@@ -37,8 +37,7 @@ const guestUser: BullionsUser = {
 };
 
 export function TerminalArena() {
-  const [authUser, setAuthUser] = useState<User | null>(null);
- = useState<User | null>(null);
+  const [authUser, setAuthUser] 
   const [user, setUser] = useState<BullionsUser | null>(null);
   const [traders] = useState<Trader[]>(mockTraders);
   const [selectedTraderId, setSelectedTraderId] = useState(mockTraders[0]?.id || "");

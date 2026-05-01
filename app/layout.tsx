@@ -12,13 +12,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Bullions",
   description: "Copy-trading and trader funding platform.",
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    icon: [
+      { url: "/favicon.png?v=8", type: "image/png" },
+      { url: "/icon.png?v=8", type: "image/png" },
+    ],
+    shortcut: ["/favicon.png?v=8"],
+    apple: ["/apple-icon.png?v=8"],
   },
 };
 

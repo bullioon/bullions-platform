@@ -204,7 +204,7 @@ export function CashModal({
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(182,255,0,0.20),transparent_58%)]" />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#121417]" />
               <img
-                src="/warning-bullions.png"
+                src="/warning.png"
                 alt="Bullions warning"
                 className="relative z-10 h-full w-full scale-[1.22] select-none object-cover object-center opacity-90 mix-blend-screen"
               />

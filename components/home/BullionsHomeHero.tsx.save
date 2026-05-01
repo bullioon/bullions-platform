@@ -1,0 +1,41 @@
+<h1 className="text-[76px] ...">bullions</h1>"use client";
+
+import Image from "next/image";
+
+export function BullionsHomeHero() {
+  return (
+    <section className="relative flex min-h-[760px] items-center justify-center bg-[#020303]">
+
+      <div className="absolute w-[320px] h-[320px] bg-[#b6ff00]/20 blur-[140px] rounded-full" />
+
+      <div className="relative z-10 flex flex-col items-center text-center">
+
+        {/* ICON */}
+        <Image
+          src="/logo.png" priority loading="eager"
+          alt="Bullions logo"
+          width={110}
+          height={110}
+          className="object-contain drop-shadow-[0_0_60px_rgba(182,255,0,0.6)]"
+        />
+
+        {/* TEXT LOGO (FIXED) */}
+        <div className="mt-4 w-[260px]">
+          <Image
+            src="/bullions.png"
+            alt="Bullions"
+            width={500}
+            height={200}
+            className="w-full h-auto object-contain"
+          />
+        </div>
+
+        <p className="mt-6 text-[#8f96a3]">
+          A copy-trading and trader funding system built for investors and traders.
+        </p>
+
+      </div>
+    </section>
+  );
+}
+

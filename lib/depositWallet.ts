@@ -1,0 +1,1 @@
+export const DEPOSIT_WALLET = "AVL315ZjNhfzfPsSYAM1U3T1f9sXcEwfKybbZWk5EBTY";

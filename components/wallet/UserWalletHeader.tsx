@@ -38,16 +38,16 @@ export function UserWalletHeader({ user, onChangeEmoji }: Props) {
 
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-xl bg-white/[0.05] p-3">
-          <p className="text-xs text-white/35">BTC Deposits</p>
+          <p className="text-xs text-white/35">Total Deposited</p>
           <p className="mt-1 font-medium text-white">
-            ${user.btcDepositedUsd}
+            ${0}
           </p>
         </div>
 
         <div className="rounded-xl bg-white/[0.05] p-3">
           <p className="text-xs text-white/35">SOL Deposits</p>
           <p className="mt-1 font-medium text-white">
-            ${user.solDepositedUsd}
+            ${user.depositedUsd}
           </p>
         </div>
       </div>

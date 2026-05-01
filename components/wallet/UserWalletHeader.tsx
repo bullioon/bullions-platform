@@ -28,7 +28,7 @@ export function UserWalletHeader({ user, onChangeEmoji }: Props) {
       <div className="mt-5">
         <p className="text-xs text-white/35">Balance</p>
         <h1 className="text-4xl font-semibold text-white">
-          ${user.balanceUsd.toLocaleString()}
+          ${user.depositedUsd.toLocaleString()}
         </h1>
 
         <p className="mt-1 text-sm text-[#b6ff00]">

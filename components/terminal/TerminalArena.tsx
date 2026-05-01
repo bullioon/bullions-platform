@@ -34,7 +34,7 @@ const guestUser: BullionsUser = {
   systemActive: false,
   dailyPerformance: [],
 
-  avatarEmoji?: string;};
+};
 
 export function TerminalArena() {
   const [authUser, setAuthUser] = useState<User | null>(null);

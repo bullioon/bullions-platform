@@ -33,7 +33,8 @@ const guestUser: BullionsUser = {
   copiedTraderId: null,
   systemActive: false,
   dailyPerformance: [],
-};
+
+  avatarEmoji?: string;};
 
 export function TerminalArena() {
   const [authUser, setAuthUser] = useState<User | null>(null);

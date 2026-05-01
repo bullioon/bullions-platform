@@ -16,7 +16,7 @@ export function UserWalletHeader({ user, onChangeEmoji }: Props) {
           onClick={onChangeEmoji}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.06] text-xl"
         >
-          {user.avatarEmoji}
+          {user.avatarEmoji || '👤'}
         </button>
 
         <div>

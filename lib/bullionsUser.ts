@@ -29,7 +29,8 @@ export type BullionsUser = {
   copiedTraderId: string | null;
   systemActive: boolean;
   dailyPerformance?: DailyPerformance[];
-};
+
+  avatarEmoji?: string;};
 
 function last7Days(depositedUsd: number, profitUsd: number): DailyPerformance[] {
   const today = new Date();

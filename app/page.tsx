@@ -1,3 +1,4 @@
+import { PrivateRoomCTA } from "@/components/home/PrivateRoomCTA";
 import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
 import { Footer } from "@/components/layout/Footer";
 import { HomeIconStrip } from "@/components/home/HomeIconStrip";
@@ -13,7 +14,8 @@ export default function Home() {
         <TopFloatingMenu />
         <BullionsHomeHero />
       </div>
-          <HomeIconStrip />
+          <PrivateRoomCTA />
+      <HomeIconStrip />
           <HomeHowItWorks />
       <Footer />
     </main>

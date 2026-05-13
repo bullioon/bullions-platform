@@ -5,6 +5,11 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { mockTraders, type Trader } from "@/lib/mockTraders";
 import {
+  ensureWeeklyLeaderboard,
+  subscribeWeeklyLeaderboard,
+  pulseWeeklyLeaderboard,
+} from "@/lib/challengeLeaderboard";
+import {
   ensureBullionsUser,
   subscribeBullionsUser,
   registerCryptoDeposit,
@@ -39,7 +44,7 @@ const guestUser: BullionsUser = {
 export function TerminalArena() {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [user, setUser] = useState<BullionsUser | null>(null);
-  const [traders] = useState<Trader[]>(mockTraders);
+  const [traders, setTraders] = useState<Trader[]>(mockTraders);
   const [selectedTraderId, setSelectedTraderId] = useState(mockTraders[0]?.id || "");
   const [cashModal, setCashModal] = useState<"deposit" | "withdraw" | null>(null);
   const [cashAmount, setCashAmount] = useState(0);
@@ -56,6 +61,33 @@ export function TerminalArena() {
   const userId = authUser?.uid || null;
   const activeUser = user || guestUser;
   const isLoggedIn = Boolean(authUser && user);
+
+  useEffect(() => {
+    let unsub: null | (() => void) = null;
+
+    async function startWeeklyLeaderboard() {
+      await ensureWeeklyLeaderboard();
+      unsub = subscribeWeeklyLeaderboard((liveTraders) => {
+        setTraders(liveTraders);
+
+        if (liveTraders[0]?.id && !selectedTraderId) {
+          setSelectedTraderId(liveTraders[0].id);
+        }
+      });
+    }
+
+    startWeeklyLeaderboard();
+
+    const pulse = setInterval(() => {
+      pulseWeeklyLeaderboard().catch(console.error);
+    }, 45000);
+
+    return () => {
+      if (unsub) unsub();
+      clearInterval(pulse);
+    };
+  }, []);
+
 
   useEffect(() => {
     let unsubscribeUser: null | (() => void) = null;

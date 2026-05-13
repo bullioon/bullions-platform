@@ -246,7 +246,28 @@ export function CashModal({
             )}
             {amount >= MIN_DEPOSIT && (
               <>
-                <div className="relative mt-7 overflow-hidden rounded-[28px] bg-[#1b1d22] p-6 ring-1 ring-white/5">
+                <div className="mt-6 rounded-[22px] border border-[#8b5cf6]/35 bg-[#8b5cf6]/10 p-4 shadow-[0_0_35px_rgba(139,92,246,0.12)]">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#8b5cf6]/20 ring-1 ring-[#8b5cf6]/30">
+                      <img
+                        src="/assets/phantom.png"
+                        alt="Phantom Wallet"
+                        className="h-8 w-8 object-contain"
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white">
+                        Payment via <span className="text-[#a78bfa]">Phantom Wallet</span>
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-white/55">
+                        Scan this QR with Phantom or tap Pay with Phantom. The SOL amount and wallet address will be filled automatically.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative mt-5 overflow-hidden rounded-[28px] bg-[#1b1d22] p-6 ring-1 ring-white/5">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(182,255,0,0.16),transparent_58%)]" />
                   <div className="relative z-10 mx-auto grid h-[210px] w-[210px] place-items-center rounded-[26px] bg-white p-3 shadow-[0_0_45px_rgba(182,255,0,0.18)]">
                     <QRCodeSVG value={paymentUri} size={180} />

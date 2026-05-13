@@ -45,6 +45,7 @@ export function TerminalArena() {
   const [cashAmount, setCashAmount] = useState(0);
   const [network, setNetwork] = useState<"BTC" | "SOL">("SOL");
   const [txHash, setTxHash] = useState("");
+  const [loginHint, setLoginHint] = useState<"deposit" | "withdraw" | null>(null);
 
   const [events, setEvents] = useState<string[]>([
     "BullPad loaded in guest mode.",
@@ -193,12 +194,20 @@ export function TerminalArena() {
           systemActive={activeUser.systemActive}
           onChangeEmoji={(emoji) => userId && updateEmoji(userId, emoji)}
           onDeposit={() => {
-            if (!requireLogin()) return;
+            if (!isLoggedIn) {
+              setLoginHint("deposit");
+              return;
+            }
+
             setCashModal("deposit");
             setCashAmount(0);
           }}
           onWithdraw={() => {
-            if (!requireLogin()) return;
+            if (!isLoggedIn) {
+              setLoginHint("withdraw");
+              return;
+            }
+
             setCashModal("withdraw");
             setCashAmount(0);
           }}
@@ -249,6 +258,54 @@ export function TerminalArena() {
           ? "Account loaded. Deposits and Copy Engine are connected to your profile."
           : "Guest mode: values start at zero. Login to load your real Bullions profile."}
       </p>
+
+
+      {loginHint && (
+        <div className="fixed inset-0 z-[80] grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
+          <section className="w-full max-w-[430px] rounded-[30px] bg-[#121417] p-6 text-center shadow-[0_24px_90px_rgba(0,0,0,.75)] ring-1 ring-white/5">
+            <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full bg-[#8b5cf6]/15 ring-1 ring-[#8b5cf6]/25">
+              <span className="text-2xl">👻</span>
+            </div>
+
+            <h3 className="text-2xl font-semibold text-white">
+              Login required
+            </h3>
+
+            <p className="mx-auto mt-3 max-w-[330px] text-sm leading-6 text-white/50">
+              {loginHint === "deposit"
+                ? "Create or login to your Bullions account first. Deposits are processed securely through Phantom Wallet."
+                : "Create or login to your Bullions account first before requesting a withdrawal."}
+            </p>
+
+            {loginHint === "deposit" && (
+              <div className="mt-5 rounded-[18px] bg-[#8b5cf6]/10 p-4 text-left ring-1 ring-[#8b5cf6]/20">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#b6ff00]">
+                  Powered by Phantom
+                </p>
+                <p className="mt-2 text-sm leading-5 text-white/60">
+                  You will scan a QR or pay directly with Phantom. The wallet opens with the SOL amount and address already filled.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-7 grid gap-3">
+              <button
+                onClick={() => setLoginHint(null)}
+                className="h-[54px] rounded-full bg-[#b6ff00] text-sm font-semibold text-black"
+              >
+                Got it
+              </button>
+
+              <button
+                onClick={() => setLoginHint(null)}
+                className="h-[46px] rounded-full border border-white/10 text-xs font-semibold text-white/50"
+              >
+                Cancel
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {cashModal && (
         <CashModal

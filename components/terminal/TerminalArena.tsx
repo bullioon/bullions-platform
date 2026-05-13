@@ -7,7 +7,6 @@ import { mockTraders, type Trader } from "@/lib/mockTraders";
 import {
   ensureWeeklyLeaderboard,
   subscribeWeeklyLeaderboard,
-  pulseWeeklyLeaderboard,
 } from "@/lib/challengeLeaderboard";
 import {
   ensureBullionsUser,
@@ -78,13 +77,8 @@ export function TerminalArena() {
 
     startWeeklyLeaderboard();
 
-    const pulse = setInterval(() => {
-      pulseWeeklyLeaderboard().catch(console.error);
-    }, 45000);
-
     return () => {
       if (unsub) unsub();
-      clearInterval(pulse);
     };
   }, []);
 

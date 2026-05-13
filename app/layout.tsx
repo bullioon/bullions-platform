@@ -12,32 +12,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "Bullions",
   description: "Copy-trading and trader funding platform.",
   icons: {
-    icon: [
-      { url: "/favicon.png?v=99", type: "image/png" },
-      { url: "/icon.png?v=99", type: "image/png" },
-    ],
-    shortcut: ["/favicon.png?v=99"],
-    apple: ["/apple-touch-icon.png?v=99"],
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#050607] text-white">
-        {children}
-      </body>
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }

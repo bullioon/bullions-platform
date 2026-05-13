@@ -23,10 +23,9 @@ type Props = {
     txHash: string;
   }) => void;
 };
-const MIN_DEPOSIT = 150;
+const MIN_DEPOSIT = 60;
 const assets = [
   { symbol: "SOL", name: "Solana", icon: "/assets/solana.png", time: "~15 sec" },
-  { symbol: "BTC", name: "Bitcoin", icon: "/assets/bitcoin.png", time: "~27 min" },
 ] as const;
 export function CashModal({
   amount,
@@ -243,7 +242,7 @@ export function CashModal({
               />
             </div>
             {amount > 0 && amount < MIN_DEPOSIT && (
-              <p className="mt-2 text-xs text-red-400">Minimum deposit is $150</p>
+              <p className="mt-2 text-xs text-red-400">Minimum deposit is $60</p>
             )}
             {amount >= MIN_DEPOSIT && (
               <>

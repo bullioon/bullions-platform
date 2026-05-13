@@ -71,7 +71,7 @@ export async function ensureWeeklyLeaderboard() {
 
   const rotated = seededNames(weekId);
 
-  const bot: Trader & { isBot: boolean; updatedAt?: number } = {
+  const bot: any = {
     id: "bullions-bot",
     name: "Bullions Bot",
     tag: "TORION Adaptive AI",
@@ -86,7 +86,7 @@ export async function ensureWeeklyLeaderboard() {
 
   for (let i = 0; i < 5; i++) {
     const base = 18 + Math.random() * 32;
-    const trader: Trader & { isBot: boolean; updatedAt?: number } = {
+    const trader: any = {
       id: `trader-${i + 1}`,
       name: rotated[i][0],
       tag: rotated[i][1],
@@ -109,7 +109,7 @@ export function subscribeWeeklyLeaderboard(callback: (traders: Trader[]) => void
   const q = query(lbRef, orderBy("roi", "desc"));
 
   return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Trader) })));
+    callback(snap.docs.map((d) => d.data() as Trader));
   });
 }
 

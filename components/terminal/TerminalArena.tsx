@@ -43,8 +43,8 @@ const guestUser: BullionsUser = {
 export function TerminalArena() {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [user, setUser] = useState<BullionsUser | null>(null);
-  const [traders, setTraders] = useState<Trader[]>(mockTraders);
-  const [selectedTraderId, setSelectedTraderId] = useState(mockTraders[0]?.id || "");
+  const [traders, setTraders] = useState<Trader[]>([]);
+  const [selectedTraderId, setSelectedTraderId] = useState("");
   const [cashModal, setCashModal] = useState<"deposit" | "withdraw" | null>(null);
   const [cashAmount, setCashAmount] = useState(0);
   const [network, setNetwork] = useState<"BTC" | "SOL">("SOL");
@@ -77,8 +77,15 @@ export function TerminalArena() {
 
     startWeeklyLeaderboard();
 
+    fetch("/api/leaderboard/pulse").catch(console.error);
+
+    const pulse = setInterval(() => {
+      fetch("/api/leaderboard/pulse").catch(console.error);
+    }, 45000);
+
     return () => {
       if (unsub) unsub();
+      clearInterval(pulse);
     };
   }, []);
 

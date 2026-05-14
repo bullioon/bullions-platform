@@ -75,7 +75,7 @@ export function CopyEnginePanel({
       </div>
 
 
-      <div className="mt-7 rounded-[20px] bg-black/25 p-4 ring-1 ring-[#b6ff00]/10">
+      <div className="mt-5 rounded-[18px] bg-black/25 p-3 ring-1 ring-[#b6ff00]/10 sm:mt-7 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] uppercase tracking-[0.22em] text-[#b6ff00]">
@@ -86,16 +86,16 @@ export function CopyEnginePanel({
             </p>
           </div>
 
-          <div className="grid h-11 w-11 place-items-center rounded-full border border-[#b6ff00]/20 bg-[#b6ff00]/10">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#b6ff00]/20 bg-[#b6ff00]/10 sm:h-11 sm:w-11">
             <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#b6ff00]" />
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2">
+        <div className="mt-3 grid gap-1.5 sm:mt-4 sm:gap-2">
           {["Risk calibrated", "Entry optimized", "Lot size adjusted"].map((item) => (
             <div
               key={item}
-              className="flex items-center justify-between rounded-full bg-white/[0.04] px-3 py-2"
+              className="flex items-center justify-between rounded-full bg-white/[0.04] px-3 py-1.5 sm:py-2"
             >
               <span className="text-xs text-white/70">{item}</span>
               <span className="text-[10px] font-semibold text-[#b6ff00]">LIVE</span>
@@ -103,11 +103,11 @@ export function CopyEnginePanel({
           ))}
         </div>
 
-        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06] sm:mt-4">
           <div className="h-full w-[72%] animate-pulse rounded-full bg-[#b6ff00]" />
         </div>
 
-        <div className="mt-2 flex items-center justify-between text-[11px] text-white/35">
+        <div className="mt-2 flex items-center justify-between gap-3 text-[10px] text-white/35 sm:text-[11px]">
           <span>Next scan in 05s</span>
           <span>TORION adaptive AI</span>
         </div>

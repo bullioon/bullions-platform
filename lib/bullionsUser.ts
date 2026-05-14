@@ -53,9 +53,11 @@ function last7Days(depositedUsd: number, profitUsd: number): DailyPerformance[] 
 }
 
 export async function ensureBullionsUser(userId: string, email: string) {
-  await setDoc(
-    doc(db, "users", userId),
-    {
+  const ref = doc(db, "users", userId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    await setDoc(ref, {
       name: email.split("@")[0] || "Bullions User",
       username: email.split("@")[0] || "user",
       email,
@@ -65,6 +67,17 @@ export async function ensureBullionsUser(userId: string, email: string) {
       copiedTraderId: null,
       systemActive: false,
       dailyPerformance: last7Days(0, 0),
+    });
+    return;
+  }
+
+  await setDoc(
+    ref,
+    {
+      name: snap.data().name || email.split("@")[0] || "Bullions User",
+      username: snap.data().username || email.split("@")[0] || "user",
+      email,
+      emoji: snap.data().emoji || "💀",
     },
     { merge: true }
   );

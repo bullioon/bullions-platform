@@ -5,7 +5,6 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { mockTraders, type Trader } from "@/lib/mockTraders";
 import {
-  ensureWeeklyLeaderboard,
   subscribeWeeklyLeaderboard,
 } from "@/lib/challengeLeaderboard";
 import {
@@ -65,7 +64,6 @@ export function TerminalArena() {
     let unsub: null | (() => void) = null;
 
     async function startWeeklyLeaderboard() {
-      await ensureWeeklyLeaderboard();
       unsub = subscribeWeeklyLeaderboard((liveTraders) => {
         setTraders(liveTraders);
 

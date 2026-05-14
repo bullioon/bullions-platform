@@ -138,12 +138,22 @@ export function TerminalArena() {
     if (!userId || !user?.systemActive || !copiedTrader || user.depositedUsd <= 0) return;
 
     const interval = setInterval(async () => {
-      const edge = (copiedTrader.roi / 100) * 0.045;
-      const volatility =
-        copiedTrader.maxLoss >= 20 ? 1.85 : copiedTrader.maxLoss >= 12 ? 1.25 : 0.75;
-      const noise = (Math.random() - 0.5) * volatility;
-      const shock = Math.random() < 0.22 ? -Math.random() * volatility * 1.4 : 0;
-      const nextMove = user.depositedUsd * ((edge + noise + shock) / 100);
+      const accountSize = user.depositedUsd;
+      const traderStrength = Math.min(1.25, Math.max(0.45, copiedTrader.roi / 55));
+      const riskControl = Math.max(0.35, 1 - copiedTrader.maxLoss / 30);
+
+      const isWin = Math.random() < 0.76;
+      const baseWinPct = (0.055 + Math.random() * 0.12) * traderStrength * riskControl;
+      const baseLossPct = (0.018 + Math.random() * 0.045) * (1.15 - riskControl);
+
+      const rareDrawdown = Math.random() < 0.045;
+      const movePct = rareDrawdown
+        ? -(0.08 + Math.random() * 0.11)
+        : isWin
+          ? baseWinPct
+          : -baseLossPct;
+
+      const nextMove = accountSize * (movePct / 100);
 
       await addProfit(userId, nextMove);
 

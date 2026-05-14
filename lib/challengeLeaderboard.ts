@@ -1,6 +1,8 @@
 import {
   collection,
   doc,
+  getDoc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -52,8 +54,10 @@ export async function ensureWeeklyLeaderboard() {
   const challengeRef = doc(db, "weeklyChallenges", weekId);
   const lbRef = collection(db, "weeklyChallenges", weekId, "leaderboard");
 
+  const challengeSnap = await getDoc(challengeRef);
   const existing = await getDocs(lbRef);
-  if (!existing.empty) return weekId;
+
+  if (challengeSnap.exists() && !existing.empty) return weekId;
 
   const start = getSundayStart();
   const end = new Date(start);

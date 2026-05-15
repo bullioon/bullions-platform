@@ -21,11 +21,11 @@ export function CopyEnginePanel({
   const canRun = Boolean(displayTrader) && depositedUsd > 0;
 
   return (
-    <section className="rounded-[24px] bg-[#111214] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+    <section className="rounded-[24px] bg-[#111214] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)] sm:p-8">
       <div className="flex items-start justify-between gap-5">
         <div>
           <p className="text-sm text-[#8f96a3]">Copy Engine</p>
-          <h2 className="mt-1 text-3xl font-semibold tracking-tight text-white">
+          <h2 className="mt-1 text-[30px] font-semibold tracking-tight text-white sm:text-3xl">
             {isActive ? "System active" : "System paused"}
           </h2>
           <p className="mt-2 text-sm text-[#8f96a3]">
@@ -48,7 +48,7 @@ export function CopyEnginePanel({
         </button>
       </div>
 
-      <div className="mt-8 grid grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-3 gap-3 sm:mt-8 sm:gap-4">
         <div>
           <p className="text-xs text-[#8f96a3]">Deposited</p>
           <p className="mt-1 text-sm font-medium text-white">${depositedUsd.toLocaleString()}</p>
@@ -116,7 +116,7 @@ export function CopyEnginePanel({
       {traderName && (
         <button
           onClick={onDisconnect}
-          className="mt-8 h-[56px] w-full rounded-full border border-white/10 text-sm font-semibold text-white/70 transition hover:bg-white/[0.05]"
+          className="mt-5 h-[52px] w-full rounded-full border border-white/10 text-sm font-semibold text-white/70 transition hover:bg-white/[0.05] sm:mt-8 sm:h-[56px]"
         >
           Disconnect trader
         </button>

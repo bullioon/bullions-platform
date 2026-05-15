@@ -77,8 +77,7 @@ export function TerminalInvestPanel({
           <div className="mt-6 space-y-3">
             {[
               ["Pair", "XAU/USD"],
-              ["Available", `$${available.toLocaleString()}`],
-              ["Current P/L", `${estimatedProfit >= 0 ? "+" : ""}$${estimatedProfit.toFixed(2)}`],
+              ["Available cash", `$${available.toLocaleString()}`],
             ].map(([label, value]) => (
               <div key={label} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0">
                 <span className="text-sm text-[#8f96a3]">{label}</span>
@@ -164,7 +163,7 @@ export function TerminalInvestPanel({
           </button>
 
           <p className="mt-4 text-center text-xs text-[#8f96a3]">
-            Copy engine only uses your available Bullions balance.
+            Allocated funds are locked while the copy engine is active.
           </p>
         </div>
       </div>

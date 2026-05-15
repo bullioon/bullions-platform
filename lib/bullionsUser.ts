@@ -29,8 +29,10 @@ export type BullionsUser = {
   copiedTraderId: string | null;
   systemActive: boolean;
   dailyPerformance?: DailyPerformance[];
-
-  avatarEmoji?: string;};
+  allocatedUsd: number;
+  maxLossUsd: number;
+  avatarEmoji?: string;
+};
 
 function last7Days(depositedUsd: number, profitUsd: number): DailyPerformance[] {
   const today = new Date();
@@ -64,6 +66,8 @@ export async function ensureBullionsUser(userId: string, email: string) {
       emoji: "💀",
       depositedUsd: 0,
       profitUsd: 0,
+      allocatedUsd: 0,
+      maxLossUsd: 10,
       copiedTraderId: null,
       systemActive: false,
       dailyPerformance: last7Days(0, 0),
@@ -145,14 +149,17 @@ export async function setCopyEngine({
   userId,
   copiedTraderId,
   systemActive,
+  allocationUsd = 0,
 }: {
   userId: string;
   copiedTraderId: string | null;
   systemActive: boolean;
+  allocationUsd?: number;
 }) {
   await updateDoc(doc(db, "users", userId), {
     copiedTraderId,
     systemActive,
+    allocatedUsd: allocationUsd,
   });
 }
 

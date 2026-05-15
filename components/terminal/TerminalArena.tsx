@@ -33,6 +33,8 @@ const guestUser: BullionsUser = {
   emoji: "💀",
   depositedUsd: 0,
   profitUsd: 0,
+  allocatedUsd: 0,
+  maxLossUsd: 10,
   copiedTraderId: null,
   systemActive: false,
   dailyPerformance: [],
@@ -59,6 +61,16 @@ export function TerminalArena() {
   const userId = authUser?.uid || null;
   const activeUser = user || guestUser;
   const isLoggedIn = Boolean(authUser && user);
+  const availableUsd = Math.max(
+    0,
+    Number(
+      (
+        (activeUser.depositedUsd || 0) +
+        (activeUser.profitUsd || 0) -
+        (activeUser.allocatedUsd || 0)
+      ).toFixed(2)
+    )
+  );
 
   useEffect(() => {
     let unsub: null | (() => void) = null;
@@ -135,10 +147,10 @@ export function TerminalArena() {
   }
 
   useEffect(() => {
-    if (!userId || !user?.systemActive || !copiedTrader || user.depositedUsd <= 0) return;
+    if (!userId || !user?.systemActive || !copiedTrader || (user.allocatedUsd || 0) <= 0) return;
 
     const interval = setInterval(async () => {
-      const accountSize = user.depositedUsd;
+      const accountSize = user.allocatedUsd || 0;
       const traderStrength = Math.min(1.25, Math.max(0.45, copiedTrader.roi / 55));
       const riskControl = Math.max(0.35, 1 - copiedTrader.maxLoss / 30);
 
@@ -166,18 +178,19 @@ export function TerminalArena() {
     }, 5500);
 
     return () => clearInterval(interval);
-  }, [userId, user?.systemActive, user?.depositedUsd, copiedTrader]);
+  }, [userId, user?.systemActive, user?.allocatedUsd, copiedTrader]);
 
   async function handleCopy(amount: number, traderOverride?: Trader) {
     if (!requireLogin() || !userId || !user) return;
 
     const traderToCopy = traderOverride || selectedTrader;
-    if (!traderToCopy || user.depositedUsd <= 0) return;
+    if (!traderToCopy || amount <= 0 || amount > availableUsd) return;
 
     await setCopyEngine({
       userId,
       copiedTraderId: traderToCopy.id,
       systemActive: true,
+      allocationUsd: amount,
     });
 
     setEvents((current) =>
@@ -193,6 +206,7 @@ export function TerminalArena() {
         userId,
         copiedTraderId: selectedTrader.id,
         systemActive: true,
+        allocationUsd: availableUsd,
       });
       return;
     }
@@ -205,6 +219,7 @@ export function TerminalArena() {
       userId,
       copiedTraderId: user.copiedTraderId,
       systemActive: !user.systemActive,
+      allocationUsd: user.allocatedUsd || 0,
     });
   }
 
@@ -217,6 +232,7 @@ export function TerminalArena() {
       userId,
       copiedTraderId: null,
       systemActive: false,
+      allocationUsd: 0,
     });
 
     setEvents((current) => ["Copy Engine disconnected.", ...current].slice(0, 6));
@@ -286,7 +302,7 @@ export function TerminalArena() {
 
         <TerminalInvestPanel
           trader={selectedTrader}
-          totalInvested={activeUser.depositedUsd}
+          totalInvested={availableUsd}
           estimatedProfit={activeUser.profitUsd}
           onInvest={handleCopy}
         />

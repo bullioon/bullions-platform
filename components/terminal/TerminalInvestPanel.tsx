@@ -49,7 +49,7 @@ export function TerminalInvestPanel({
   return (
     <section
       id="copy"
-      className="rounded-[24px] bg-[#111214] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]"
+      className="w-full max-w-full min-w-0 overflow-hidden rounded-[24px] bg-[#111214] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)] sm:p-8"
     >
       <div className="flex items-start justify-between gap-5">
         <div>
@@ -67,7 +67,7 @@ export function TerminalInvestPanel({
         </span>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
           <p className="text-xs text-[#8f96a3]">Selected trader</p>
           <h3 className="mt-1 text-2xl font-semibold text-white">
@@ -79,9 +79,9 @@ export function TerminalInvestPanel({
               ["Pair", "XAU/USD"],
               ["Available cash", `$${available.toLocaleString()}`],
             ].map(([label, value]) => (
-              <div key={label} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0">
+              <div key={label} className="flex min-w-0 items-center justify-between gap-4 border-b border-white/5 pb-3 last:border-0">
                 <span className="text-sm text-[#8f96a3]">{label}</span>
-                <span className="text-sm font-medium text-white">{value}</span>
+                <span className="min-w-0 truncate text-right text-sm font-medium text-white">{value}</span>
               </div>
             ))}
           </div>
@@ -153,7 +153,7 @@ export function TerminalInvestPanel({
           <button
             onClick={() => trader && canCopy && onInvest(amount, trader)}
             disabled={!canCopy}
-            className="mt-5 h-[56px] w-full rounded-full bg-[#b6ff00] text-sm font-semibold text-black transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-5 h-[56px] w-full max-w-full truncate rounded-full bg-[#b6ff00] px-4 text-sm font-semibold text-black transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {!trader
               ? "Select trader"

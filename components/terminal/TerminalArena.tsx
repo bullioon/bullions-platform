@@ -278,7 +278,7 @@ export function TerminalArena() {
   }
 
   return (
-    <section id="bullpad" className="mx-auto w-full max-w-[1480px] scroll-mt-28 space-y-5 pb-10">
+    <section id="bullpad" className="mx-auto w-full max-w-[1480px] min-w-0 overflow-x-hidden scroll-mt-28 space-y-5 pb-10 px-4 sm:px-0">
       <div className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
         <UserIntroCard
           name={activeUser.name}

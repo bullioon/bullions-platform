@@ -21,7 +21,7 @@ export function CopyEnginePanel({
   const canRun = Boolean(displayTrader) && depositedUsd > 0;
 
   return (
-    <section className="rounded-[24px] bg-[#111214] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)] sm:p-8">
+    <section className="w-full max-w-full min-w-0 overflow-hidden rounded-[24px] bg-[#111214] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)] sm:p-8">
       <div className="flex items-start justify-between gap-5">
         <div>
           <p className="text-sm text-[#8f96a3]">Copy Engine</p>

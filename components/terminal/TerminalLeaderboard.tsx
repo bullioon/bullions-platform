@@ -24,14 +24,20 @@ export function TerminalLeaderboard({
             Leaderboard
           </h2>
           <p className="mt-1 text-sm text-white/40">
-            Weekly Beat the Bot challenge
+            Weekly Cycle · Rankings reset every Sunday
           </p>
         </div>
 
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#b6ff00]/20 bg-[#b6ff00]/10 px-3 py-1 text-xs text-[#b6ff00]">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b6ff00]" />
-          Live
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#b6ff00]/20 bg-[#b6ff00]/10 px-3 py-1 text-xs text-[#b6ff00]">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b6ff00]" />
+            Live
+          </span>
+
+          <span className="text-[11px] text-white/35">
+            Sunday reset
+          </span>
+        </div>
       </div>
 
       <div className="divide-y divide-white/5">

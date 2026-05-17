@@ -37,7 +37,7 @@ export function UserIntroCard({
   const roi = (profitUsd / Math.max(balanceUsd, 1)) * 100;
 
   return (
-    <section className="relative overflow-hidden rounded-[24px] bg-[#111214] p-8 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+    <section className="relative w-full max-w-full min-w-0 overflow-hidden rounded-[24px] bg-[#111214] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)] sm:p-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(182,255,0,0.10),transparent_34%)]" />
 
       <div className="relative z-10">

@@ -142,3 +142,14 @@ body {
 .animate-success-glow {
   animation: successGlow 1.6s ease-in-out infinite;
 }
+
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  position: relative;
+}
+
+* {
+  box-sizing: border-box;
+}

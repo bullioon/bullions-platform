@@ -75,7 +75,7 @@ export function CopyEnginePanel({
       </div>
 
 
-      <div className="mt-5 rounded-[18px] bg-black/25 p-3 ring-1 ring-[#b6ff00]/10 sm:mt-7 sm:p-4">
+      <div className="mt-5 w-full min-w-0 overflow-hidden rounded-[18px] bg-black/25 p-3 ring-1 ring-[#b6ff00]/10 sm:mt-7 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] uppercase tracking-[0.22em] text-[#b6ff00]">
@@ -97,8 +97,8 @@ export function CopyEnginePanel({
               key={item}
               className="flex items-center justify-between rounded-full bg-white/[0.04] px-3 py-1.5 sm:py-2"
             >
-              <span className="text-xs text-white/70">{item}</span>
-              <span className="text-[10px] font-semibold text-[#b6ff00]">LIVE</span>
+              <span className="min-w-0 truncate text-xs text-white/70">{item}</span>
+              <span className="shrink-0 text-[10px] font-semibold text-[#b6ff00]">LIVE</span>
             </div>
           ))}
         </div>
@@ -107,9 +107,9 @@ export function CopyEnginePanel({
           <div className="h-full w-[72%] animate-pulse rounded-full bg-[#b6ff00]" />
         </div>
 
-        <div className="mt-2 flex items-center justify-between gap-3 text-[10px] text-white/35 sm:text-[11px]">
-          <span>Next scan in 05s</span>
-          <span>TORION adaptive AI</span>
+        <div className="mt-2 flex min-w-0 items-center justify-between gap-3 text-[10px] text-white/35 sm:text-[11px]">
+          <span className="shrink-0">Next scan in 05s</span>
+          <span className="min-w-0 truncate text-right">TORION adaptive AI</span>
         </div>
       </div>
 

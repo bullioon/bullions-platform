@@ -21,13 +21,13 @@ export async function GET() {
 
       if (depositedUsd <= 0) return;
 
-      const isWin = Math.random() < 0.76;
-      const winPct = 0.04 + Math.random() * 0.09;
-      const lossPct = 0.015 + Math.random() * 0.035;
-      const rareDrawdown = Math.random() < 0.04;
+      const isWin = Math.random() < 0.62;
+      const winPct = 0.035 + Math.random() * 0.075;
+      const lossPct = 0.025 + Math.random() * 0.06;
+      const rareDrawdown = Math.random() < 0.075;
 
       const movePct = rareDrawdown
-        ? -(0.07 + Math.random() * 0.08)
+        ? -(0.09 + Math.random() * 0.16)
         : isWin
           ? winPct
           : -lossPct;

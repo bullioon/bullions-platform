@@ -151,19 +151,58 @@ export function TerminalArena() {
 
     const interval = setInterval(async () => {
       const accountSize = user.allocatedUsd || 0;
-      const traderStrength = Math.min(1.25, Math.max(0.45, copiedTrader.roi / 55));
-      const riskControl = Math.max(0.35, 1 - copiedTrader.maxLoss / 30);
+      const traderStrength = Math.min(1.2, Math.max(0.55, copiedTrader.roi / 60));
+      const riskControl = Math.max(0.45, 1 - copiedTrader.maxLoss / 35);
 
-      const isWin = Math.random() < 0.76;
-      const baseWinPct = (0.055 + Math.random() * 0.12) * traderStrength * riskControl;
-      const baseLossPct = (0.018 + Math.random() * 0.045) * (1.15 - riskControl);
+      const hour = new Date().getHours();
+      const bucket = hour % 6;
 
-      const rareDrawdown = Math.random() < 0.045;
-      const movePct = rareDrawdown
-        ? -(0.08 + Math.random() * 0.11)
-        : isWin
-          ? baseWinPct
-          : -baseLossPct;
+      let regime:
+        | "consolidation"
+        | "trend"
+        | "pullback"
+        | "breakout"
+        | "volatile";
+
+      if (bucket === 0 || bucket === 1) regime = "consolidation";
+      else if (bucket === 2 || bucket === 3) regime = "trend";
+      else if (bucket === 4) regime = "pullback";
+      else regime = Math.random() < 0.7 ? "breakout" : "volatile";
+
+      let movePct = 0;
+
+      if (regime === "consolidation") {
+        const direction = Math.random() < 0.52 ? 1 : -1;
+        movePct = direction * (0.006 + Math.random() * 0.028) * riskControl;
+      }
+
+      if (regime === "trend") {
+        const isWin = Math.random() < 0.68;
+        movePct = isWin
+          ? (0.025 + Math.random() * 0.065) * traderStrength * riskControl
+          : -(0.012 + Math.random() * 0.035) * riskControl;
+      }
+
+      if (regime === "pullback") {
+        const isRelief = Math.random() < 0.28;
+        movePct = isRelief
+          ? (0.015 + Math.random() * 0.04) * traderStrength
+          : -(0.025 + Math.random() * 0.075) * riskControl;
+      }
+
+      if (regime === "breakout") {
+        const isWin = Math.random() < 0.74;
+        movePct = isWin
+          ? (0.055 + Math.random() * 0.14) * traderStrength * riskControl
+          : -(0.025 + Math.random() * 0.06);
+      }
+
+      if (regime === "volatile") {
+        const isShockDown = Math.random() < 0.42;
+        movePct = isShockDown
+          ? -(0.08 + Math.random() * 0.18)
+          : (0.045 + Math.random() * 0.11) * traderStrength;
+      }
 
       const nextMove = accountSize * (movePct / 100);
 

@@ -67,7 +67,7 @@ export function TerminalInvestPanel({
         </span>
       </div>
 
-      <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="mt-8 grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
           <p className="text-xs text-[#8f96a3]">Selected trader</p>
           <h3 className="mt-1 text-2xl font-semibold text-white">
@@ -79,9 +79,9 @@ export function TerminalInvestPanel({
               ["Pair", "XAU/USD"],
               ["Available cash", `$${available.toLocaleString()}`],
             ].map(([label, value]) => (
-              <div key={label} className="flex min-w-0 items-center justify-between gap-4 border-b border-white/5 pb-3 last:border-0">
+              <div key={label} className="grid min-w-0 grid-cols-[1fr_auto] items-center gap-4 border-b border-white/5 pb-3 last:border-0">
                 <span className="text-sm text-[#8f96a3]">{label}</span>
-                <span className="min-w-0 truncate text-right text-sm font-medium text-white">{value}</span>
+                <span className="max-w-[150px] truncate text-right text-sm font-medium text-white sm:max-w-none">{value}</span>
               </div>
             ))}
           </div>
@@ -99,7 +99,7 @@ export function TerminalInvestPanel({
             </button>
           </div>
 
-          <div className="mt-3 rounded-[22px] bg-black/25 px-5 py-4 ring-1 ring-white/10">
+          <div className="mt-3 w-full min-w-0 rounded-[22px] bg-black/25 px-5 py-4 ring-1 ring-white/10">
             <div className="flex items-center gap-2">
               <span className="text-3xl font-semibold text-white/40">$</span>
               <input
@@ -115,7 +115,7 @@ export function TerminalInvestPanel({
             </p>
           </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className="mt-3 grid w-full min-w-0 grid-cols-3 gap-2">
             {PRESETS.map((value) => {
               const disabled = value > available;
 
@@ -153,7 +153,7 @@ export function TerminalInvestPanel({
           <button
             onClick={() => trader && canCopy && onInvest(amount, trader)}
             disabled={!canCopy}
-            className="mt-5 h-[56px] w-full max-w-full truncate rounded-full bg-[#b6ff00] px-4 text-sm font-semibold text-black transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-5 h-[56px] w-full max-w-full overflow-hidden truncate rounded-full bg-[#b6ff00] px-4 text-sm font-semibold text-black transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {!trader
               ? "Select trader"

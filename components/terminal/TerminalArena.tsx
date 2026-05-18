@@ -25,6 +25,7 @@ import { PerformanceChart } from "@/components/ui/PerformanceChart";
 import { UserIntroCard } from "@/components/wallet/UserIntroCard";
 import { CopyEnginePanel } from "@/components/terminal/CopyEnginePanel";
 import { CashModal } from "@/components/terminal/CashModal";
+import { generateMove, engineEvents } from "@/lib/engineBehavior";
 
 const guestUser: BullionsUser = {
   name: "Guest",
@@ -159,60 +160,9 @@ export function TerminalArena() {
 
     const interval = setInterval(async () => {
       const accountSize = user.allocatedUsd || 0;
-      const traderStrength = Math.min(1.2, Math.max(0.55, copiedTrader.roi / 60));
-      const riskControl = Math.max(0.45, 1 - copiedTrader.maxLoss / 35);
-
-      const hour = new Date().getHours();
-      const bucket = hour % 6;
-
-      let regime:
-        | "consolidation"
-        | "trend"
-        | "pullback"
-        | "breakout"
-        | "volatile";
-
-      if (bucket === 0 || bucket === 1) regime = "consolidation";
-      else if (bucket === 2 || bucket === 3) regime = "trend";
-      else if (bucket === 4) regime = "pullback";
-      else regime = Math.random() < 0.7 ? "breakout" : "volatile";
-
-      let movePct = 0;
-
-      if (regime === "consolidation") {
-        const direction = Math.random() < 0.52 ? 1 : -1;
-        movePct = direction * (0.12 + Math.random() * 0.28) * riskControl;
-      }
-
-      if (regime === "trend") {
-        const isWin = Math.random() < 0.66;
-        movePct = isWin
-          ? (0.35 + Math.random() * 0.75) * traderStrength * riskControl
-          : -(0.18 + Math.random() * 0.38) * riskControl;
-      }
-
-      if (regime === "pullback") {
-        const isRelief = Math.random() < 0.28;
-        movePct = isRelief
-          ? (0.18 + Math.random() * 0.35) * traderStrength
-          : -(0.28 + Math.random() * 0.65) * riskControl;
-      }
-
-      if (regime === "breakout") {
-        const isWin = Math.random() < 0.72;
-        movePct = isWin
-          ? (0.75 + Math.random() * 1.35) * traderStrength * riskControl
-          : -(0.28 + Math.random() * 0.55);
-      }
-
-      if (regime === "volatile") {
-        const isShockDown = Math.random() < 0.44;
-        movePct = isShockDown
-          ? -(0.55 + Math.random() * 1.15)
-          : (0.45 + Math.random() * 0.95) * traderStrength;
-      }
-
-      const nextMove = accountSize * (movePct / 100);
+      const { phase, move } = generateMove();
+      const nextMove = accountSize * (move / 100);
+      const event = engineEvents[Math.floor(Math.random() * engineEvents.length)];
 
       await addProfit(userId, nextMove);
 

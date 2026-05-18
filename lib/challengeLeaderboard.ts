@@ -56,7 +56,12 @@ export async function ensureWeeklyLeaderboard() {
   const challengeSnap = await getDoc(challengeRef);
   const existing = await getDocs(lbRef);
 
-  if (challengeSnap.exists() && !existing.empty) return weekId;
+  if (
+    challengeSnap.exists() &&
+    existing.docs.length >= 2
+  ) {
+    return weekId;
+  }
 
   const start = getSundayStart();
   const end = new Date(start);

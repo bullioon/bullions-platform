@@ -173,35 +173,35 @@ export function TerminalArena() {
 
       if (regime === "consolidation") {
         const direction = Math.random() < 0.52 ? 1 : -1;
-        movePct = direction * (0.006 + Math.random() * 0.028) * riskControl;
+        movePct = direction * (0.025 + Math.random() * 0.075) * riskControl;
       }
 
       if (regime === "trend") {
-        const isWin = Math.random() < 0.68;
+        const isWin = Math.random() < 0.66;
         movePct = isWin
-          ? (0.025 + Math.random() * 0.065) * traderStrength * riskControl
-          : -(0.012 + Math.random() * 0.035) * riskControl;
+          ? (0.09 + Math.random() * 0.18) * traderStrength * riskControl
+          : -(0.045 + Math.random() * 0.09) * riskControl;
       }
 
       if (regime === "pullback") {
         const isRelief = Math.random() < 0.28;
         movePct = isRelief
-          ? (0.015 + Math.random() * 0.04) * traderStrength
-          : -(0.025 + Math.random() * 0.075) * riskControl;
+          ? (0.04 + Math.random() * 0.09) * traderStrength
+          : -(0.08 + Math.random() * 0.16) * riskControl;
       }
 
       if (regime === "breakout") {
-        const isWin = Math.random() < 0.74;
+        const isWin = Math.random() < 0.72;
         movePct = isWin
-          ? (0.055 + Math.random() * 0.14) * traderStrength * riskControl
-          : -(0.025 + Math.random() * 0.06);
+          ? (0.18 + Math.random() * 0.32) * traderStrength * riskControl
+          : -(0.06 + Math.random() * 0.13);
       }
 
       if (regime === "volatile") {
-        const isShockDown = Math.random() < 0.42;
+        const isShockDown = Math.random() < 0.44;
         movePct = isShockDown
-          ? -(0.08 + Math.random() * 0.18)
-          : (0.045 + Math.random() * 0.11) * traderStrength;
+          ? -(0.18 + Math.random() * 0.34)
+          : (0.12 + Math.random() * 0.24) * traderStrength;
       }
 
       const nextMove = accountSize * (movePct / 100);

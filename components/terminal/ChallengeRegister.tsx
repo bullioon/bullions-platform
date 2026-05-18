@@ -141,7 +141,12 @@ export function ChallengeRegister() {
           ))}
         </div>
 
-        <button className="mt-6 h-[58px] w-full rounded-full bg-[#b6ff00] text-sm font-semibold text-black shadow-[0_0_45px_rgba(182,255,0,0.20)] transition hover:opacity-90 active:scale-[0.98]">
+        <button
+          onClick={() => {
+            window.open("https://discord.gg/bullions", "_blank", "noopener,noreferrer");
+          }}
+          className="mt-6 h-[58px] w-full rounded-full bg-[#b6ff00] text-sm font-semibold text-black shadow-[0_0_45px_rgba(182,255,0,0.20)] transition hover:opacity-90 active:scale-[0.98]"
+        >
           Register for next challenge
         </button>
       </div>

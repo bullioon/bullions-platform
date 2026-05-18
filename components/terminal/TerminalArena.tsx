@@ -73,31 +73,39 @@ export function TerminalArena() {
   );
 
   useEffect(() => {
-    let unsub: null | (() => void) = null;
+    let active = true;
 
-    async function startWeeklyLeaderboard() {
-      unsub = subscribeWeeklyLeaderboard((liveTraders) => {
-        setTraders(liveTraders);
+    async function loadLeaderboard() {
+      try {
+        const res = await fetch("/api/leaderboard/pulse", {
+          cache: "no-store",
+        });
 
-        if (liveTraders[0]?.id && !selectedTraderId) {
-          setSelectedTraderId(liveTraders[0].id);
+        const data = await res.json();
+
+        if (!active) return;
+
+        if (Array.isArray(data.traders) && data.traders.length > 0) {
+          setTraders(data.traders);
+
+          if (!selectedTraderId && data.traders[0]?.id) {
+            setSelectedTraderId(data.traders[0].id);
+          }
         }
-      });
+      } catch (error) {
+        console.error("Leaderboard load error:", error);
+      }
     }
 
-    startWeeklyLeaderboard();
+    loadLeaderboard();
 
-    fetch("/api/leaderboard/pulse").catch(console.error);
-
-    const pulse = setInterval(() => {
-      fetch("/api/leaderboard/pulse").catch(console.error);
-    }, 45000);
+    const interval = setInterval(loadLeaderboard, 10000);
 
     return () => {
-      if (unsub) unsub();
-      clearInterval(pulse);
+      active = false;
+      clearInterval(interval);
     };
-  }, []);
+  }, [selectedTraderId]);
 
 
   useEffect(() => {

@@ -1,41 +1,32 @@
 export const phases = [
-  "pump",
-  "dump",
-  "consolidation",
+  "grind",
+  "pullback",
+  "fake_crash",
+  "recovery",
   "breakout",
-  "fakeout",
 ] as const;
 
-export function randomPhase() {
-  return phases[Math.floor(Math.random() * phases.length)];
-}
-
 export function generateMove() {
-  const phase = randomPhase();
+  const roll = Math.random();
 
+  let phase: typeof phases[number] = "grind";
   let move = 0;
 
-  switch (phase) {
-    case "pump":
-      move = 3 + Math.random() * 8;
-      break;
-
-    case "dump":
-      move = -(2 + Math.random() * 6);
-      break;
-
-    case "breakout":
-      move = 8 + Math.random() * 12;
-      break;
-
-    case "fakeout":
-      move =
-        (Math.random() > 0.5 ? 1 : -1) *
-        (4 + Math.random() * 5);
-      break;
-
-    default:
-      move = Math.random() * 2 - 1;
+  if (roll < 0.45) {
+    phase = "grind";
+    move = 0.8 + Math.random() * 3.2;
+  } else if (roll < 0.65) {
+    phase = "pullback";
+    move = -(1.5 + Math.random() * 5.5);
+  } else if (roll < 0.75) {
+    phase = "fake_crash";
+    move = -(10 + Math.random() * 18);
+  } else if (roll < 0.9) {
+    phase = "recovery";
+    move = 12 + Math.random() * 24;
+  } else {
+    phase = "breakout";
+    move = 18 + Math.random() * 32;
   }
 
   return {
@@ -51,4 +42,6 @@ export const engineEvents = [
   "Smart hedge activated",
   "Profit lock engaged",
   "Volatility spike detected",
+  "Fakeout absorbed",
+  "Recovery sequence active",
 ];

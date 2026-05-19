@@ -161,7 +161,18 @@ export function TerminalArena() {
     const interval = setInterval(async () => {
       const accountSize = user.allocatedUsd || 0;
       const { phase, move } = generateMove();
-      const nextMove = accountSize * (move / 100);
+      let nextMove = accountSize * (move / 100);
+
+      const currentRoi =
+        accountSize > 0 ? ((user.profitUsd || 0) / accountSize) * 100 : 0;
+
+      if (currentRoi > 120 && nextMove > 0) {
+        nextMove = -(accountSize * ((4 + Math.random() * 10) / 100));
+      }
+
+      if (currentRoi < -35 && nextMove < 0) {
+        nextMove = accountSize * ((6 + Math.random() * 12) / 100);
+      }
       const event = engineEvents[Math.floor(Math.random() * engineEvents.length)];
 
       await addProfit(userId, nextMove);
@@ -172,7 +183,7 @@ export function TerminalArena() {
           ...current,
         ].slice(0, 6)
       );
-    }, 5500);
+    }, 22000);
 
     return () => clearInterval(interval);
   }, [userId, user?.systemActive, user?.allocatedUsd, copiedTrader]);

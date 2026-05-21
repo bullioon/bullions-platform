@@ -15,6 +15,9 @@ export type DailyPerformance = {
   date: string;
   depositedUsd: number;
   profitUsd: number;
+  tier?: "NOVATO" | "HELLION" | "TORION";
+  withdrawalLockedUntil?: number;
+  maxAllocationPct?: number;
   liveWallet: number;
   pnlPct: number;
 };
@@ -26,6 +29,9 @@ export type BullionsUser = {
   emoji: string;
   depositedUsd: number;
   profitUsd: number;
+  tier?: "NOVATO" | "HELLION" | "TORION";
+  withdrawalLockedUntil?: number;
+  maxAllocationPct?: number;
   copiedTraderId: string | null;
   systemActive: boolean;
   dailyPerformance?: DailyPerformance[];

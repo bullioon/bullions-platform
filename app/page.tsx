@@ -1,3 +1,4 @@
+import { DiscordProof } from "@/components/home/DiscordProof";
 import { PrivateRoomCTA } from "@/components/home/PrivateRoomCTA";
 import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
 import { Footer } from "@/components/layout/Footer";
@@ -14,7 +15,8 @@ export default function Home() {
         <TopFloatingMenu />
         <BullionsHomeHero />
       </div>
-          <PrivateRoomCTA />
+          <DiscordProof />
+      <PrivateRoomCTA />
       <HomeIconStrip />
           <HomeHowItWorks />
       <Footer />

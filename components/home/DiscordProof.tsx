@@ -1,116 +1,213 @@
+"use client";
+
+import { motion } from "framer-motion";
+import Link from "next/link";
+
 export function DiscordProof() {
   return (
-    <section className="relative mx-auto mt-12 w-full max-w-[1480px] overflow-hidden rounded-[38px] border border-white/5 bg-[#0b0b0e] p-8">
+    <section className="relative mx-auto mt-14 w-full max-w-[1480px] overflow-hidden rounded-[42px] border border-white/[0.06] bg-[#050607] px-6 py-8 sm:px-10 sm:py-10">
       
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(182,255,0,0.10),transparent_30%),radial-gradient(circle_at_80%_30%,rgba(140,82,255,0.18),transparent_35%),radial-gradient(circle_at_50%_100%,rgba(182,255,0,0.08),transparent_40%)]" />
+      <div className="absolute inset-0">
+        <div className="absolute left-[-10%] top-[-20%] h-[420px] w-[420px] rounded-full bg-[#6CFF72]/10 blur-[120px]" />
 
-      <div className="relative z-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="absolute right-[-10%] top-[10%] h-[520px] w-[520px] rounded-full bg-[#7c3aed]/20 blur-[150px]" />
+
+        <div className="absolute bottom-[-20%] left-[20%] h-[400px] w-[400px] rounded-full bg-[#6CFF72]/5 blur-[120px]" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.02),transparent)]" />
+      </div>
+
+      <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
         
-        <div className="flex flex-col justify-center">
-          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[#b6ff00]/20 bg-[#b6ff00]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#b6ff00]">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#b6ff00]" />
-            Private Discord Access
-          </span>
+        <div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 rounded-full border border-[#6CFF72]/20 bg-[#6CFF72]/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#6CFF72]"
+          >
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#6CFF72]" />
+            Private AI Trading Community
+          </motion.div>
 
-          <h2 className="mt-6 text-5xl font-semibold leading-[0.95] tracking-tight text-white sm:text-6xl">
-            See the room.
+          <motion.h2
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.05 }}
+            viewport={{ once: true }}
+            className="mt-7 text-[54px] font-semibold leading-[0.92] tracking-tight text-white sm:text-[72px]"
+          >
+            Join the
             <br />
-            Feel the pressure.
-          </h2>
+            Bullions
+            <br />
+            Trading Club
+          </motion.h2>
 
-          <p className="mt-6 max-w-[580px] text-lg leading-8 text-white/55">
-            Real traders. Live reactions. Copy Engine alerts, withdrawals,
-            challenge rankings and market panic — all happening inside the private room.
-          </p>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.12 }}
+            viewport={{ once: true }}
+            className="mt-6 max-w-[620px] text-[17px] leading-8 text-white/55"
+          >
+            Live traders. AI-powered copy trading. Real-time leaderboard.
+            Follow profitable traders, compete against the bot, and access
+            private BullPad launches before the public.
+          </motion.p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-7 flex flex-wrap gap-3">
             {[
-              "Live market reactions",
-              "Copy Engine alerts",
-              "Challenge rankings",
-              "Private updates",
+              "94+ members",
+              "Live trading chat",
+              "AI copy trading signals",
+              "Weekly challenges",
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/70 backdrop-blur-xl"
+                className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/70 backdrop-blur-xl"
               >
                 {item}
               </div>
             ))}
           </div>
 
-          <a
-            href="https://discord.gg/YkFBXRD6rz"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-10 inline-flex h-[62px] w-fit items-center justify-center rounded-full bg-[#b6ff00] px-9 text-sm font-semibold text-black shadow-[0_0_60px_rgba(182,255,0,0.25)] transition-all duration-300 hover:scale-[1.03]"
-          >
-            Enter Discord
-          </a>
+          <div className="mt-10 flex flex-wrap gap-4">
+            <Link
+              href="https://discord.gg/YkFBXRD6rz"
+              target="_blank"
+              className="group relative inline-flex h-[62px] items-center justify-center overflow-hidden rounded-full bg-[#6CFF72] px-9 text-sm font-semibold text-black shadow-[0_0_60px_rgba(108,255,114,0.25)] transition-all duration-300 hover:scale-[1.03]"
+            >
+              <span className="relative z-10">Join Discord</span>
+
+              <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.4),transparent_70%)]" />
+              </div>
+            </Link>
+
+            <button className="inline-flex h-[62px] items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] px-8 text-sm font-semibold text-white/80 backdrop-blur-xl transition hover:bg-white/[0.05]">
+              View Leaderboard
+            </button>
+          </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#121218]/90 p-5 backdrop-blur-2xl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true }}
+          className="relative"
+        >
           
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(140,82,255,0.22),transparent_35%)]" />
+          <div className="absolute inset-0 rounded-[36px] bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.32),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(108,255,114,0.16),transparent_40%)] blur-2xl" />
 
-          <div className="relative z-10">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  bullions-private-room
-                </p>
+          <div className="relative overflow-hidden rounded-[36px] border border-white/[0.08] bg-[#0b0d11]/90 shadow-[0_40px_120px_rgba(0,0,0,0.65)] backdrop-blur-2xl">
+            
+            <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.9),transparent)]" />
 
-                <p className="mt-1 text-xs text-white/35">
-                  1,284 online
-                </p>
-              </div>
+            <div className="absolute bottom-0 left-0 right-0 h-[220px] opacity-40">
+              <svg
+                viewBox="0 0 600 220"
+                className="h-full w-full"
+                fill="none"
+              >
+                <path
+                  d="M0 180L70 160L120 165L180 120L240 135L310 90L380 110L450 70L520 100L600 40"
+                  stroke="#6CFF72"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
 
-              <div className="rounded-full border border-[#8c52ff]/20 bg-[#8c52ff]/10 px-3 py-1 text-xs font-semibold text-[#c7adff]">
-                LIVE
-              </div>
+                <path
+                  d="M0 180L70 160L120 165L180 120L240 135L310 90L380 110L450 70L520 100L600 40"
+                  stroke="url(#glow)"
+                  strokeWidth="18"
+                  opacity="0.25"
+                />
+
+                <defs>
+                  <linearGradient id="glow">
+                    <stop stopColor="#6CFF72" />
+                    <stop offset="1" stopColor="#7c3aed" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
 
-            <div className="space-y-3">
-              {[
-                ["TORION", "Market volatility spike detected."],
-                ["Alex", "just activated Copy Engine."],
-                ["Nika", "survived another withdrawal cycle."],
-                ["Ghost", "up +18.2% this week."],
-                ["System", "Leaderboard updated live."],
-                ["Maria", "switched to survival mode."],
-              ].map(([name, text], index) => (
-                <div
-                  key={text}
-                  className="rounded-[22px] border border-white/5 bg-black/30 p-4 backdrop-blur-xl"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+            <div className="relative z-10 flex min-h-[520px] items-center justify-center p-8">
+              
+              <motion.div
+                animate={{
+                  y: [0, -6, 0],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                }}
+                className="w-full max-w-[420px] rounded-[32px] border border-white/[0.08] bg-[#12141a]/90 p-6 shadow-[0_25px_100px_rgba(0,0,0,0.55)] backdrop-blur-2xl"
+              >
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      bullions trading club
+                    </p>
+
+                    <p className="mt-1 text-xs text-white/40">
+                      private AI trading room
+                    </p>
+                  </div>
+
+                  <div className="rounded-full border border-[#6CFF72]/20 bg-[#6CFF72]/10 px-3 py-1 text-xs font-semibold text-[#6CFF72]">
+                    LIVE
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-3">
+                  {[
+                    "TORION detected recovery momentum",
+                    "Alex activated Copy Engine",
+                    "Nika survived withdrawal cycle",
+                    "Leaderboard updated live",
+                    "Ghost Alpha up +18.4%",
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item}
+                      initial={{ opacity: 0, x: 10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: 0.45,
+                        delay: i * 0.08,
+                      }}
+                      className="flex items-center gap-3 rounded-[20px] border border-white/[0.05] bg-white/[0.03] p-4"
+                    >
                       <div
                         className={
-                          index % 2 === 0
-                            ? "h-2.5 w-2.5 rounded-full bg-[#b6ff00]"
-                            : "h-2.5 w-2.5 rounded-full bg-[#8c52ff]"
+                          i % 2 === 0
+                            ? "h-2.5 w-2.5 rounded-full bg-[#6CFF72]"
+                            : "h-2.5 w-2.5 rounded-full bg-[#7c3aed]"
                         }
                       />
 
-                      <p className="text-sm font-semibold text-white">
-                        {name}
+                      <p className="text-sm text-white/70">
+                        {item}
                       </p>
-                    </div>
-
-                    <span className="text-[11px] text-white/30">
-                      now
-                    </span>
-                  </div>
-
-                  <p className="mt-2 text-sm text-white/55">
-                    {text}
-                  </p>
+                    </motion.div>
+                  ))}
                 </div>
-              ))}
+
+                <Link
+                  href="https://discord.gg/YkFBXRD6rz"
+                  target="_blank"
+                  className="mt-6 inline-flex h-[56px] w-full items-center justify-center rounded-full bg-[#5865F2] text-sm font-semibold text-white transition hover:opacity-90"
+                >
+                  Accept Invite
+                </Link>
+              </motion.div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

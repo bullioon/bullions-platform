@@ -8,12 +8,14 @@ import {
   query,
   setDoc,
   updateDoc,
+  deleteDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { type Trader } from "@/lib/mockTraders";
 
 const names = [
+  ["axbullions", "Founder Signal"],
   ["Diego Ramirez", "XAU/USD Beast"],
   ["Nova Trades", "Momentum Hunter"],
   ["Maria Santos", "Risk Controller"],
@@ -22,6 +24,11 @@ const names = [
   ["Ivan Cross", "London Session"],
   ["Mia Capital", "Smart Scalper"],
   ["Leo Prime", "Breakout Hunter"],
+  ["Phantom Bull", "SOL Momentum"],
+  ["Torion Desk", "AI Scalper"],
+  ["Hellion Capital", "High Risk Hunter"],
+  ["Bullion Whale", "Liquidity Sniper"],
+  ["Sixx Signals", "Breakout Engine"],
 ];
 
 function getSundayStart(date = new Date()) {
@@ -36,15 +43,10 @@ export function getWeekId() {
   return getSundayStart().toISOString().slice(0, 10);
 }
 
-function progressToSundayEnd() {
-  const start = getSundayStart();
-  const end = new Date(start);
-  end.setDate(start.getDate() + 7);
-  return Math.min(1, Math.max(0, (Date.now() - start.getTime()) / (end.getTime() - start.getTime())));
-}
-
 function seededNames(weekId: string) {
-  const offset = weekId.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % names.length;
+  const offset =
+    weekId.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % names.length;
+
   return [...names.slice(offset), ...names.slice(0, offset)];
 }
 
@@ -56,11 +58,19 @@ export async function ensureWeeklyLeaderboard() {
   const challengeSnap = await getDoc(challengeRef);
   const existing = await getDocs(lbRef);
 
-  if (
-    challengeSnap.exists() &&
-    existing.docs.length >= 2
-  ) {
+  const needsReset =
+    existing.docs.length !== 8 ||
+    existing.docs.some((d) => {
+      const data = d.data() as any;
+      return data.weekId !== weekId;
+    });
+
+  if (challengeSnap.exists() && !needsReset) {
     return weekId;
+  }
+
+  if (existing.docs.length > 0) {
+    await Promise.all(existing.docs.map((d) => deleteDoc(d.ref)));
   }
 
   const start = getSundayStart();
@@ -79,30 +89,29 @@ export async function ensureWeeklyLeaderboard() {
 
   const rotated = seededNames(weekId);
 
-  const bot: any = {
+  await setDoc(doc(lbRef, "bullions-bot"), {
     id: "bullions-bot",
     name: "Bullions Bot",
     tag: "TORION Adaptive AI",
-    roi: 28.5,
-    balance: 28500,
-    topTrade: 9.8,
-    maxLoss: 1.4,
+    roi: 0,
+    balance: 10000,
+    topTrade: 0,
+    maxLoss: 0,
     isBot: true,
-  };
+    weekId,
+  });
 
-  await setDoc(doc(lbRef, bot.id), bot);
-
-  for (let i = 0; i < 5; i++) {
-    const base = 18 + Math.random() * 32;
-    const trader: any = {
-      id: `trader-${i + 1}`,
+  for (let i = 0; i < 7; i++) {
+    const trader = {
+      id: `${weekId}-trader-${i + 1}`,
       name: rotated[i][0],
       tag: rotated[i][1],
-      roi: Number(base.toFixed(1)),
-      balance: Math.round(18000 + base * 850),
-      topTrade: Number((4 + Math.random() * 8).toFixed(1)),
-      maxLoss: Number((1.8 + Math.random() * 4).toFixed(1)),
+      roi: 0,
+      balance: 10000,
+      topTrade: 0,
+      maxLoss: 0,
       isBot: false,
+      weekId,
     };
 
     await setDoc(doc(lbRef, trader.id), trader);
@@ -122,23 +131,33 @@ export function subscribeWeeklyLeaderboard(callback: (traders: Trader[]) => void
 }
 
 export async function pulseWeeklyLeaderboard() {
-  const weekId = getWeekId();
+  const weekId = await ensureWeeklyLeaderboard();
   const lbRef = collection(db, "weeklyChallenges", weekId, "leaderboard");
   const snap = await getDocs(lbRef);
-
-  const progress = progressToSundayEnd();
 
   await Promise.all(
     snap.docs.map(async (d) => {
       const trader = d.data() as Trader & { isBot?: boolean };
+      const currentRoi = Number(trader.roi || 0);
 
-      const botBoost = trader.isBot ? 0.65 + progress * 1.25 : 0;
-      const humanMove = trader.isBot ? 0 : Math.random() * 0.9 - 0.15;
-      const roi = Number(Math.max(1, trader.roi + botBoost + humanMove).toFixed(1));
+      const botMove = trader.isBot ? 0.15 + Math.random() * 0.45 : 0;
+      const humanMove = trader.isBot ? 0 : Math.random() * 1.2 - 0.25;
+      const founderMove =
+        trader.name === "axbullions" ? 0.25 + Math.random() * 0.75 : 0;
+
+      const roi = Number(
+        Math.max(0, currentRoi + botMove + humanMove + founderMove).toFixed(1)
+      );
 
       await updateDoc(d.ref, {
         roi,
-        balance: Math.round(12000 + roi * 920),
+        balance: Math.round(10000 + roi * 920),
+        topTrade: Number(
+          Math.max(Number(trader.topTrade || 0), roi * 0.22).toFixed(1)
+        ),
+        maxLoss: Number(
+          Math.max(Number(trader.maxLoss || 0), Math.random() * 2.8).toFixed(1)
+        ),
         updatedAt: Date.now(),
       });
     })

@@ -21,10 +21,10 @@ export function TerminalLeaderboard({
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-[28px] font-semibold tracking-tight text-white">
-            Leaderboard
+            Weekly Leaderboard
           </h2>
           <p className="mt-1 text-sm text-white/40">
-            Weekly Cycle · Rankings reset every Sunday
+            Fresh cycle · Starts from 0% every Sunday
           </p>
         </div>
 
@@ -35,15 +35,16 @@ export function TerminalLeaderboard({
           </span>
 
           <span className="text-[11px] text-white/35">
-            Sunday reset
+            0% weekly reset
           </span>
         </div>
       </div>
 
       <div className="divide-y divide-white/5">
-        {(traders || []).slice(0, 6).map((trader, index) => {
+        {(traders || []).slice(0, 8).map((trader, index) => {
           const active = selectedTraderId === trader.id;
           const isBot = trader.id === "bullions-bot";
+          const isFounder = trader.name === "axbullions";
 
           return (
             <button
@@ -70,6 +71,12 @@ export function TerminalLeaderboard({
                     {isBot && (
                       <span className="rounded-full bg-[#b6ff00]/10 px-2 py-0.5 text-[10px] font-semibold text-[#b6ff00] ring-1 ring-[#b6ff00]/20">
                         TORION
+                      </span>
+                    )}
+
+                    {isFounder && (
+                      <span className="rounded-full bg-[#8b5cf6]/10 px-2 py-0.5 text-[10px] font-semibold text-[#c4b5fd] ring-1 ring-[#8b5cf6]/20">
+                        FOUNDER
                       </span>
                     )}
                   </div>

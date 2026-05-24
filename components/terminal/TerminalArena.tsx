@@ -27,6 +27,7 @@ import { CopyEnginePanel } from "@/components/terminal/CopyEnginePanel";
 import { CashModal } from "@/components/terminal/CashModal";
 import { createWithdrawalRequest } from "@/lib/withdrawals";
 import { SurvivalPanel } from "@/components/terminal/SurvivalPanel";
+import { WithdrawalModal } from "@/components/terminal/WithdrawalModal";
 import { resolveTier, maxAllocationPct } from "@/lib/tierSystem";
 import { generateMove, engineEvents } from "@/lib/engineBehavior";
 
@@ -52,11 +53,7 @@ export function TerminalArena() {
   const [selectedTraderId, setSelectedTraderId] = useState("");
   const [cashModal, setCashModal] = useState<"deposit" | "withdraw" | null>(null);
   const [cashAmount, setCashAmount] = useState(0);
-  const [withdrawNotice, setWithdrawNotice] = useState<null | {
-    title: string;
-    message: string;
-    status: "locked" | "success" | "empty";
-  }>(null);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [network, setNetwork] = useState<"BTC" | "SOL">("SOL");
   const [txHash, setTxHash] = useState("");
   const [loginHint, setLoginHint] = useState<"deposit" | "withdraw" | null>(null);
@@ -280,73 +277,13 @@ export function TerminalArena() {
             setCashModal("deposit");
             setCashAmount(0);
           }}
-          onWithdraw={async () => {
+          onWithdraw={() => {
             if (!isLoggedIn || !userId) {
               setLoginHint("withdraw");
               return;
             }
 
-            const result = await createWithdrawalRequest({
-              userId,
-              depositedUsd: activeUser.depositedUsd || 0,
-              profitUsd: activeUser.profitUsd || 0,
-              allocatedUsd: activeUser.allocatedUsd || 0,
-            });
-
-            if (!result.ok && result.reason === "locked") {
-              setWithdrawNotice({
-                status: "locked",
-                title: "Withdrawal locked",
-                message: "Withdrawals unlock every Sunday. Survive the cycle to access your withdrawal window.",
-              });
-
-              setEvents((current) =>
-                [
-                  "Withdrawal locked · Sunday unlock required.",
-                  ...current,
-                ].slice(0, 6)
-              );
-
-              setEvents((current) =>
-                [
-                  `Withdrawal locked. Survive until Sunday.`,
-                  ...current,
-                ].slice(0, 6)
-              );
-
-              return;
-            }
-
-            if (!result.ok && result.reason === "empty") {
-              setEvents((current) =>
-                [
-                  `No withdrawable balance available.`,
-                  ...current,
-                ].slice(0, 6)
-              );
-
-              return;
-            }
-
-            setWithdrawNotice({
-              status: "success",
-              title: `${result.tier} withdrawal unlocked`,
-              message: `Withdrawal request created for $${result.maxAmountUsd}. Your request is now pending review.`,
-            });
-
-            setEvents((current) =>
-              [
-                `${result.tier} withdrawal request created · $${result.maxAmountUsd}`,
-                ...current,
-              ].slice(0, 6)
-            );
-
-            setEvents((current) =>
-              [
-                `${result.tier} withdrawal unlocked: $${result.maxAmountUsd}`,
-                ...current,
-              ].slice(0, 6)
-            );
+            setWithdrawOpen(true);
           }}
         />
 
@@ -404,50 +341,13 @@ export function TerminalArena() {
       </p>
 
 
-      {withdrawNotice && (
-        <div className="fixed inset-0 z-[80] grid place-items-center bg-black/70 px-4 backdrop-blur-xl">
-          <div className="w-full max-w-[430px] overflow-hidden rounded-[34px] bg-[#111214] p-6 shadow-[0_30px_120px_rgba(0,0,0,0.8)] ring-1 ring-white/10">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.26em] text-[#b6ff00]">
-                  Survival Protocol
-                </p>
-
-                <h3 className="mt-3 text-3xl font-semibold tracking-tight text-white">
-                  {withdrawNotice.title}
-                </h3>
-              </div>
-
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#b6ff00]/10 text-2xl ring-1 ring-[#b6ff00]/20">
-                {withdrawNotice.status === "success" ? "💸" : withdrawNotice.status === "locked" ? "🔒" : "⚠️"}
-              </div>
-            </div>
-
-            <p className="mt-5 text-sm leading-6 text-white/55">
-              {withdrawNotice.message}
-            </p>
-
-            <div className="mt-6 rounded-[22px] bg-black/30 p-4 ring-1 ring-white/5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-white/40">Withdrawal day</span>
-                <span className="font-semibold text-white">Sunday</span>
-              </div>
-
-              <div className="mt-3 flex items-center justify-between text-sm">
-                <span className="text-white/40">Protocol</span>
-                <span className="font-semibold text-[#b6ff00]">Survive to unlock</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setWithdrawNotice(null)}
-              className="mt-6 h-[56px] w-full rounded-full bg-[#b6ff00] text-sm font-semibold text-black transition active:scale-[0.98]"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
-      )}
+      <WithdrawalModal
+        open={withdrawOpen}
+        onClose={() => setWithdrawOpen(false)}
+        tier={tier}
+        maxWithdrawUsd={Math.max(0, ((activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0) - (activeUser.allocatedUsd || 0)) * (tier === "BULLION" ? 0.1 : tier === "HELLION" ? 0.3 : 1))}
+        portfolioUsd={(activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0)}
+      />
 
       {loginHint && (
         <div className="fixed inset-0 z-[80] grid place-items-center bg-black/75 p-4 backdrop-blur-sm">

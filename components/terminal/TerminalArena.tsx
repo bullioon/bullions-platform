@@ -182,7 +182,7 @@ export function TerminalArena() {
       let nextMove = accountSize * (move / 100);
 
       const currentRoi =
-        accountSize > 0 ? ((user.profitUsd || 0) / accountSize) * 100 : 0;
+        accountSize > 0 ? ((user?.profitUsd || 0) / accountSize) * 100 : 0;
 
       if (currentRoi > 120 && nextMove > 0) {
         nextMove = -(accountSize * ((4 + Math.random() * 10) / 100));

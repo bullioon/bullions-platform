@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -73,22 +74,51 @@ export function DiscordProof() {
             ))}
           </div>
 
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link
               href="https://discord.gg/YkFBXRD6rz"
               target="_blank"
-              className="group relative inline-flex h-[62px] items-center justify-center overflow-hidden rounded-full bg-[#6CFF72] px-9 text-sm font-semibold text-black shadow-[0_0_60px_rgba(108,255,114,0.25)] transition-all duration-300 hover:scale-[1.03]"
+              className="group relative inline-flex h-[64px] items-center justify-center gap-3 overflow-hidden rounded-full bg-[#5865F2] px-7 text-sm font-semibold text-white shadow-[0_0_60px_rgba(88,101,242,0.28)] transition-all duration-300 hover:scale-[1.03]"
             >
-              <span className="relative z-10">Join Discord</span>
+              <Image
+                src="/discord.webp"
+                alt="Discord"
+                width={34}
+                height={34}
+                className="relative z-10 rounded-full"
+              />
+
+              <span className="relative z-10 flex flex-col items-start leading-tight">
+                <span>Join Discord</span>
+                <span className="text-[11px] font-medium text-white/65">
+                  94+ members · live room
+                </span>
+              </span>
 
               <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.4),transparent_70%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.22),transparent_70%)]" />
               </div>
             </Link>
 
-            <button className="inline-flex h-[62px] items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] px-8 text-sm font-semibold text-white/80 backdrop-blur-xl transition hover:bg-white/[0.05]">
+            <Link
+              href="/bullpad#leaderboard"
+              className="inline-flex h-[64px] items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] px-8 text-sm font-semibold text-white/80 backdrop-blur-xl transition hover:bg-white/[0.05]"
+            >
               View Leaderboard
-            </button>
+            </Link>
+
+            <div className="flex items-center gap-3 rounded-full border border-white/[0.07] bg-white/[0.03] px-4 py-3">
+              <div className="flex -space-x-2">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-[#6CFF72] text-xs font-bold text-black ring-2 ring-[#111214]">A</span>
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-[#8b5cf6] text-xs font-bold text-white ring-2 ring-[#111214]">G</span>
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-xs font-bold text-black ring-2 ring-[#111214]">N</span>
+              </div>
+
+              <div className="leading-tight">
+                <p className="text-xs font-semibold text-white">Online now</p>
+                <p className="text-[11px] text-white/40">traders + investors</p>
+              </div>
+            </div>
           </div>
         </div>
 

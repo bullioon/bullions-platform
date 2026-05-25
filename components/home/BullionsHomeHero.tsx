@@ -183,25 +183,26 @@ export function BullionsHomeHero() {
       </section>
 
       {/* FOMO CTA */}
-      <section className="relative overflow-hidden rounded-[32px] bg-[#b6ff00] p-10 text-center text-black">
+      <section className="relative overflow-hidden rounded-[28px] bg-[#b6ff00] px-6 py-8 text-left text-black sm:rounded-[32px] sm:p-10 sm:text-center">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.35),transparent_40%)]" />
 
         <div className="relative">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-black/55">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/50 sm:text-sm">
             Private access
           </p>
 
-          <h2 className="mx-auto mt-3 max-w-[920px] text-4xl font-semibold tracking-tight">
-            A private trading system for capital, consistency and live performance.
+          <h2 className="mt-3 max-w-[760px] text-[34px] font-semibold leading-[1.02] tracking-tight sm:mx-auto sm:text-4xl md:text-5xl">
+            Private trading infrastructure.
+            <span className="block text-black/55">Live performance. Clean execution.</span>
           </h2>
 
-          <p className="mx-auto mt-4 max-w-[680px] text-sm leading-6 text-black/60">
-            Compare traders, activate copy mode and monitor performance from one clean dashboard.
+          <p className="mt-4 max-w-[560px] text-[15px] leading-6 text-black/60 sm:mx-auto">
+            Compare traders, activate copy mode and monitor PnL from one dashboard.
           </p>
 
           <a
             href="/bullpad"
-            className="mx-auto mt-8 grid h-[56px] w-fit place-items-center rounded-full bg-black px-9 text-sm font-semibold text-white"
+            className="mt-7 inline-grid h-[54px] place-items-center rounded-full bg-black px-8 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(0,0,0,0.25)] sm:mx-auto sm:mt-8"
           >
             Open BullPad
           </a>

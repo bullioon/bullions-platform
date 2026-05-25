@@ -177,7 +177,7 @@ export function TerminalArena() {
     if (!userId || !engineIsActive || !copiedTrader || (user?.allocatedUsd || 0) <= 0) return;
 
     const interval = setInterval(async () => {
-      const accountSize = user.allocatedUsd || 0;
+      const accountSize = user?.allocatedUsd || 0;
       const { phase, move } = generateMove();
       let nextMove = accountSize * (move / 100);
 
@@ -193,13 +193,13 @@ export function TerminalArena() {
       }
       const event = engineEvents[Math.floor(Math.random() * engineEvents.length)];
 
-      const nextProfitUsd = (user.profitUsd || 0) + nextMove;
+      const nextProfitUsd = (user?.profitUsd || 0) + nextMove;
 
       await addProfit(userId, nextMove);
 
       await recordPerformanceSnapshot({
         userId,
-        depositedUsd: user.depositedUsd || 0,
+        depositedUsd: user?.depositedUsd || 0,
         profitUsd: nextProfitUsd,
       });
 

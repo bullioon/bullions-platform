@@ -41,7 +41,10 @@ export function TerminalLeaderboard({
       </div>
 
       <div className="divide-y divide-white/5">
-        {(traders || []).slice(0, 8).map((trader, index) => {
+        {[...(traders || [])]
+          .sort((a, b) => Number(b.roi || 0) - Number(a.roi || 0))
+          .slice(0, 8)
+          .map((trader, index) => {
           const active = selectedTraderId === trader.id;
           const isBot = trader.id === "bullions-bot";
           const isFounder = trader.name === "axbullions";

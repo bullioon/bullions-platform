@@ -151,6 +151,42 @@ export async function addProfit(userId: string, amountUsd: number) {
   });
 }
 
+
+export async function recordPerformanceSnapshot({
+  userId,
+  depositedUsd,
+  profitUsd,
+}: {
+  userId: string;
+  depositedUsd: number;
+  profitUsd: number;
+}) {
+  const now = new Date();
+  const point: DailyPerformance = {
+    date: now.toISOString(),
+    depositedUsd,
+    profitUsd,
+    liveWallet: depositedUsd + profitUsd,
+    pnlPct: depositedUsd > 0 ? (profitUsd / depositedUsd) * 100 : 0,
+  };
+
+  const ref = doc(db, "users", userId);
+  const snap = await getDoc(ref);
+  const user = snap.data() as BullionsUser | undefined;
+
+  const current = user?.dailyPerformance || [];
+  const next = [...current, point].slice(-120);
+
+  await updateDoc(ref, {
+    dailyPerformance: next,
+  });
+
+  await addDoc(collection(db, "users", userId, "performance_logs"), {
+    ...point,
+    createdAt: serverTimestamp(),
+  });
+}
+
 export async function setCopyEngine({
   userId,
   copiedTraderId,

@@ -7,6 +7,8 @@ type Props = {
   trader?: Trader;
   totalInvested: number;
   estimatedProfit: number;
+  allocatedUsd?: number;
+  isActive?: boolean;
   onInvest: (amount: number, traderOverride?: Trader) => void;
 };
 
@@ -16,9 +18,12 @@ export function TerminalInvestPanel({
   trader,
   totalInvested,
   estimatedProfit,
+  allocatedUsd = 0,
+  isActive = false,
   onInvest,
 }: Props) {
   const available = Math.max(0, totalInvested);
+  const hasAllocation = allocatedUsd > 0;
   const [amount, setAmount] = useState(0);
 
   useEffect(() => {
@@ -36,15 +41,33 @@ export function TerminalInvestPanel({
 
   const score = useMemo(() => {
     if (!trader) return 0;
-    return Math.min(96, Math.max(60, Math.round(trader.roi + trader.topTrade - trader.maxLoss)));
+    return Math.min(
+      96,
+      Math.max(60, Math.round(trader.roi + trader.topTrade - trader.maxLoss))
+    );
   }, [trader]);
 
-  const canCopy = Boolean(trader) && amount > 0 && amount <= available;
+  const canCopy = Boolean(trader) && amount > 0 && amount <= available && !isActive;
 
   function updateAmount(value: number) {
     const clean = Math.max(0, Math.min(value || 0, available));
     setAmount(clean);
   }
+
+  const statusMessage =
+    isActive && hasAllocation
+      ? "Your allocation is already active in the copy engine."
+      : available <= 0
+        ? "Deposit with Phantom first to activate copy setup."
+        : "Choose an amount to activate copy setup.";
+
+  const buttonLabel = !trader
+    ? "Select trader"
+    : isActive && hasAllocation
+      ? `Copy Engine active with $${allocatedUsd.toLocaleString()}`
+      : available <= 0
+        ? "Deposit required"
+        : `Copy ${trader.name} with $${amount.toLocaleString()}`;
 
   return (
     <section
@@ -78,10 +101,17 @@ export function TerminalInvestPanel({
             {[
               ["Pair", "XAU/USD"],
               ["Available cash", `$${available.toLocaleString()}`],
+              ["Allocated", `$${allocatedUsd.toLocaleString()}`],
+              ["Profit", `+$${Math.max(0, estimatedProfit).toLocaleString()}`],
             ].map(([label, value]) => (
-              <div key={label} className="grid min-w-0 grid-cols-[1fr_auto] items-center gap-4 border-b border-white/5 pb-3 last:border-0">
+              <div
+                key={label}
+                className="grid min-w-0 grid-cols-[1fr_auto] items-center gap-4 border-b border-white/5 pb-3 last:border-0"
+              >
                 <span className="text-sm text-[#8f96a3]">{label}</span>
-                <span className="max-w-[150px] truncate text-right text-sm font-medium text-white sm:max-w-none">{value}</span>
+                <span className="max-w-[150px] truncate text-right text-sm font-medium text-white sm:max-w-none">
+                  {value}
+                </span>
               </div>
             ))}
           </div>
@@ -92,7 +122,7 @@ export function TerminalInvestPanel({
             <p className="text-xs text-[#8f96a3]">Allocation</p>
             <button
               onClick={() => updateAmount(available)}
-              disabled={available <= 0}
+              disabled={available <= 0 || isActive}
               className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-[#b6ff00] transition hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-30"
             >
               Max
@@ -107,7 +137,8 @@ export function TerminalInvestPanel({
                 value={amount || ""}
                 onChange={(e) => updateAmount(Number(e.target.value))}
                 placeholder="0"
-                className="min-w-0 flex-1 bg-transparent text-3xl font-semibold text-white outline-none placeholder:text-white/20"
+                disabled={isActive}
+                className="min-w-0 flex-1 bg-transparent text-3xl font-semibold text-white outline-none placeholder:text-white/20 disabled:text-white/25"
               />
             </div>
             <p className="mt-2 text-xs text-white/35">
@@ -117,7 +148,7 @@ export function TerminalInvestPanel({
 
           <div className="mt-3 grid w-full min-w-0 grid-cols-3 gap-2">
             {PRESETS.map((value) => {
-              const disabled = value > available;
+              const disabled = value > available || isActive;
 
               return (
                 <button
@@ -138,28 +169,14 @@ export function TerminalInvestPanel({
             })}
           </div>
 
-          {amount > available && (
-            <p className="mt-3 text-xs text-red-400">
-              Allocation cannot exceed available balance.
-            </p>
-          )}
-
-          {available <= 0 && (
-            <p className="mt-3 text-xs text-white/35">
-              Deposit with Phantom first to activate copy setup.
-            </p>
-          )}
+          <p className="mt-3 text-xs text-white/35">{statusMessage}</p>
 
           <button
             onClick={() => trader && canCopy && onInvest(amount, trader)}
             disabled={!canCopy}
             className="mt-5 h-[56px] w-full max-w-full overflow-hidden truncate rounded-full bg-[#b6ff00] px-4 text-sm font-semibold text-black transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {!trader
-              ? "Select trader"
-              : available <= 0
-                ? "Deposit required"
-                : `Copy ${trader.name} with $${amount.toLocaleString()}`}
+            {buttonLabel}
           </button>
 
           <p className="mt-4 text-center text-xs text-[#8f96a3]">

@@ -4,6 +4,7 @@ type Props = {
   selectedTraderName?: string;
   depositedUsd: number;
   profitUsd: number;
+  allocatedUsd?: number;
   onToggle: () => void;
   onDisconnect: () => void;
 };
@@ -14,10 +15,12 @@ export function CopyEnginePanel({
   selectedTraderName,
   depositedUsd,
   profitUsd,
+  allocatedUsd = 0,
   onToggle,
   onDisconnect,
 }: Props) {
   const displayTrader = traderName || selectedTraderName;
+  const hasLockedAllocation = allocatedUsd > 0;
   const canRun = Boolean(displayTrader) && depositedUsd > 0;
 
   return (
@@ -113,12 +116,12 @@ export function CopyEnginePanel({
         </div>
       </div>
 
-      {traderName && (
+      {(traderName || isActive || hasLockedAllocation) && (
         <button
           onClick={onDisconnect}
           className="mt-5 h-[52px] w-full rounded-full border border-white/10 text-sm font-semibold text-white/70 transition hover:bg-white/[0.05] sm:mt-8 sm:h-[56px]"
         >
-          Disconnect trader
+          {traderName ? "Disconnect trader" : "Reset Copy Engine"}
         </button>
       )}
     </section>

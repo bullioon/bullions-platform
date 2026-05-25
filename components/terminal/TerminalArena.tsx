@@ -13,6 +13,7 @@ import {
   registerCryptoDeposit,
   addProfit,
   recordDailyPerformance,
+  recordPerformanceSnapshot,
   setCopyEngine,
   updateEmoji,
   type BullionsUser,
@@ -155,6 +156,13 @@ export function TerminalArena() {
     [traders, activeUser.copiedTraderId]
   );
 
+  const engineIsActive = Boolean(
+    activeUser.systemActive &&
+      activeUser.copiedTraderId &&
+      copiedTrader &&
+      (activeUser.allocatedUsd || 0) > 0
+  );
+
   function requireLogin() {
     if (!isLoggedIn) {
       setEvents((current) =>
@@ -166,7 +174,7 @@ export function TerminalArena() {
   }
 
   useEffect(() => {
-    if (!userId || !user?.systemActive || !copiedTrader || (user.allocatedUsd || 0) <= 0) return;
+    if (!userId || !engineIsActive || !copiedTrader || (user?.allocatedUsd || 0) <= 0) return;
 
     const interval = setInterval(async () => {
       const accountSize = user.allocatedUsd || 0;
@@ -185,7 +193,15 @@ export function TerminalArena() {
       }
       const event = engineEvents[Math.floor(Math.random() * engineEvents.length)];
 
+      const nextProfitUsd = (user.profitUsd || 0) + nextMove;
+
       await addProfit(userId, nextMove);
+
+      await recordPerformanceSnapshot({
+        userId,
+        depositedUsd: user.depositedUsd || 0,
+        profitUsd: nextProfitUsd,
+      });
 
       setEvents((current) =>
         [
@@ -196,7 +212,7 @@ export function TerminalArena() {
     }, 22000);
 
     return () => clearInterval(interval);
-  }, [userId, user?.systemActive, user?.allocatedUsd, copiedTrader]);
+  }, [userId, engineIsActive, user?.allocatedUsd, user?.profitUsd, copiedTrader]);
 
   async function handleCopy(amount: number, traderOverride?: Trader) {
     if (!requireLogin() || !userId || !user) return;
@@ -235,16 +251,18 @@ export function TerminalArena() {
 
     await setCopyEngine({
       userId,
-      copiedTraderId: user.copiedTraderId,
-      systemActive: !user.systemActive,
-      allocationUsd: user.allocatedUsd || 0,
+      copiedTraderId: user.copiedTraderId || selectedTrader?.id || null,
+      systemActive: !engineIsActive,
+      allocationUsd: user.allocatedUsd || availableUsd || 0,
     });
   }
 
   async function disconnectTrader() {
     if (!requireLogin() || !userId || !user) return;
 
-    await recordDailyPerformance({ userId, user });
+    if (user.depositedUsd > 0) {
+      await recordDailyPerformance({ userId, user });
+    }
 
     await setCopyEngine({
       userId,
@@ -253,7 +271,7 @@ export function TerminalArena() {
       allocationUsd: 0,
     });
 
-    setEvents((current) => ["Copy Engine disconnected.", ...current].slice(0, 6));
+    setEvents((current) => ["Copy Engine reset. Select a trader again.", ...current].slice(0, 6));
   }
 
   return (
@@ -320,6 +338,7 @@ export function TerminalArena() {
           selectedTraderName={selectedTrader?.name}
           depositedUsd={activeUser.depositedUsd}
           profitUsd={activeUser.profitUsd}
+          allocatedUsd={activeUser.allocatedUsd || 0}
           onToggle={toggleEngine}
           onDisconnect={disconnectTrader}
         />
@@ -328,6 +347,8 @@ export function TerminalArena() {
           trader={selectedTrader}
           totalInvested={availableUsd}
           estimatedProfit={activeUser.profitUsd}
+          allocatedUsd={activeUser.allocatedUsd || 0}
+          isActive={activeUser.systemActive}
           onInvest={handleCopy}
         />
       </div>

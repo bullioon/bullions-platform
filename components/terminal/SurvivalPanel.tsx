@@ -94,12 +94,21 @@ export function SurvivalPanel({
   const countdown = getNextSundayCountdown();
 
   return (
-    <section className="w-full max-w-full min-w-0 overflow-hidden rounded-[24px] bg-[#111214] p-5 ring-1 ring-white/5 sm:p-6">
+    <section
+      className="w-full max-w-full min-w-0 overflow-hidden rounded-[24px] bg-[#111214] p-5 sm:p-6 transition-all duration-500"
+      style={{
+        border: `1px solid ${identity.color}25`,
+        boxShadow: `0 0 60px ${identity.color}12`,
+      }}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           <div
             className="grid h-[88px] w-[88px] shrink-0 place-items-center rounded-full border border-white/10 bg-black/30"
-            style={{ boxShadow: `0 0 45px ${identity.color}45` }}
+            style={{ boxShadow:
+                tier === "TORION"
+                  ? `0 0 65px ${identity.color}55`
+                  : `0 0 45px ${identity.color}45` }}
           >
             <Image
               src={identity.image}
@@ -154,7 +163,7 @@ export function SurvivalPanel({
       </div>
 
       <div className="mt-5">
-        <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]">
           <div
             className="h-full rounded-full"
             style={{

@@ -9,7 +9,7 @@ export function resolveTier(depositedUsd: number): UserTier {
 export function maxWithdrawalPct(tier: UserTier) {
   switch (tier) {
     case "BULLION":
-      return 0.1;
+      return 0.3;
 
     case "HELLION":
       return 0.3;

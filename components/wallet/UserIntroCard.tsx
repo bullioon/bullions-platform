@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  engineStateConfig,
+  type EngineState,
+} from "@/lib/engineBehavior";
+
+
 type Props = {
   name: string;
   username: string;
@@ -8,6 +14,7 @@ type Props = {
   profitUsd: number;
   activeTrader?: string;
   systemActive?: boolean;
+  engineState: EngineState;
   onChangeEmoji: (emoji: string) => void;
   onDeposit: () => void;
   onWithdraw: () => void;
@@ -28,6 +35,7 @@ export function UserIntroCard({
   profitUsd,
   activeTrader,
   systemActive = false,
+  engineState,
   onChangeEmoji,
   onDeposit,
   onWithdraw,
@@ -56,9 +64,30 @@ export function UserIntroCard({
             </div>
           </div>
 
-          <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-medium text-[#8f96a3]">
-            {systemActive ? "Live" : "Paused"}
-          </span>
+          <div
+            className="rounded-full border px-4 py-[7px] text-[10px] font-black tracking-[0.22em] uppercase backdrop-blur-md transition-all duration-300"
+            style={{
+              backgroundColor: systemActive
+                ? `${engineStateConfig[engineState].color}12`
+                : "rgba(255,255,255,0.05)",
+
+              color: systemActive
+                ? engineStateConfig[engineState].color
+                : "rgba(255,255,255,0.55)",
+
+              borderColor: systemActive
+                ? `${engineStateConfig[engineState].color}55`
+                : "rgba(255,255,255,0.10)",
+
+              boxShadow: systemActive
+                ? `0 0 24px ${engineStateConfig[engineState].color}22`
+                : "none",
+            }}
+          >
+            {systemActive
+              ? engineStateConfig[engineState].label
+              : "PAUSED"}
+          </div>
         </div>
 
         <div className="mt-10">

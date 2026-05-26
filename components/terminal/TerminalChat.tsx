@@ -89,7 +89,9 @@ export function TerminalChat({ events = [], userName = "User" }: Props) {
       setTimeout(() => setCooldown(false), 5000);
     }
   }
-  const merged = [...localActivity, ...eventMessages, ...messages].slice(-12);
+  const engineFeed = [...localActivity, ...eventMessages].slice(-6);
+  const liveFeed = messages.slice(-6);
+
   return (
     <section className="relative overflow-hidden rounded-[24px] bg-[#101114] p-4 ring-1 ring-white/5">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(182,255,0,0.10),transparent_42%)]" />
@@ -103,19 +105,54 @@ export function TerminalChat({ events = [], userName = "User" }: Props) {
             Live
           </span>
         </div>
-        <div className="flex h-[180px] flex-col gap-2 overflow-y-auto pr-1">
-          {merged.map((msg) => (
-            <div
-              key={msg.id}
-              className={`rounded-[14px] px-3 py-2 text-xs ring-1 ${styleByTag(msg.tag)}`}
-            >
-              <div className="mb-0.5 flex items-center justify-between gap-3">
-                <p className="font-semibold opacity-90">{msg.name}</p>
-                <span className="text-[9px] opacity-40">now</span>
-              </div>
-              <p className="leading-5">{msg.text}</p>
+        <div className="grid gap-3">
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b6ff00]/70">
+              Engine Activity
+            </p>
+
+            <div className="flex max-h-[140px] flex-col gap-2 overflow-y-auto pr-1">
+              {engineFeed.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`rounded-[14px] px-3 py-2 text-xs ring-1 ${styleByTag(msg.tag)}`}
+                >
+                  <div className="mb-0.5 flex items-center justify-between gap-3">
+                    <p className="font-semibold opacity-90">{msg.name}</p>
+                    <span className="text-[9px] opacity-40">system</span>
+                  </div>
+                  <p className="leading-5">{msg.text}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+              Live Chat
+            </p>
+
+            <div className="flex max-h-[130px] flex-col gap-2 overflow-y-auto pr-1">
+              {liveFeed.length > 0 ? (
+                liveFeed.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`rounded-[14px] px-3 py-2 text-xs ring-1 ${styleByTag(msg.tag)}`}
+                  >
+                    <div className="mb-0.5 flex items-center justify-between gap-3">
+                      <p className="font-semibold opacity-90">{msg.name}</p>
+                      <span className="text-[9px] opacity-40">now</span>
+                    </div>
+                    <p className="leading-5">{msg.text}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-[14px] bg-white/[0.03] px-3 py-3 text-xs text-white/30 ring-1 ring-white/5">
+                  No user messages yet.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         <div className="mt-3 flex items-center gap-2 rounded-full bg-black/30 p-2 ring-1 ring-white/5">
           <input

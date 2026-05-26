@@ -30,7 +30,16 @@ import { createWithdrawalRequest } from "@/lib/withdrawals";
 import { SurvivalPanel } from "@/components/terminal/SurvivalPanel";
 import { WithdrawalModal } from "@/components/terminal/WithdrawalModal";
 import { resolveTier, maxAllocationPct } from "@/lib/tierSystem";
-import { generateMove, engineEvents } from "@/lib/engineBehavior";
+import {
+  generateMove,
+  resolveEngineState,
+  engineEvents,
+  engineStateConfig,
+  type EngineState,
+} from "@/lib/engineBehavior";
+
+const ENGINE_PULSE_MS =
+  process.env.NODE_ENV === "development" ? 8000 : 25000;
 
 const guestUser: BullionsUser = {
   name: "Guest",
@@ -65,11 +74,18 @@ export function TerminalArena() {
     "Copy Engine is paused.",
   ]);
 
+  const [engineState, setEngineState] = useState<EngineState>("STABLE");
+
+  const [enginePhase, setEnginePhase] = useState<
+    "STABLE" | "EUPHORIA" | "RECOVERY" | "LOSS_DAY" | "BREAKER"
+  >("normal");
+
   const userId = authUser?.uid || null;
   const activeUser = user || guestUser;
   const isLoggedIn = Boolean(authUser && user);
   const tier = resolveTier(activeUser.depositedUsd || 0);
-  const maxAllocatableUsd = Number(((activeUser.depositedUsd || 0) * maxAllocationPct(tier)).toFixed(2));
+  const portfolioUsd = (activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0);
+  const maxAllocatableUsd = Number((portfolioUsd * maxAllocationPct(tier)).toFixed(2));
   const remainingAllocationRoom = Math.max(0, maxAllocatableUsd - (activeUser.allocatedUsd || 0));
 
   const availableUsd = Math.max(
@@ -77,9 +93,7 @@ export function TerminalArena() {
     Number(
       Math.min(
         remainingAllocationRoom,
-        (activeUser.depositedUsd || 0) +
-          (activeUser.profitUsd || 0) -
-          (activeUser.allocatedUsd || 0)
+        portfolioUsd - (activeUser.allocatedUsd || 0)
       ).toFixed(2)
     )
   );
@@ -178,11 +192,15 @@ export function TerminalArena() {
 
     const interval = setInterval(async () => {
       const accountSize = user?.allocatedUsd || 0;
-      const { phase, move } = generateMove();
-      let nextMove = accountSize * (move / 100);
-
       const currentRoi =
         accountSize > 0 ? ((user?.profitUsd || 0) / accountSize) * 100 : 0;
+      const nextState = resolveEngineState(currentRoi);
+
+      setEngineState(nextState);
+
+      const movePct = generateMove(nextState);
+
+      let nextMove = accountSize * (movePct / 100);
 
       if (currentRoi > 120 && nextMove > 0) {
         nextMove = -(accountSize * ((4 + Math.random() * 10) / 100));
@@ -191,7 +209,8 @@ export function TerminalArena() {
       if (currentRoi < -35 && nextMove < 0) {
         nextMove = accountSize * ((6 + Math.random() * 12) / 100);
       }
-      const event = engineEvents[Math.floor(Math.random() * engineEvents.length)];
+      const stateEvents = engineEvents[nextState] || ["TORION engine updated"];
+      const event = stateEvents[Math.floor(Math.random() * stateEvents.length)];
 
       const nextProfitUsd = (user?.profitUsd || 0) + nextMove;
 
@@ -205,11 +224,11 @@ export function TerminalArena() {
 
       setEvents((current) =>
         [
-          `${copiedTrader.name} PnL ${nextMove >= 0 ? "+" : "-"}$${Math.abs(nextMove).toFixed(2)}`,
+          `${nextState} • ${copiedTrader.name} PnL ${nextMove >= 0 ? "+" : "-"}$${Math.abs(nextMove).toFixed(2)} • ${event}`,
           ...current,
         ].slice(0, 6)
       );
-    }, 22000);
+    }, ENGINE_PULSE_MS);
 
     return () => clearInterval(interval);
   }, [userId, engineIsActive, user?.allocatedUsd, user?.profitUsd, copiedTrader]);
@@ -287,6 +306,7 @@ export function TerminalArena() {
           profitUsd={activeUser.profitUsd}
           activeTrader={copiedTrader?.name}
           systemActive={activeUser.systemActive}
+          engineState={engineState}
           onChangeEmoji={(emoji) => userId && updateEmoji(userId, emoji)}
           onDeposit={() => {
             if (!isLoggedIn) {
@@ -329,8 +349,12 @@ export function TerminalArena() {
       <SurvivalPanel
         tier={tier}
         depositedUsd={activeUser.depositedUsd || 0}
+        profitUsd={activeUser.profitUsd || 0}
         allocatedUsd={activeUser.allocatedUsd || 0}
         availableUsd={availableUsd}
+        maxAllocationPct={maxAllocationPct(tier)}
+        systemActive={activeUser.systemActive}
+        enginePhase={enginePhase}
       />
 
       <div id="copy-terminal" className="grid scroll-mt-28 gap-5 lg:grid-cols-[0.85fr_1.15fr]">
@@ -355,7 +379,7 @@ export function TerminalArena() {
         />
       </div>
 
-      <TerminalChat events={events} />
+      <TerminalChat events={events} userName={isLoggedIn ? activeUser.username || activeUser.name || authUser?.email?.split("@")[0] || "User" : "Guest"} />
 
       <p className="text-center text-[11px] leading-4 text-white/30">
         {isLoggedIn
@@ -368,8 +392,12 @@ export function TerminalArena() {
         open={withdrawOpen}
         onClose={() => setWithdrawOpen(false)}
         tier={tier}
-        maxWithdrawUsd={Math.max(0, ((activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0) - (activeUser.allocatedUsd || 0)) * (tier === "BULLION" ? 0.1 : tier === "HELLION" ? 0.3 : 1))}
+        maxWithdrawUsd={Math.max(0, ((activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0)) * (tier === "BULLION" ? 0.3 : tier === "HELLION" ? 0.3 : 1))}
         portfolioUsd={(activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0)}
+        onUpgrade={() => {
+          setCashModal(null);
+          setTimeout(() => setCashModal("deposit"), 80);
+        }}
       />
 
       {loginHint && (

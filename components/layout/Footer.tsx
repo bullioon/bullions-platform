@@ -35,6 +35,9 @@ export function Footer() {
             <p>Live leaderboard</p>
             <p>Copy Engine</p>
             <p>Support</p>
+            <a href="/privacy" className="block hover:text-white">Privacy Policy</a>
+            <a href="/terms" className="block hover:text-white">Terms</a>
+            <a href="/risk" className="block hover:text-white">Risk Disclaimer</a>
           </div>
         </div>
       </div>

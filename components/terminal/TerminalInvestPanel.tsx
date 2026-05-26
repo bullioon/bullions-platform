@@ -100,7 +100,7 @@ export function TerminalInvestPanel({
           <div className="mt-6 space-y-3">
             {[
               ["Pair", "XAU/USD"],
-              ["Available cash", `$${available.toLocaleString()}`],
+              ["Allocation room", `$${available.toLocaleString()}`],
               ["Allocated", `$${allocatedUsd.toLocaleString()}`],
               ["Profit", `+$${Math.max(0, estimatedProfit).toLocaleString()}`],
             ].map(([label, value]) => (
@@ -142,7 +142,7 @@ export function TerminalInvestPanel({
               />
             </div>
             <p className="mt-2 text-xs text-white/35">
-              Available: ${available.toLocaleString()}
+              Protected capital: ${available.toLocaleString()}
             </p>
           </div>
 
@@ -180,7 +180,7 @@ export function TerminalInvestPanel({
           </button>
 
           <p className="mt-4 text-center text-xs text-[#8f96a3]">
-            Allocated funds are locked while the copy engine is active.
+            Capital becomes locked only after the Copy Engine is activated.
           </p>
         </div>
       </div>

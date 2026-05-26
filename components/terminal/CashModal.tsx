@@ -37,7 +37,7 @@ export function CashModal({
 }: Props) {
   const [step, setStep] = useState<"asset" | "network" | "warning" | "receive">("asset");
   const [status, setStatus] = useState<"idle" | "waiting" | "verified">("idle");
-  const [lastTx, setLastTx] = useState("");
+  const [lastTx, setLastTx] = useState("500");
   const [solPriceUsd, setSolPriceUsd] = useState<number | null>(null);
   useEffect(() => {
     let active = true;

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 type Props = {
@@ -8,11 +9,12 @@ type Props = {
   tier: "BULLION" | "HELLION" | "TORION";
   maxWithdrawUsd: number;
   portfolioUsd: number;
+  onUpgrade: () => void;
 };
 
 const tierConfig = {
   BULLION: {
-    pct: "10%",
+    pct: "30%",
     next: "HELLION",
     requirement: "$500+ portfolio",
     progress: "40%",
@@ -37,6 +39,7 @@ export function WithdrawalModal({
   tier,
   maxWithdrawUsd,
   portfolioUsd,
+  onUpgrade,
 }: Props) {
   const [wallet, setWallet] = useState("");
   const [amount, setAmount] = useState("");
@@ -45,6 +48,17 @@ export function WithdrawalModal({
 
   const current = tierConfig[tier];
   const isLocked = tier !== "TORION";
+
+  const now = new Date();
+  const nextSunday = new Date(now);
+  const daysUntilSunday = (7 - now.getDay()) % 7 || 7;
+  nextSunday.setDate(now.getDate() + daysUntilSunday);
+  nextSunday.setHours(0, 0, 0, 0);
+
+  const diff = nextSunday.getTime() - now.getTime();
+  const countdownDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const countdownHours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const countdownMinutes = Math.floor((diff / (1000 * 60)) % 60);
 
   return (
     <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/75 px-4 py-8 backdrop-blur-xl">
@@ -93,7 +107,11 @@ export function WithdrawalModal({
               </p>
 
               <p className="mt-2 text-sm font-medium text-[#6CFF72]">
-                Max {current.pct} available
+                Max {current.pct} available every Sunday
+              </p>
+
+              <p className="mt-2 text-xs text-white/35">
+                Next unlock in {countdownDays}D {countdownHours}H {countdownMinutes}M
               </p>
             </div>
 
@@ -134,8 +152,15 @@ export function WithdrawalModal({
           </div>
 
           <div className="mt-5 rounded-[28px] border border-[#8b5cf6]/40 bg-[#2d145f]/35 p-5 shadow-[0_0_45px_rgba(139,92,246,0.12)]">
-            <label className="text-sm font-semibold text-white">
-              🟣 Phantom destination
+            <label className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Image
+                src="/assets/phantom.png"
+                alt="Phantom"
+                width={22}
+                height={22}
+                className="h-[22px] w-[22px] rounded-full object-contain"
+              />
+              Phantom destination
             </label>
 
             <input
@@ -171,7 +196,17 @@ export function WithdrawalModal({
           )}
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <button className="h-[62px] flex-1 rounded-full bg-[#6CFF72] text-sm font-semibold text-black transition hover:scale-[1.01]">
+            <button
+              onClick={
+                isLocked
+                  ? () => {
+                      onClose();
+                      setTimeout(onUpgrade, 80);
+                    }
+                  : undefined
+              }
+              className="h-[62px] flex-1 rounded-full bg-[#6CFF72] text-sm font-semibold text-black transition hover:scale-[1.01]"
+            >
               {isLocked ? "Upgrade to Unlock Withdrawals" : "Request Withdrawal"}
             </button>
 

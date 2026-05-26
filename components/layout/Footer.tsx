@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <footer className="mx-auto mt-8 w-full max-w-[1480px] rounded-[28px] bg-[#101114] p-8 ring-1 ring-white/5">
+    <footer className="relative z-20 mx-auto mt-8 w-full max-w-[1480px] rounded-[28px] bg-[#101114] p-8 ring-1 ring-white/5">
       <div className="grid gap-8 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
         <div>
           <p className="text-lg font-semibold italic text-white">bullions</p>
@@ -35,9 +35,9 @@ export function Footer() {
             <p>Live leaderboard</p>
             <p>Copy Engine</p>
             <p>Support</p>
-            <a href="/privacy" className="block hover:text-white">Privacy Policy</a>
-            <a href="/terms" className="block hover:text-white">Terms</a>
-            <a href="/risk" className="block hover:text-white">Risk Disclaimer</a>
+            <a href="/privacy" className="relative z-20 block hover:text-white">Privacy Policy</a>
+            <a href="/terms" className="relative z-20 block hover:text-white">Terms</a>
+            <a href="/risk" className="relative z-20 block hover:text-white">Risk Disclaimer</a>
           </div>
         </div>
       </div>

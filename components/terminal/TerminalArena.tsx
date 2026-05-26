@@ -78,7 +78,7 @@ export function TerminalArena() {
 
   const [enginePhase, setEnginePhase] = useState<
     "STABLE" | "EUPHORIA" | "RECOVERY" | "LOSS_DAY" | "BREAKER"
-  >("normal");
+  >("STABLE");
 
   const userId = authUser?.uid || null;
   const activeUser = user || guestUser;

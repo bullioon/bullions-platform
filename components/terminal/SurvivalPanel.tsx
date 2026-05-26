@@ -12,7 +12,7 @@ type Props = {
   availableUsd: number;
   maxAllocationPct: number;
   systemActive: boolean;
-  enginePhase: "normal" | "euphoria" | "loss_day" | "breaker" | "recovery";
+  enginePhase: "STABLE" | "EUPHORIA" | "RECOVERY" | "LOSS_DAY" | "BREAKER";
 };
 
 const tierIdentity = {
@@ -80,11 +80,11 @@ export function SurvivalPanel({
   );
 
   const phaseLabel = {
-    normal: "Normal execution",
-    euphoria: "Momentum expansion",
-    loss_day: "Loss day pressure",
-    breaker: "Breaker protection active",
-    recovery: "Recovery protocol engaged",
+    STABLE: "Normal execution",
+    EUPHORIA: "Momentum expansion",
+    LOSS_DAY: "Loss day pressure",
+    BREAKER: "Breaker protection active",
+    RECOVERY: "Recovery protocol engaged",
   }[enginePhase];
 
   const status = !systemActive

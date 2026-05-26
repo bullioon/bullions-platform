@@ -116,12 +116,12 @@ export function CopyEnginePanel({
         </div>
       </div>
 
-      {(traderName || isActive || hasLockedAllocation) && (
+      {(traderName || isActive || hasLockedAllocation || profitUsd !== 0) && (
         <button
           onClick={onDisconnect}
           className="mt-5 h-[52px] w-full rounded-full border border-white/10 text-sm font-semibold text-white/70 transition hover:bg-white/[0.05] sm:mt-8 sm:h-[56px]"
         >
-          {traderName ? "Disconnect trader" : "Reset Copy Engine"}
+          Disconnect Trader
         </button>
       )}
     </section>

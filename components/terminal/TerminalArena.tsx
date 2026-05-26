@@ -271,7 +271,9 @@ export function TerminalArena() {
       allocationUsd: 0,
     });
 
-    setEvents((current) => ["Copy Engine reset. Select a trader again.", ...current].slice(0, 6));
+    setEvents((current) =>
+      ["Copy Engine disconnected.", ...current].slice(0, 6)
+    );
   }
 
   return (
@@ -344,7 +346,7 @@ export function TerminalArena() {
         />
 
         <TerminalInvestPanel
-          trader={selectedTrader}
+          trader={copiedTrader || selectedTrader}
           totalInvested={availableUsd}
           estimatedProfit={activeUser.profitUsd}
           allocatedUsd={activeUser.allocatedUsd || 0}

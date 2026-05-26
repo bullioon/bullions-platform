@@ -241,3 +241,6 @@ export async function recordDailyPerformance({
     createdAt: serverTimestamp(),
   });
 }
+
+
+

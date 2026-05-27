@@ -9,7 +9,7 @@ import { BullionsHomeHero } from "@/components/home/BullionsHomeHero";
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#050607] px-4 py-5 text-white">
+    <main className="min-h-screen overflow-hidden bg-[#050607] px-4 pt-10 pb-5 text-white">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(182,255,0,0.08),transparent_28%)]" />
 
       <div className="relative">

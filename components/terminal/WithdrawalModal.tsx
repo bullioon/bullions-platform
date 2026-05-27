@@ -254,7 +254,18 @@ export function WithdrawalModal({
             <button
               onClick={handleWithdrawalRequest}
               disabled={!canRequest}
-              className="h-[62px] flex-1 rounded-full bg-[#6CFF72] text-sm font-semibold text-black transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35"
+              className={`
+                h-[64px] flex-1 rounded-full text-sm font-semibold transition-all duration-300
+                ${
+                  canRequest
+                    ? "bg-[#6CFF72] text-black shadow-[0_0_45px_rgba(108,255,114,0.28)] hover:scale-[1.01]"
+                    : blockedByEngine
+                      ? "border border-[#ff9d00]/25 bg-[#ff9d00]/10 text-[#ffb84d]"
+                      : blockedByPending
+                        ? "border border-[#8b5cf6]/30 bg-[#8b5cf6]/12 text-[#c4b5fd]"
+                        : "border border-white/[0.08] bg-white/[0.04] text-white/35"
+                }
+              `}
             >
               {blockedByEngine
                 ? "Turn Off Engine First"
@@ -267,7 +278,14 @@ export function WithdrawalModal({
 
             <button
               onClick={onClose}
-              className="h-[62px] flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-sm font-semibold text-white/70 transition hover:bg-white/[0.06]"
+              className="
+                h-[64px] flex-1 rounded-full
+                border border-white/[0.08]
+                bg-white/[0.03]
+                text-sm font-semibold text-white/75
+                transition-all duration-300
+                hover:bg-white/[0.06]
+              "
             >
               Continue Compounding
             </button>

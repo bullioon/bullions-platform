@@ -416,6 +416,9 @@ export function TerminalArena() {
           setCashModal(null);
           setTimeout(() => setCashModal("deposit"), 80);
         }}
+        userId={userId}
+        systemActive={activeUser.systemActive}
+        pendingWithdrawal={activeUser.pendingWithdrawal}
       />
 
       {loginHint && (

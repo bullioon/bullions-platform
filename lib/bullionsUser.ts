@@ -38,6 +38,13 @@ export type BullionsUser = {
   allocatedUsd: number;
   maxLossUsd: number;
   avatarEmoji?: string;
+  pendingWithdrawal?: {
+    amountUsd: number;
+    wallet: string;
+    status: "pending" | "released";
+    requestedAt: number;
+    weekKey: string;
+  };
 };
 
 function last7Days(depositedUsd: number, profitUsd: number): DailyPerformance[] {
@@ -139,9 +146,49 @@ export async function registerCryptoDeposit({
 }
 
 
-export async function withdrawUsd(userId: string, amountUsd: number) {
+export async function requestWithdrawal({
+  userId,
+  amountUsd,
+  wallet,
+  weekKey,
+}: {
+  userId: string;
+  amountUsd: number;
+  wallet: string;
+  weekKey: string;
+}) {
+  const amount = Math.abs(amountUsd);
+
+  await addDoc(collection(db, "withdrawals"), {
+    userId,
+    amountUsd: amount,
+    wallet,
+    status: "pending",
+    weekKey,
+    createdAt: serverTimestamp(),
+  });
+
   await updateDoc(doc(db, "users", userId), {
-    depositedUsd: increment(-amountUsd),
+    depositedUsd: increment(-amount),
+    systemActive: false,
+    allocatedUsd: 0,
+    copiedTraderId: null,
+    pendingWithdrawal: {
+      amountUsd: amount,
+      wallet,
+      status: "pending",
+      requestedAt: Date.now(),
+      weekKey,
+    },
+  });
+}
+
+export async function withdrawUsd(userId: string, amountUsd: number) {
+  await requestWithdrawal({
+    userId,
+    amountUsd,
+    wallet: "legacy",
+    weekKey: new Date().toISOString().slice(0, 10),
   });
 }
 

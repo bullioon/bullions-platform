@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { requestWithdrawal } from "@/lib/bullionsUser";
 
 type Props = {
   open: boolean;
@@ -10,6 +11,15 @@ type Props = {
   maxWithdrawUsd: number;
   portfolioUsd: number;
   onUpgrade: () => void;
+  userId: string | null;
+  systemActive: boolean;
+  pendingWithdrawal?: {
+    amountUsd: number;
+    wallet: string;
+    status: "pending" | "released";
+    requestedAt: number;
+    weekKey: string;
+  };
 };
 
 const tierConfig = {
@@ -40,6 +50,9 @@ export function WithdrawalModal({
   maxWithdrawUsd,
   portfolioUsd,
   onUpgrade,
+  userId,
+  systemActive,
+  pendingWithdrawal,
 }: Props) {
   const [wallet, setWallet] = useState("");
   const [amount, setAmount] = useState("");
@@ -47,9 +60,45 @@ export function WithdrawalModal({
   if (!open) return null;
 
   const current = tierConfig[tier];
-  const isLocked = tier !== "TORION";
 
   const now = new Date();
+  const isSunday = now.getDay() === 0;
+  const weekKey = `${now.getFullYear()}-${Math.ceil(
+    ((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86400000 + new Date(now.getFullYear(), 0, 1).getDay() + 1) / 7
+  )}`;
+
+  const hasPendingThisWeek =
+    pendingWithdrawal?.weekKey === weekKey &&
+    pendingWithdrawal?.status === "pending";
+
+  const amountNumber = Number(amount);
+  const blockedByEngine = systemActive;
+  const blockedByDay = !isSunday;
+  const blockedByPending = Boolean(hasPendingThisWeek);
+  const invalidAmount =
+    !amountNumber || amountNumber <= 0 || amountNumber > maxWithdrawUsd;
+
+  const canRequest =
+    Boolean(userId) &&
+    !blockedByEngine &&
+    !blockedByDay &&
+    !blockedByPending &&
+    !invalidAmount &&
+    wallet.trim().length > 5;
+
+  async function handleWithdrawalRequest() {
+    if (!canRequest || !userId) return;
+
+    await requestWithdrawal({
+      userId,
+      amountUsd: amountNumber,
+      wallet: wallet.trim(),
+      weekKey,
+    });
+
+    setAmount("");
+  }
+
   const nextSunday = new Date(now);
   const daysUntilSunday = (7 - now.getDay()) % 7 || 7;
   nextSunday.setDate(now.getDate() + daysUntilSunday);
@@ -183,38 +232,44 @@ export function WithdrawalModal({
             />
           </div>
 
-          {isLocked ? (
-            <div className="mt-4 rounded-[22px] border border-[#f59e0b]/20 bg-[#f59e0b]/10 p-4 text-sm leading-6 text-white/65">
-              Withdrawals are locked for this tier. Upgrade your survival level
-              to unlock priority payouts and larger capital access.
+          {blockedByPending ? (
+            <div className="mt-4 rounded-[22px] border border-[#8b5cf6]/25 bg-[#8b5cf6]/10 p-4 text-sm leading-6 text-white/70">
+              Withdrawal already requested this week: ${pendingWithdrawal?.amountUsd.toFixed(2)} to {pendingWithdrawal?.wallet}. Status: {pendingWithdrawal?.status}.
+            </div>
+          ) : blockedByEngine ? (
+            <div className="mt-4 rounded-[22px] border border-[#f59e0b]/25 bg-[#f59e0b]/10 p-4 text-sm leading-6 text-white/70">
+              Turn off the Copy Engine before requesting a withdrawal. Allocated capital must be released first.
+            </div>
+          ) : blockedByDay ? (
+            <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-white/60">
+              Withdrawals open every Sunday. Next unlock in {countdownDays}D {countdownHours}H {countdownMinutes}M.
             </div>
           ) : (
             <div className="mt-4 rounded-[22px] border border-[#6CFF72]/10 bg-[#6CFF72]/5 p-4 text-sm leading-6 text-white/60">
-              Remaining capital stays active in the AI engine to protect
-              long-term performance and survival status.
+              Sunday withdrawal window is open. Requested capital will be deducted immediately and marked pending.
             </div>
           )}
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <button
-              onClick={
-                isLocked
-                  ? () => {
-                      onClose();
-                      setTimeout(onUpgrade, 80);
-                    }
-                  : undefined
-              }
-              className="h-[62px] flex-1 rounded-full bg-[#6CFF72] text-sm font-semibold text-black transition hover:scale-[1.01]"
+              onClick={handleWithdrawalRequest}
+              disabled={!canRequest}
+              className="h-[62px] flex-1 rounded-full bg-[#6CFF72] text-sm font-semibold text-black transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/35"
             >
-              {isLocked ? "Upgrade to Unlock Withdrawals" : "Request Withdrawal"}
+              {blockedByEngine
+                ? "Turn Off Engine First"
+                : blockedByPending
+                  ? "Withdrawal Pending"
+                  : blockedByDay
+                    ? `Unlocks Sunday`
+                    : "Request Withdrawal"}
             </button>
 
             <button
               onClick={onClose}
               className="h-[62px] flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-sm font-semibold text-white/70 transition hover:bg-white/[0.06]"
             >
-              Keep Compounding
+              Continue Compounding
             </button>
           </div>
         </div>

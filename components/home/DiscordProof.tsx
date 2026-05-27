@@ -9,11 +9,11 @@ export function DiscordProof() {
     <section className="relative mx-auto mt-14 w-full max-w-[1480px] overflow-hidden rounded-[42px] border border-white/[0.06] bg-[#050607] px-6 py-8 sm:px-10 sm:py-10">
       
       <div className="absolute inset-0">
-        <div className="absolute left-[-10%] top-[-20%] h-[420px] w-[420px] rounded-full bg-[#6CFF72]/10 blur-[120px]" />
+        <div className="absolute left-[-10%] top-[-20%] h-[420px] w-[420px] rounded-full bg-[#6CFF72]/10 blur-[50px] md:blur-[120px]" />
 
-        <div className="absolute right-[-10%] top-[10%] h-[520px] w-[520px] rounded-full bg-[#7c3aed]/20 blur-[150px]" />
+        <div className="absolute right-[-10%] top-[10%] h-[520px] w-[520px] rounded-full bg-[#7c3aed]/20 blur-[60px] md:blur-[150px]" />
 
-        <div className="absolute bottom-[-20%] left-[20%] h-[400px] w-[400px] rounded-full bg-[#6CFF72]/5 blur-[120px]" />
+        <div className="absolute bottom-[-20%] left-[20%] h-[400px] w-[400px] rounded-full bg-[#6CFF72]/5 blur-[50px] md:blur-[120px]" />
 
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.02),transparent)]" />
       </div>
@@ -28,7 +28,7 @@ export function DiscordProof() {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 rounded-full border border-[#6CFF72]/20 bg-[#6CFF72]/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#6CFF72]"
           >
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#6CFF72]" />
+            <span className="h-2 w-2 md:animate-pulse rounded-full bg-[#6CFF72]" />
             Private AI Trading Community
           </motion.div>
 
@@ -67,7 +67,7 @@ export function DiscordProof() {
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/70 backdrop-blur-xl"
+                className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/70 backdrop-blur-sm md:backdrop-blur-xl"
               >
                 {item}
               </div>
@@ -102,7 +102,7 @@ export function DiscordProof() {
 
             <Link
               href="/bullpad#leaderboard"
-              className="inline-flex h-[64px] items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] px-8 text-sm font-semibold text-white/80 backdrop-blur-xl transition hover:bg-white/[0.05]"
+              className="inline-flex h-[64px] items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] px-8 text-sm font-semibold text-white/80 backdrop-blur-sm md:backdrop-blur-xl transition hover:bg-white/[0.05]"
             >
               View Leaderboard
             </Link>
@@ -130,9 +130,9 @@ export function DiscordProof() {
           className="relative"
         >
           
-          <div className="absolute inset-0 rounded-[36px] bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.32),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(108,255,114,0.16),transparent_40%)] blur-2xl" />
+          <div className="absolute inset-0 rounded-[36px] bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.32),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(108,255,114,0.16),transparent_40%)] blur-md md:blur-2xl" />
 
-          <div className="relative overflow-hidden rounded-[36px] border border-white/[0.08] bg-[#0b0d11]/90 shadow-[0_40px_120px_rgba(0,0,0,0.65)] backdrop-blur-2xl">
+          <div className="relative overflow-hidden rounded-[36px] border border-white/[0.08] bg-[#0b0d11]/90 shadow-[0_40px_120px_rgba(0,0,0,0.65)] backdrop-blur-md md:blur-2xl">
             
             <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.9),transparent)]" />
 
@@ -175,7 +175,7 @@ export function DiscordProof() {
                   duration: 6,
                   repeat: Infinity,
                 }}
-                className="w-full max-w-[420px] rounded-[32px] border border-white/[0.08] bg-[#12141a]/90 p-6 shadow-[0_25px_100px_rgba(0,0,0,0.55)] backdrop-blur-2xl"
+                className="w-full max-w-[420px] rounded-[32px] border border-white/[0.08] bg-[#12141a]/90 p-6 shadow-[0_25px_100px_rgba(0,0,0,0.55)] backdrop-blur-md md:blur-2xl"
               >
                 
                 <div className="flex items-center justify-between">

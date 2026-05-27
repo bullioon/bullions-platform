@@ -41,6 +41,20 @@ import {
 const ENGINE_PULSE_MS =
   process.env.NODE_ENV === "development" ? 8000 : 25000;
 
+
+function tierMultiplier(tier: "BULLION" | "HELLION" | "TORION") {
+  switch (tier) {
+    case "BULLION":
+      return 0.45;
+
+    case "HELLION":
+      return 0.8;
+
+    case "TORION":
+      return 1.35;
+  }
+}
+
 const guestUser: BullionsUser = {
   name: "Guest",
   username: "guest",
@@ -200,7 +214,11 @@ export function TerminalArena() {
 
       const movePct = generateMove(nextState);
 
-      let nextMove = accountSize * (movePct / 100);
+      const scaledMovePct =
+        movePct * tierMultiplier(tier);
+
+      let nextMove =
+        accountSize * (scaledMovePct / 100);
 
       if (currentRoi > 120 && nextMove > 0) {
         nextMove = -(accountSize * ((4 + Math.random() * 10) / 100));
@@ -224,7 +242,7 @@ export function TerminalArena() {
 
       setEvents((current) =>
         [
-          `${nextState} • ${copiedTrader.name} PnL ${nextMove >= 0 ? "+" : "-"}$${Math.abs(nextMove).toFixed(2)} • ${event}`,
+          `${nextState} • ${copiedTrader.name} ${nextMove >= 0 ? "+" : "-"}$${Math.abs(nextMove).toFixed(2)} • ${event}`,
           ...current,
         ].slice(0, 6)
       );

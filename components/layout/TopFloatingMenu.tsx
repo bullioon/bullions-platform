@@ -23,7 +23,7 @@ export function TopFloatingMenu() {
   return (
     <>
       <div className="sticky top-8 z-50 mx-auto mb-10 w-full max-w-[1480px] px-4">
-        <div className="relative flex items-center justify-between rounded-full border border-white/[0.06] bg-white/[0.04] px-6 py-3 shadow-[0_8px_40px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
+        <div className="relative flex items-center justify-between rounded-full border border-white/[0.06] bg-white/[0.04] px-6 py-3 shadow-[0_8px_40px_rgba(0,0,0,0.45)] backdrop-blur-md md:blur-2xl">
           <div className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-b from-white/[0.06] to-transparent opacity-60" />
 
           <a href="/" className="relative text-lg font-semibold italic text-white">

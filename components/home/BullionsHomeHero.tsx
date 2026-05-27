@@ -34,7 +34,7 @@ export function BullionsHomeHero() {
         <div className="absolute inset-0 opacity-[0.06] bg-[linear-gradient(115deg,transparent_0%,transparent_47%,rgba(255,255,255,.12)_48%,transparent_50%)] bg-[size:140px_140px]" />
 
         <div className="relative z-10 flex flex-col items-center text-center">
-          <div className="absolute h-[520px] w-[520px] rounded-full bg-[#b6ff00]/20 blur-[180px] animate-glow-breath" />
+          <div className="absolute h-[520px] w-[520px] rounded-full bg-[#b6ff00]/20 blur-[60px] md:blur-[180px] md:animate-glow-breath" />
 
           <div className="relative flex flex-col items-center justify-center gap-2">
             <Image
@@ -43,7 +43,7 @@ export function BullionsHomeHero() {
               width={170}
               height={170}
               priority
-              className="animate-soft-blink-glow object-contain"
+              className="md:animate-soft-blink-glow object-contain"
             />
 
             <div className="w-[420px] max-w-[82vw]">
@@ -53,7 +53,7 @@ export function BullionsHomeHero() {
                 width={900}
                 height={320}
                 priority
-                className="h-auto w-full object-contain animate-fade-up"
+                className="h-auto w-full object-contain md:animate-fade-up"
               />
             </div>
           </div>

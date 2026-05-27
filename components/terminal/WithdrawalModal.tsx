@@ -255,15 +255,18 @@ export function WithdrawalModal({
               onClick={handleWithdrawalRequest}
               disabled={!canRequest}
               className={`
-                h-[64px] flex-1 rounded-full text-sm font-semibold transition-all duration-300
+                h-[64px] flex-1 rounded-full
+                text-sm font-semibold
+                transition-all duration-300
+                border
                 ${
                   canRequest
-                    ? "bg-[#6CFF72] text-black shadow-[0_0_45px_rgba(108,255,114,0.28)] hover:scale-[1.01]"
+                    ? "border-[#6CFF72]/30 bg-[#6CFF72] text-black shadow-[0_10px_40px_rgba(108,255,114,0.18)] hover:opacity-95"
                     : blockedByEngine
-                      ? "border border-[#ff9d00]/25 bg-[#ff9d00]/10 text-[#ffb84d]"
+                      ? "border-[#f59e0b]/18 bg-[#1a1408] text-[#f5c27a]"
                       : blockedByPending
-                        ? "border border-[#8b5cf6]/30 bg-[#8b5cf6]/12 text-[#c4b5fd]"
-                        : "border border-white/[0.08] bg-white/[0.04] text-white/35"
+                        ? "border-[#8b5cf6]/18 bg-[#120d1f] text-[#c4b5fd]"
+                        : "border-white/[0.08] bg-white/[0.03] text-white/40"
                 }
               `}
             >

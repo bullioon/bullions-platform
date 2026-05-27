@@ -45,7 +45,7 @@ const ENGINE_PULSE_MS =
 function tierMultiplier(tier: "BULLION" | "HELLION" | "TORION") {
   switch (tier) {
     case "BULLION":
-      return 0.45;
+      return 0.75;
 
     case "HELLION":
       return 0.8;

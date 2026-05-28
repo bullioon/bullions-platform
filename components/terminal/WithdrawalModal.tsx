@@ -200,26 +200,32 @@ export function WithdrawalModal({
             </div>
           </div>
 
-          <div className="mt-5 rounded-[28px] border border-[#8b5cf6]/40 bg-[#2d145f]/35 p-5 shadow-[0_0_45px_rgba(139,92,246,0.12)]">
-            <label className="flex items-center gap-2 text-[15px] font-semibold text-white">
-              <Image
-                src="/assets/phantom.png"
-                alt="Phantom"
-                width={22}
-                height={22}
-                className="h-[72px] w-[22px] rounded-full px-7 object-contain"
-              />
-              Phantom destination
-            </label>
-
+          <div className="mt-5 rounded-[28px] border border-white/[0.08] bg-white/[0.035] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.28)]">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/assets/phantom.png"
+                  alt="Phantom"
+                  width={34}
+                  height={34}
+                  className="h-[34px] w-[34px] rounded-full object-contain"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-white">Phantom Wallet</p>
+                  <p className="text-xs text-white/35">Withdrawal destination</p>
+                </div>
+              </div>
+              <div className="rounded-full border border-[#8b5cf6]/25 bg-[#8b5cf6]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#c4b5fd]">
+                Solana
+              </div>
+            </div>
             <input
               value={wallet}
               onChange={(e) => setWallet(e.target.value)}
-              placeholder="Enter your Phantom / SOL wallet..."
-              className="mt-3 h-[72px] w-full rounded-[22px] border border-white/[0.08] bg-black/35 px-5 text-white outline-none transition placeholder:text-white/25 focus:border-[#6CFF72]/50 focus:ring-4 focus:ring-[#6CFF72]/10"
+              placeholder="Enter your SOL / Phantom wallet..."
+              className="h-[62px] w-full rounded-[22px] border border-white/[0.08] bg-black/35 px-5 text-white outline-none transition placeholder:text-white/25 focus:border-[#8b5cf6]/50 focus:ring-4 focus:ring-[#8b5cf6]/10"
             />
           </div>
-
           <div className="mt-4">
             <label className="text-sm text-white/45">Withdrawal amount</label>
 

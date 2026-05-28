@@ -136,7 +136,7 @@ export function WithdrawalModal({
 
             <button
               onClick={onClose}
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-2xl text-white/60 transition hover:bg-white/[0.06] hover:text-white"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full px-7 border border-white/[0.08] bg-white/[0.03] text-2xl text-white/60 transition hover:bg-white/[0.06] hover:text-white"
             >
               ×
             </button>
@@ -192,22 +192,22 @@ export function WithdrawalModal({
               </div>
             </div>
 
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="mt-5 h-2 overflow-hidden rounded-full px-7 bg-white/[0.06]">
               <div
-                className="h-full rounded-full bg-[#6CFF72]"
+                className="h-full rounded-full px-7 bg-[#6CFF72]"
                 style={{ width: current.progress }}
               />
             </div>
           </div>
 
           <div className="mt-5 rounded-[28px] border border-[#8b5cf6]/40 bg-[#2d145f]/35 p-5 shadow-[0_0_45px_rgba(139,92,246,0.12)]">
-            <label className="flex items-center gap-2 text-sm font-semibold text-white">
+            <label className="flex items-center gap-2 text-[15px] font-semibold text-white">
               <Image
                 src="/assets/phantom.png"
                 alt="Phantom"
                 width={22}
                 height={22}
-                className="h-[22px] w-[22px] rounded-full object-contain"
+                className="h-[72px] w-[22px] rounded-full px-7 object-contain"
               />
               Phantom destination
             </label>
@@ -216,7 +216,7 @@ export function WithdrawalModal({
               value={wallet}
               onChange={(e) => setWallet(e.target.value)}
               placeholder="Enter your Phantom / SOL wallet..."
-              className="mt-3 h-[62px] w-full rounded-[22px] border border-white/[0.08] bg-black/35 px-5 text-white outline-none transition placeholder:text-white/25 focus:border-[#6CFF72]/50 focus:ring-4 focus:ring-[#6CFF72]/10"
+              className="mt-3 h-[72px] w-full rounded-[22px] border border-white/[0.08] bg-black/35 px-5 text-white outline-none transition placeholder:text-white/25 focus:border-[#6CFF72]/50 focus:ring-4 focus:ring-[#6CFF72]/10"
             />
           </div>
 
@@ -228,7 +228,7 @@ export function WithdrawalModal({
               onChange={(e) => setAmount(e.target.value)}
               placeholder={`Max $${maxWithdrawUsd.toFixed(2)}`}
               inputMode="decimal"
-              className="mt-3 h-[62px] w-full rounded-[22px] border border-white/[0.08] bg-black/30 px-5 text-white outline-none transition placeholder:text-white/25 focus:border-[#6CFF72]/50 focus:ring-4 focus:ring-[#6CFF72]/10"
+              className="mt-3 h-[72px] w-full rounded-[22px] border border-white/[0.08] bg-black/30 px-5 text-white outline-none transition placeholder:text-white/25 focus:border-[#6CFF72]/50 focus:ring-4 focus:ring-[#6CFF72]/10"
             />
           </div>
 
@@ -255,8 +255,8 @@ export function WithdrawalModal({
               onClick={handleWithdrawalRequest}
               disabled={!canRequest}
               className={`
-                h-[64px] flex-1 rounded-full
-                text-sm font-semibold
+                min-h-[72px] flex-1 rounded-full px-7 px-6 py-4
+                text-[15px] font-semibold
                 transition-all duration-300
                 border
                 ${
@@ -282,10 +282,10 @@ export function WithdrawalModal({
             <button
               onClick={onClose}
               className="
-                h-[64px] flex-1 rounded-full
+                min-h-[72px] flex-1 rounded-full px-7 px-6 py-4
                 border border-white/[0.08]
                 bg-white/[0.03]
-                text-sm font-semibold text-white/75
+                text-[15px] font-semibold text-white/75
                 transition-all duration-300
                 hover:bg-white/[0.06]
               "

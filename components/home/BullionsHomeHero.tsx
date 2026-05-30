@@ -59,7 +59,7 @@ export function BullionsHomeHero() {
           </div>
 
           <p className="mt-6 text-lg font-medium text-white/85">
-            Copy traders who survive. Not gamblers who get lucky.
+              Follow performance. Let AI manage risk.
           </p>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm text-white/55">

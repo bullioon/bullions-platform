@@ -8,13 +8,16 @@ export type Trader = {
   balance: number;
   topTrade: number;
   maxLoss: number;
+  pair: string;
 };
 
 export const mockTraders: Trader[] = [
   {
     id: "diego",
     name: "Diego Ramirez",
+    pair: "XAU/USD",
     tag: "XAU/USD Beast",
+    pair: "XAU/USD",
     avatar: "DR",
     roi: 74.4,
     profitUsd: 49820,
@@ -25,7 +28,9 @@ export const mockTraders: Trader[] = [
   {
     id: "bullions-bot",
     name: "Bullions Bot",
+    pair: "BTC/USD",
     tag: "AI Scalper",
+    pair: "BTC/USD",
     avatar: "BB",
     roi: 60.3,
     profitUsd: 42100,
@@ -36,7 +41,9 @@ export const mockTraders: Trader[] = [
   {
     id: "nova",
     name: "Nova Trades",
+    pair: "ETH/USD",
     tag: "Momentum Hunter",
+    pair: "ETH/USD",
     avatar: "NT",
     roi: 49.2,
     profitUsd: 33700,
@@ -47,7 +54,9 @@ export const mockTraders: Trader[] = [
   {
     id: "maria",
     name: "Maria Santos",
+    pair: "EUR/USD",
     tag: "Risk Controller",
+    pair: "EUR/USD",
     avatar: "MS",
     roi: 45.8,
     profitUsd: 29800,
@@ -58,7 +67,9 @@ export const mockTraders: Trader[] = [
   {
     id: "alex",
     name: "Alex Rivera",
+    pair: "XAU/USD",
     tag: "Gold Intraday",
+    pair: "XAU/USD",
     avatar: "AR",
     roi: 43.4,
     profitUsd: 28400,
@@ -69,7 +80,9 @@ export const mockTraders: Trader[] = [
   {
     id: "ghost",
     name: "Ghost Alpha",
+    pair: "BTC/USD",
     tag: "Low Risk Grid",
+    pair: "BTC/USD",
     avatar: "GA",
     roi: 33.6,
     profitUsd: 22100,

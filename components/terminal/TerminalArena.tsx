@@ -42,6 +42,76 @@ const ENGINE_PULSE_MS =
   process.env.NODE_ENV === "development" ? 8000 : 25000;
 
 
+
+
+function resolveTraderPair(trader?: { id?: string; name?: string; tag?: string; pair?: string }) {
+  const value = `${trader?.id || ""} ${trader?.name || ""} ${trader?.tag || ""} ${trader?.pair || ""}`.toUpperCase();
+
+  if (
+    value.includes("BTC") ||
+    value.includes("ETH") ||
+    value.includes("SOL") ||
+    value.includes("CRYPTO") ||
+    value.includes("BULLIONS BOT") ||
+    value.includes("GHOST") ||
+    value.includes("NOVA")
+  ) {
+    return "BTC/USD";
+  }
+
+  if (
+    value.includes("XAU") ||
+    value.includes("GOLD") ||
+    value.includes("ALEX") ||
+    value.includes("IVAN") ||
+    value.includes("DIEGO")
+  ) {
+    return "XAU/USD";
+  }
+
+  if (value.includes("EUR") || value.includes("MARIA")) {
+    return "EUR/USD";
+  }
+
+  if (value.includes("MIA") || value.includes("NAS")) {
+    return "NAS100";
+  }
+
+  return trader?.pair || "XAU/USD";
+}
+
+function isCryptoPair(pair?: string) {
+  const value = (pair || "").toUpperCase();
+  return (
+    value.includes("BTC") ||
+    value.includes("ETH") ||
+    value.includes("SOL") ||
+    value.includes("CRYPTO")
+  );
+}
+
+function isTraditionalMarketClosed(pair?: string) {
+  if (isCryptoPair(pair)) return false;
+
+  const nowNy = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
+  );
+
+  const day = nowNy.getDay();
+  const hour = nowNy.getHours();
+
+  // Friday after 3pm NY
+  if (day === 5 && hour >= 15) return true;
+
+  // Saturday
+  if (day === 6) return true;
+
+  // Sunday before 5pm NY
+  if (day === 0 && hour < 17) return true;
+
+  return false;
+}
+
 function tierMultiplier(tier: "BULLION" | "HELLION" | "TORION") {
   switch (tier) {
     case "BULLION":
@@ -81,6 +151,7 @@ export function TerminalArena() {
   const [network, setNetwork] = useState<"BTC" | "SOL">("SOL");
   const [txHash, setTxHash] = useState("");
   const [loginHint, setLoginHint] = useState<"deposit" | "withdraw" | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const [events, setEvents] = useState<string[]>([
     "BullPad loaded in guest mode.",
@@ -191,6 +262,11 @@ export function TerminalArena() {
       (activeUser.allocatedUsd || 0) > 0
   );
 
+  function showNotice(message: string) {
+    setNotice(message);
+    setTimeout(() => setNotice(null), 4500);
+  }
+
   function requireLogin() {
     if (!isLoggedIn) {
       setEvents((current) =>
@@ -202,10 +278,41 @@ export function TerminalArena() {
   }
 
   useEffect(() => {
+    if (!engineIsActive || !copiedTrader) return;
+
+    const activePair = resolveTraderPair(copiedTrader);
+
+    if (isTraditionalMarketClosed(activePair)) {
+      setEvents((current) =>
+        [
+          `MARKET CLOSED • ${activePair} paused. Weekend crypto traders remain active.`,
+          ...current,
+        ].slice(0, 6)
+      );
+    }
+  }, [engineIsActive, copiedTrader]);
+
+  useEffect(() => {
     if (!userId || !engineIsActive || !copiedTrader || (user?.allocatedUsd || 0) <= 0) return;
 
     const interval = setInterval(async () => {
       const accountSize = user?.allocatedUsd || 0;
+
+      const activePair = resolveTraderPair(copiedTrader);
+
+      if (isTraditionalMarketClosed(activePair)) {
+        const cryptoTrader = traders.find((t) => isCryptoPair(t.pair));
+
+        setEvents((current) =>
+          [
+            cryptoTrader
+              ? `MARKET CLOSED • ${activePair} paused. Crypto traders stay active on weekends: ${cryptoTrader.name}`
+              : `MARKET CLOSED • ${activePair} reopens Sunday 5PM NY. Crypto markets remain open 24/7.`,
+            ...current,
+          ].slice(0, 6)
+        );
+        return;
+      }
       const currentRoi =
         accountSize > 0 ? ((user?.profitUsd || 0) / accountSize) * 100 : 0;
       const nextState = resolveEngineState(currentRoi);
@@ -257,6 +364,22 @@ export function TerminalArena() {
     const traderToCopy = traderOverride || selectedTrader;
     if (!traderToCopy || amount <= 0 || amount > availableUsd) return;
 
+    const traderPair = resolveTraderPair(traderToCopy);
+
+    if (isTraditionalMarketClosed(traderPair)) {
+      const msg = `Market closed: ${traderPair} cannot be copied on weekends. Choose BTC/ETH/SOL traders instead.`;
+
+      showNotice(msg);
+
+      setEvents((current) =>
+        [
+          `MARKET CLOSED • ${traderPair} traders cannot be copied on weekends. Choose BTC/ETH/SOL traders instead.`,
+          ...current,
+        ].slice(0, 6)
+      );
+      return;
+    }
+
     await setCopyEngine({
       userId,
       copiedTraderId: traderToCopy.id,
@@ -279,6 +402,23 @@ export function TerminalArena() {
         systemActive: true,
         allocationUsd: availableUsd,
       });
+      return;
+    }
+
+    const traderForToggle = traders.find((t) => t.id === (user.copiedTraderId || selectedTrader?.id));
+    const traderPair = resolveTraderPair(traderForToggle || selectedTrader);
+
+    if (!user.systemActive && isTraditionalMarketClosed(traderPair)) {
+      const msg = `Market closed: ${traderPair} cannot be activated on weekends. Copy BTC/ETH/SOL traders instead.`;
+
+      showNotice(msg);
+
+      setEvents((current) =>
+        [
+          `MARKET CLOSED • ${traderPair} traders cannot be activated on weekends. Copy BTC/ETH/SOL traders instead.`,
+          ...current,
+        ].slice(0, 6)
+      );
       return;
     }
 
@@ -314,7 +454,14 @@ export function TerminalArena() {
   }
 
   return (
-    <section id="bullpad" className="mx-auto w-full max-w-[1480px] min-w-0 overflow-x-hidden scroll-mt-28 space-y-5 pb-10 px-4 sm:px-0">
+    <>
+      {notice && (
+        <div className="fixed left-1/2 top-5 z-[9999] w-[calc(100%-32px)] max-w-[560px] -translate-x-1/2 rounded-[22px] border border-[#f59e0b]/25 bg-[#1a1408]/95 px-5 py-4 text-sm font-semibold text-[#f5c27a] shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+          {notice}
+        </div>
+      )}
+
+      <section id="bullpad" className="mx-auto w-full max-w-[1480px] min-w-0 overflow-x-hidden scroll-mt-28 space-y-5 pb-10 px-4 sm:px-0">
       <div className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
         <UserIntroCard
           name={activeUser.name}
@@ -497,7 +644,8 @@ export function TerminalArena() {
           }}
         />
       )}
-    </section>
+      </section>
+    </>
   );
 }
 

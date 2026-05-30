@@ -92,6 +92,7 @@ export async function ensureWeeklyLeaderboard() {
   await setDoc(doc(lbRef, "bullions-bot"), {
     id: "bullions-bot",
     name: "Bullions Bot",
+    pair: "BTC/USD",
     tag: "TORION Adaptive AI",
     roi: 0,
     balance: 10000,

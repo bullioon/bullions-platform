@@ -38,9 +38,11 @@ export function resolveEngineState(roi: number): EngineState {
 
   if (roi <= -45) return "BREAKER";
   if (roi < -12) return "RECOVERY";
-  if (roi > 45) return "EUPHORIA";
 
-  // martes y viernes: días rojos potenciales
+  // profitable expansion
+  if (roi > 65) return "EUPHORIA";
+
+  // red days: Tuesday + Friday
   if (day === 2 || day === 5) return "LOSS_DAY";
 
   return "STABLE";
@@ -52,37 +54,37 @@ export function generateMove(state: EngineState) {
   switch (state) {
     case "STABLE":
       move =
-        Math.random() > 0.28
-          ? 1.8 + Math.random() * 5.2
-          : -(0.6 + Math.random() * 2.4);
+        Math.random() > 0.25
+          ? 2.2 + Math.random() * 6.8
+          : -(0.8 + Math.random() * 2.8);
       break;
 
     case "EUPHORIA":
       move =
-        Math.random() > 0.16
-          ? 6 + Math.random() * 18
-          : -(1.5 + Math.random() * 5);
+        Math.random() > 0.14
+          ? 8 + Math.random() * 26
+          : -(2 + Math.random() * 6);
       break;
 
     case "RECOVERY":
       move =
-        Math.random() > 0.22
-          ? 2.5 + Math.random() * 7.5
-          : -(0.5 + Math.random() * 2);
+        Math.random() > 0.2
+          ? 3 + Math.random() * 10
+          : -(0.8 + Math.random() * 2.4);
       break;
 
     case "LOSS_DAY":
       move =
-        Math.random() > 0.68
-          ? 1.5 + Math.random() * 5
-          : -(3 + Math.random() * 12);
+        Math.random() > 0.72
+          ? 2 + Math.random() * 5
+          : -(4 + Math.random() * 16);
       break;
 
     case "BREAKER":
       move =
-        Math.random() > 0.55
-          ? 0.5 + Math.random() * 2
-          : -(0.4 + Math.random() * 2);
+        Math.random() > 0.62
+          ? 0.8 + Math.random() * 2.2
+          : -(0.6 + Math.random() * 2.8);
       break;
   }
 
@@ -91,28 +93,33 @@ export function generateMove(state: EngineState) {
 
 export const engineEvents = {
   STABLE: [
-    "AI following stable momentum",
+    "AI tracking clean momentum",
     "Risk stable",
     "Position flow healthy",
+    "Smart exposure calibrated",
   ],
   EUPHORIA: [
     "Breakout sequence active",
     "Momentum expansion detected",
     "Volatility captured",
+    "TORION acceleration online",
   ],
   RECOVERY: [
     "Recovery logic engaged",
     "Drawdown absorbed",
     "Rebalancing active",
+    "Survival protocol repairing exposure",
   ],
   LOSS_DAY: [
     "Protection layer active",
     "Reducing exposure",
     "Volatility exceeded threshold",
+    "Loss day pressure detected",
   ],
   BREAKER: [
     "Emergency breaker enabled",
     "Capital preservation active",
     "Engine temporarily slowed",
+    "Hard risk lock engaged",
   ],
 };

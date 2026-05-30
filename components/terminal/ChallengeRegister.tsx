@@ -143,7 +143,7 @@ export function ChallengeRegister() {
 
         <button
           onClick={() => {
-            window.open("https://discord.gg/YkFBXRD6rz", "_blank", "noopener,noreferrer");
+            window.open("https://discord.gg/vq9TG5gjd4", "_blank", "noopener,noreferrer");
           }}
           className="mt-6 h-[58px] w-full rounded-full bg-[#b6ff00] text-sm font-semibold text-black shadow-[0_0_45px_rgba(182,255,0,0.20)] transition hover:opacity-90 active:scale-[0.98]"
         >

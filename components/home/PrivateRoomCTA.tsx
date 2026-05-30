@@ -1,4 +1,4 @@
-const DISCORD_URL = "https://discord.gg/YkFBXRD6rz";
+const DISCORD_URL = "https://discord.gg/vq9TG5gjd4";
 
 export function PrivateRoomCTA() {
   return (

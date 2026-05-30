@@ -31,6 +31,22 @@ const names = [
   ["Sixx Signals", "Breakout Engine"],
 ];
 
+
+function pairForTrader(name: string, tag: string) {
+  const value = `${name} ${tag}`.toUpperCase();
+
+  if (value.includes("BULLIONS BOT")) return "BTC/USD";
+  if (value.includes("PHANTOM") || value.includes("SOL")) return "SOL/USD";
+  if (value.includes("NOVA") || value.includes("ETH")) return "ETH/USD";
+  if (value.includes("GHOST")) return "BTC/USD";
+  if (value.includes("MARIA") || value.includes("EUR")) return "EUR/USD";
+  if (value.includes("MIA") || value.includes("US30")) return "US30";
+  if (value.includes("ALEX") || value.includes("NAS")) return "NAS100";
+  if (value.includes("IVAN") || value.includes("DIEGO") || value.includes("XAU") || value.includes("GOLD")) return "XAU/USD";
+
+  return "XAU/USD";
+}
+
 function getSundayStart(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();
@@ -94,6 +110,7 @@ export async function ensureWeeklyLeaderboard() {
     name: "Bullions Bot",
     pair: "BTC/USD",
     tag: "TORION Adaptive AI",
+    pair: "BTC/USD",
     roi: 0,
     balance: 10000,
     topTrade: 0,
@@ -107,6 +124,7 @@ export async function ensureWeeklyLeaderboard() {
       id: `${weekId}-trader-${i + 1}`,
       name: rotated[i][0],
       tag: rotated[i][1],
+      pair: pairForTrader(rotated[i][0], rotated[i][1]),
       roi: 0,
       balance: 10000,
       topTrade: 0,
@@ -151,6 +169,7 @@ export async function pulseWeeklyLeaderboard() {
       );
 
       await updateDoc(d.ref, {
+        pair: trader.pair || pairForTrader(trader.name, trader.tag),
         roi,
         balance: Math.round(10000 + roi * 920),
         topTrade: Number(

@@ -99,7 +99,7 @@ export function TerminalInvestPanel({
 
           <div className="mt-6 space-y-3">
             {[
-              ["Pair", "XAU/USD"],
+              ["Pair", trader?.pair || "TRADITIONAL"],
               ["Allocation room", `$${available.toLocaleString()}`],
               ["Allocated", `$${allocatedUsd.toLocaleString()}`],
               ["Profit", `+$${Math.max(0, estimatedProfit).toLocaleString()}`],

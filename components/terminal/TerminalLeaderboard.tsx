@@ -87,7 +87,7 @@ export function TerminalLeaderboard({
                   <p className="text-xs text-white/35">
                     {trader.tag}
                     {" "}
-                    <span className="text-[#b6ff00]/60">• {trader.pair || "XAU/USD"}</span>
+                    <span className="text-[#b6ff00]/60">• {trader.pair || "TRADITIONAL"}</span>
                   </p>
                 </div>
 

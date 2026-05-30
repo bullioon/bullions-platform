@@ -110,7 +110,6 @@ export async function ensureWeeklyLeaderboard() {
     name: "Bullions Bot",
     pair: "BTC/USD",
     tag: "TORION Adaptive AI",
-    pair: "BTC/USD",
     roi: 0,
     balance: 10000,
     topTrade: 0,

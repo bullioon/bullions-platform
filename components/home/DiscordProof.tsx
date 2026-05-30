@@ -1,5 +1,5 @@
 export function DiscordProof() {
-  const discordUrl = "https://discord.gg/vq9TG5gjd4";
+  const discordUrl = "https://discord.gg/YkFBXRD6rz";
 
   return (
     <section className="relative overflow-hidden rounded-[42px] border border-white/[0.06] bg-[#0b0d11] p-6 md:p-10">

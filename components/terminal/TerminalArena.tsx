@@ -45,41 +45,17 @@ const ENGINE_PULSE_MS =
 
 
 function resolveTraderPair(trader?: { id?: string; name?: string; tag?: string; pair?: string }) {
-  const value = `${trader?.id || ""} ${trader?.name || ""} ${trader?.tag || ""} ${trader?.pair || ""}`.toUpperCase();
-
-  if (
-    value.includes("BTC") ||
-    value.includes("ETH") ||
-    value.includes("SOL") ||
-    value.includes("CRYPTO") ||
-    value.includes("BULLIONS BOT") ||
-    value.includes("GHOST") ||
-    value.includes("NOVA")
-  ) {
-    return "BTC/USD";
-  }
-
-  if (
-    value.includes("XAU") ||
-    value.includes("GOLD") ||
-    value.includes("ALEX") ||
-    value.includes("IVAN") ||
-    value.includes("DIEGO")
-  ) {
-    return "XAU/USD";
-  }
-
-  if (value.includes("EUR") || value.includes("MARIA")) {
-    return "EUR/USD";
-  }
-
-  if (value.includes("MIA") || value.includes("NAS")) {
-    return "NAS100";
-  }
-
-  return trader?.pair || "XAU/USD";
+  const value = `${trader?.pair || ""} ${trader?.tag || ""} ${trader?.name || ""} ${trader?.id || ""}`.toUpperCase();
+  if (value.includes("BTC")) return "BTC/USD";
+  if (value.includes("ETH")) return "ETH/USD";
+  if (value.includes("SOL")) return "SOL/USD";
+  if (value.includes("CRYPTO")) return "CRYPTO";
+  if (value.includes("XAU") || value.includes("GOLD")) return "XAU/USD";
+  if (value.includes("EUR")) return "EUR/USD";
+  if (value.includes("NAS")) return "NAS100";
+  if (value.includes("US30")) return "US30";
+  return trader?.pair || trader?.tag || "TRADITIONAL";
 }
-
 function isCryptoPair(pair?: string) {
   const value = (pair || "").toUpperCase();
   return (
@@ -89,7 +65,6 @@ function isCryptoPair(pair?: string) {
     value.includes("CRYPTO")
   );
 }
-
 function isTraditionalMarketClosed(pair?: string) {
   if (isCryptoPair(pair)) return false;
 

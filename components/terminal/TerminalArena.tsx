@@ -90,13 +90,13 @@ function isTraditionalMarketClosed(pair?: string) {
 function tierMultiplier(tier: "BULLION" | "HELLION" | "TORION") {
   switch (tier) {
     case "BULLION":
-      return 0.75;
+      return 1.05;
 
     case "HELLION":
-      return 0.8;
+      return 1.25;
 
     case "TORION":
-      return 1.35;
+      return 1.55;
   }
 }
 

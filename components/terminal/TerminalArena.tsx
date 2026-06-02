@@ -87,6 +87,64 @@ function isTraditionalMarketClosed(pair?: string) {
   return false;
 }
 
+
+function generateTierMove({
+  tier,
+  profitUsd,
+  allocatedUsd,
+}: {
+  tier: "BULLION" | "HELLION" | "TORION";
+  profitUsd: number;
+  allocatedUsd: number;
+}) {
+  const roi = allocatedUsd > 0 ? (profitUsd / allocatedUsd) * 100 : 0;
+
+  if (tier === "TORION") {
+    return null;
+  }
+
+  const isBullion = tier === "BULLION";
+
+  const recoveryMode = isBullion ? roi < -7 : roi < -12;
+
+  const winChance = recoveryMode
+    ? isBullion
+      ? 0.8
+      : 0.7
+    : isBullion
+      ? 0.65
+      : 0.6;
+
+  const positive = Math.random() < winChance;
+
+  let movePct = 0;
+
+  if (positive) {
+    movePct = isBullion
+      ? 0.3 + Math.random() * 0.9
+      : 0.6 + Math.random() * 1.4;
+  } else {
+    movePct = isBullion
+      ? -(0.2 + Math.random() * 0.5)
+      : -(0.4 + Math.random() * 1.1);
+  }
+
+  // drawdown protection
+  if (isBullion && roi < -15 && movePct < 0) {
+    movePct = 0.2 + Math.random() * 0.5;
+  }
+
+  if (!isBullion && roi < -25 && movePct < 0) {
+    movePct = 0.4 + Math.random() * 0.9;
+  }
+
+  return {
+    movePct: Number(movePct.toFixed(2)),
+    state: recoveryMode ? "RECOVERY" : positive ? "STABLE" : "LOSS_DAY",
+  };
+}
+
+
 function tierMultiplier(tier: "BULLION" | "HELLION" | "TORION") {
   switch (tier) {
     case "BULLION":
@@ -290,14 +348,24 @@ export function TerminalArena() {
       }
       const currentRoi =
         accountSize > 0 ? ((user?.profitUsd || 0) / accountSize) * 100 : 0;
-      const nextState = resolveEngineState(currentRoi);
+      const tierMove = generateTierMove({
+        tier,
+        profitUsd: user?.profitUsd || 0,
+        allocatedUsd: accountSize,
+      });
+
+      const nextState =
+        tierMove?.state || resolveEngineState(currentRoi);
 
       setEngineState(nextState);
 
-      const movePct = generateMove(nextState);
+      const movePct =
+        tierMove?.movePct ?? generateMove(nextState);
 
       const scaledMovePct =
-        movePct * tierMultiplier(tier);
+        tier === "TORION"
+          ? movePct * tierMultiplier(tier)
+          : movePct;
 
       let nextMove =
         accountSize * (scaledMovePct / 100);
@@ -473,6 +541,7 @@ export function TerminalArena() {
           liveWallet={activeUser.depositedUsd + activeUser.profitUsd}
           depositedUsd={activeUser.depositedUsd}
           profitUsd={activeUser.profitUsd}
+          dailyPerformance={activeUser.dailyPerformance || []}
         />
       </div>
 
@@ -504,6 +573,7 @@ export function TerminalArena() {
           selectedTraderName={selectedTrader?.name}
           depositedUsd={activeUser.depositedUsd}
           profitUsd={activeUser.profitUsd}
+          dailyPerformance={activeUser.dailyPerformance || []}
           allocatedUsd={activeUser.allocatedUsd || 0}
           onToggle={toggleEngine}
           onDisconnect={disconnectTrader}

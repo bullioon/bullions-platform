@@ -354,8 +354,8 @@ export function TerminalArena() {
         allocatedUsd: accountSize,
       });
 
-      const nextState =
-        tierMove?.state || resolveEngineState(currentRoi);
+      const nextState: EngineState =
+        (tierMove?.state as EngineState | undefined) || resolveEngineState(currentRoi);
 
       setEngineState(nextState);
 
@@ -536,12 +536,8 @@ export function TerminalArena() {
         />
 
         <PerformanceChart
-          active={activeUser.systemActive}
-          data={activeUser.dailyPerformance || []}
-          liveWallet={activeUser.depositedUsd + activeUser.profitUsd}
           depositedUsd={activeUser.depositedUsd}
           profitUsd={activeUser.profitUsd}
-          dailyPerformance={activeUser.dailyPerformance || []}
         />
       </div>
 
@@ -573,7 +569,6 @@ export function TerminalArena() {
           selectedTraderName={selectedTrader?.name}
           depositedUsd={activeUser.depositedUsd}
           profitUsd={activeUser.profitUsd}
-          dailyPerformance={activeUser.dailyPerformance || []}
           allocatedUsd={activeUser.allocatedUsd || 0}
           onToggle={toggleEngine}
           onDisconnect={disconnectTrader}

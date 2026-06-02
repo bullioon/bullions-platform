@@ -11,7 +11,7 @@ type Message = {
 const seedMessages: Message[] = [
   { id: 1, text: "BullPad loaded in guest mode.", type: "system" },
   { id: 2, text: "Deposit to activate copy engine.", type: "system" },
-  { id: 3, text: "Alex deposited $250", type: "user" },
+  { id: 3, text: "Alex deposited $200", type: "user" },
   { id: 4, text: "Mia started copying Ghost Alpha", type: "user" },
 ];
 

@@ -6,7 +6,7 @@ const tiers = [
     name: "BULLION",
     image: "/assets/bullion-chip.png",
     color: "#b6ff00",
-    min: "$250",
+    min: "$200",
     allocation: "Max 40% engine allocation",
     withdrawal: "30% weekly withdrawals",
     title: "Retail survival mode",

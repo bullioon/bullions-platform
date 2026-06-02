@@ -236,8 +236,8 @@ export function TerminalArena() {
             setSelectedTraderId(data.traders[0].id);
           }
         }
-      } catch (error) {
-        console.error("Leaderboard load error:", error);
+      } catch {
+        // retry silently
       }
     }
 
@@ -538,6 +538,7 @@ export function TerminalArena() {
         <PerformanceChart
           depositedUsd={activeUser.depositedUsd}
           profitUsd={activeUser.profitUsd}
+          dailyPerformance={activeUser.dailyPerformance || []}
         />
       </div>
 

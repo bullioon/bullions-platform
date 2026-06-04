@@ -370,7 +370,7 @@ export function TerminalArena() {
       let nextMove =
         accountSize * (scaledMovePct / 100);
 
-      const lastEngineUpdate = Number(user?.updatedAt || 0);
+      const lastEngineUpdate = Number(user?.lastEngineUpdate || user?.updatedAt || 0);
       const missedTicks =
         lastEngineUpdate > 0
           ? Math.min(

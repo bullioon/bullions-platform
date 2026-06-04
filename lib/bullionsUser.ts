@@ -38,6 +38,7 @@ export type BullionsUser = {
   allocatedUsd: number;
   maxLossUsd: number;
   updatedAt?: number;
+  lastEngineUpdate?: number;
   avatarEmoji?: string;
   pendingWithdrawal?: {
     amountUsd: number;
@@ -197,6 +198,7 @@ export async function addProfit(userId: string, amountUsd: number) {
   await updateDoc(doc(db, "users", userId), {
     profitUsd: increment(amountUsd),
     updatedAt: Date.now(),
+    lastEngineUpdate: Date.now(),
   });
 }
 

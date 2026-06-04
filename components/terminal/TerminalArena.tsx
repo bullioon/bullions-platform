@@ -370,6 +370,19 @@ export function TerminalArena() {
       let nextMove =
         accountSize * (scaledMovePct / 100);
 
+      const lastEngineUpdate = Number(user?.updatedAt || 0);
+      const missedTicks =
+        lastEngineUpdate > 0
+          ? Math.min(
+              8,
+              Math.max(1, Math.floor((Date.now() - lastEngineUpdate) / ENGINE_PULSE_MS))
+            )
+          : 1;
+
+      if (tier !== "TORION" && missedTicks > 1) {
+        nextMove = nextMove * missedTicks;
+      }
+
       if (currentRoi > 120 && nextMove > 0) {
         nextMove = -(accountSize * ((4 + Math.random() * 10) / 100));
       }

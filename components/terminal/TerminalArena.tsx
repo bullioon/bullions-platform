@@ -21,7 +21,6 @@ import {
 import { TerminalLeaderboard } from "@/components/terminal/TerminalLeaderboard";
 import { TierOpportunity } from "@/components/terminal/TierOpportunity";
 import { UranioEvent } from "@/components/terminal/UranioEvent";
-import { UranioProtocol } from "@/components/terminal/UranioProtocol";
 import { TerminalInvestPanel } from "@/components/terminal/TerminalInvestPanel";
 import { TerminalChat } from "@/components/terminal/TerminalChat";
 import { ChallengeRegister } from "@/components/terminal/ChallengeRegister";
@@ -557,14 +556,6 @@ export function TerminalArena() {
           dailyPerformance={activeUser.dailyPerformance || []}
         />
       </div>
-
-      <UranioEvent
-        isTorion={(activeUser.depositedUsd || 0) >= 1000}
-        onAddCollateral={() => {
-          setCashModal("deposit");
-          setCashAmount(380);
-        }}
-      />
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-5">
 

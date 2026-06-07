@@ -22,7 +22,7 @@ function ProgressBar({ value }: { value: number }) {
 export function TierOpportunity({ depositedUsd, profitUsd, onDepositAmount }: Props) {
   const portfolio = Math.max(0, depositedUsd + profitUsd);
 
-  if (depositedUsd < 500 && portfolio >= 350) {
+  if (portfolio < 500 && portfolio >= 350) {
     const progress = Math.min(100, Math.round((portfolio / 500) * 100));
 
     return (
@@ -61,7 +61,7 @@ export function TierOpportunity({ depositedUsd, profitUsd, onDepositAmount }: Pr
     );
   }
 
-  if (depositedUsd >= 500 && depositedUsd < 1000 && portfolio >= 600) {
+  if (portfolio >= 500 && portfolio < 1000 && portfolio >= 600) {
     const progress = Math.min(100, Math.round((portfolio / 1000) * 100));
 
     return (
@@ -114,7 +114,7 @@ export function TierOpportunity({ depositedUsd, profitUsd, onDepositAmount }: Pr
     );
   }
 
-  if (depositedUsd >= 1000) {
+  if (portfolio >= 1000) {
     return <UranioEvent isTorion onAddCollateral={() => onDepositAmount(380)} />;
   }
 

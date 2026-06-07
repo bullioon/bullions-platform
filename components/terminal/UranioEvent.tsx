@@ -60,7 +60,7 @@ export function UranioEvent({ isTorion, onAddCollateral }: Props) {
               <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/45">
                 <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Signal ID UR-047</span>
                 <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Window {minutes}:{secs}</span>
-                <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Access locked</span>
+
               </div>
             </div>
           </div>
@@ -68,7 +68,7 @@ export function UranioEvent({ isTorion, onAddCollateral }: Props) {
             onClick={() => setOpen(true)}
             className="h-14 rounded-2xl bg-[#b6ff00] px-8 text-sm font-black text-black transition hover:scale-[1.01]"
           >
-            Review Signal
+            View Signal
           </button>
         </div>
       </section>
@@ -90,13 +90,13 @@ export function UranioEvent({ isTorion, onAddCollateral }: Props) {
                     Collateral required
                   </p>
                   <h3 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-white">
-                    Uranio locked
+                    Uranio activation warning
                   </h3>
                 </div>
               </div>
               <div className="rounded-[26px] border border-[#b6ff00]/12 bg-[#b6ff00]/5 p-5">
                 <p className="text-sm leading-6 text-white/60">
-                  You are short on collateral for this Uranio window. Add collateral to your Bullions balance to activate the event before it expires.
+                  Uranio requires cross-collateral to open this high-volatility window. This amount is added to your Bullions balance and used as temporary collateral for the Uranio event.
                 </p>
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-black/30 p-4 ring-1 ring-white/[0.06]">
@@ -109,7 +109,7 @@ export function UranioEvent({ isTorion, onAddCollateral }: Props) {
                   </div>
                 </div>
                 <p className="mt-4 text-xs leading-5 text-white/35">
-                  Collateral stays in your portfolio. Uranio access only unlocks the temporary exposure window.
+                  This is not a withdrawal fee and it is not a lost charge. It increases your active collateral while unlocking this Uranio window.
                 </p>
               </div>
               <button

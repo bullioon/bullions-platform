@@ -8,7 +8,18 @@ type Props = {
   onAddCollateral?: (amount: number) => void;
 };
 
+type Certificate = {
+  id: string;
+  resultUsd: number;
+  createdAt: number;
+  maxLoss: number;
+  maxWin: number;
+};
+
 type Signal = {
+  status?: "detected" | "active" | "complete";
+  activeUntil?: number;
+  resultUsd?: number;
   expiresAt: number;
   nextScanAt: number;
   collateral: number;
@@ -30,6 +41,7 @@ function createSignal(): Signal {
   const now = Date.now();
 
   return {
+    status: "detected",
     expiresAt: now + EVENT_MS,
     nextScanAt: now + randomBetween(MIN_NEXT_SCAN_MS, MAX_NEXT_SCAN_MS),
     collateral: randomBetween(180, 380),
@@ -65,9 +77,17 @@ export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) 
   const [signal, setSignal] = useState<Signal | null>(null);
   const [now, setNow] = useState(Date.now());
   const [dismissed, setDismissed] = useState(false);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
 
   const maxLoss = useMemo(() => Math.round(portfolioUsd * 0.1), [portfolioUsd]);
   const maxWin = useMemo(() => Math.round(portfolioUsd * 0.3), [portfolioUsd]);
+
+  useEffect(() => {
+    const savedCertificates = localStorage.getItem("bullions_uranio_certificates");
+    if (savedCertificates) {
+      setCertificates(JSON.parse(savedCertificates));
+    }
+  }, []);
 
   useEffect(() => {
     if (!isTorion) return;
@@ -91,6 +111,27 @@ export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) 
   useEffect(() => {
     if (!signal) return;
 
+    if (signal.status === "active" && signal.activeUntil && signal.activeUntil <= now) {
+      const completeSignal = { ...signal, status: "complete" as const };
+      const certificate: Certificate = {
+        id: signal.signalId,
+        resultUsd: signal.resultUsd || 0,
+        createdAt: Date.now(),
+        maxLoss,
+        maxWin,
+      };
+
+      const updatedCertificates = [certificate, ...certificates].slice(0, 6);
+      localStorage.setItem("bullions_uranio_certificates", JSON.stringify(updatedCertificates));
+      localStorage.setItem("bullions_uranio_signal", JSON.stringify(completeSignal));
+
+      setCertificates(updatedCertificates);
+      setSignal(completeSignal);
+      return;
+    }
+
+    if (signal.status === "complete") return;
+
     if (signal.expiresAt > now) return;
 
     const timer = setTimeout(() => {
@@ -106,7 +147,8 @@ export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) 
 
   if (!isTorion || !signal || dismissed) return null;
 
-  const seconds = Math.max(0, Math.floor((signal.expiresAt - now) / 1000));
+  const activeSeconds = signal.activeUntil ? Math.max(0, Math.floor((signal.activeUntil - now) / 1000)) : 0;
+  const seconds = signal.status === "active" ? activeSeconds : Math.max(0, Math.floor((signal.expiresAt - now) / 1000));
   const expired = seconds <= 0;
   const minutes = Math.floor(seconds / 60);
   const secs = String(seconds % 60).padStart(2, "0");
@@ -154,17 +196,54 @@ export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) 
               {expired ? "EXPIRED" : countdown}
             </p>
 
-            {expired && <p className="mt-2 text-xs font-bold uppercase tracking-[0.2em] text-white/35">Scanning market...</p>}
+            {expired && <p className="mt-2 text-xs font-bold uppercase tracking-[0.2em] text-white/35">Searching for new opportunities</p>}
 
             <button
               disabled={expired}
               onClick={() => !expired && setOpen(true)}
               className={expired ? "mt-5 w-full rounded-2xl bg-white/[0.08] px-6 py-4 text-sm font-black text-white/35" : "mt-5 w-full rounded-2xl bg-[#b6ff00] px-6 py-4 text-sm font-black text-black"}
             >
-              {expired ? "Signal Expired" : "Unlock Uranio"}
+              {expired ? "Market window closed" : signal.status === "active" ? "Uranio Active" : signal.status === "complete" ? "Certificate Ready" : "Unlock Uranio"}
             </button>
           </div>
         </div>
+        {certificates.length > 0 && (
+          <div className="relative z-10 mt-5 rounded-[26px] border border-white/[0.06] bg-black/25 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/35">
+                  Certificate vault
+                </p>
+                <p className="mt-1 text-sm font-semibold text-white/75">
+                  Uranio events completed
+                </p>
+              </div>
+
+              <span className="rounded-full bg-[#b6ff00]/10 px-3 py-1 text-xs font-black text-[#b6ff00]">
+                {certificates.length}
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              {certificates.slice(0, 3).map((cert) => (
+                <div
+                  key={`${cert.id}-${cert.createdAt}`}
+                  className="rounded-2xl bg-white/[0.035] p-3 ring-1 ring-white/[0.05]"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">
+                    {cert.id}
+                  </p>
+                  <p className={cert.resultUsd >= 0 ? "mt-1 text-lg font-black text-[#b6ff00]" : "mt-1 text-lg font-black text-red-300"}>
+                    {cert.resultUsd >= 0 ? "+" : ""}${cert.resultUsd}
+                  </p>
+                  <p className="mt-1 text-[10px] text-white/35">
+                    Max risk ${cert.maxLoss} · Upside ${cert.maxWin}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {open && (
@@ -250,6 +329,22 @@ export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) 
 
               <button
                 onClick={() => {
+                  const maxLossAmount = Math.round(portfolioUsd * 0.1);
+                  const maxWinAmount = Math.round(portfolioUsd * 0.3);
+                  const negative = Math.random() < 0.75;
+                  const resultUsd = negative
+                    ? -Math.round(maxLossAmount * (0.35 + Math.random() * 0.65))
+                    : Math.round(maxWinAmount * (0.15 + Math.random() * 0.85));
+
+                  const activeSignal = {
+                    ...signal,
+                    status: "active" as const,
+                    activeUntil: Date.now() + EVENT_MS,
+                    resultUsd,
+                  };
+
+                  localStorage.setItem("bullions_uranio_signal", JSON.stringify(activeSignal));
+                  setSignal(activeSignal);
                   setOpen(false);
                   onAddCollateral?.(signal.collateral);
                 }}

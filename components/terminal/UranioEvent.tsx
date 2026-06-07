@@ -73,42 +73,42 @@ export function UranioEvent({ isTorion, onAddCollateral }: Props) {
         </div>
       </section>
       {open && (
-        <div className="fixed inset-0 z-[9999] grid place-items-center bg-black/70 px-4 backdrop-blur-md">
-          <div className="relative w-full max-w-[520px] overflow-hidden rounded-[34px] border border-[#b6ff00]/20 bg-[#070807] p-6 shadow-[0_0_120px_rgba(182,255,0,0.12)]">
+        <div className="fixed inset-0 z-[9999] grid place-items-center overflow-y-auto bg-black/75 px-4 py-6 backdrop-blur-md">
+          <div className="relative w-full max-w-[520px] overflow-hidden rounded-[26px] border border-[#b6ff00]/20 bg-[#070807] p-4 shadow-[0_0_120px_rgba(182,255,0,0.12)] sm:rounded-[34px] sm:p-6">
             <button
               onClick={() => setOpen(false)}
-              className="absolute right-5 top-5 rounded-full bg-white/[0.06] px-3 py-1 text-xs font-bold text-white/50"
+              className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full border border-white/[0.08] bg-black/50 text-lg font-bold text-white/60 backdrop-blur hover:text-white"
             >
-              Close
+              ×
             </button>
             <div className="absolute right-[-80px] top-[-80px] h-[220px] w-[220px] rounded-full bg-[#b6ff00]/10 blur-[90px]" />
             <div className="relative z-10">
-              <div className="mb-5 flex items-center gap-4">
+              <div className="mb-4 flex items-center gap-3 sm:gap-4">
                 <UranioMark />
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#b6ff00]">
                     Collateral required
                   </p>
-                  <h3 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-white">
+                  <h3 className="mt-1 text-2xl font-semibold leading-tight tracking-[-0.05em] text-white sm:text-3xl">
                     Uranio activation warning
                   </h3>
                 </div>
               </div>
-              <div className="rounded-[26px] border border-[#b6ff00]/12 bg-[#b6ff00]/5 p-5">
-                <p className="text-sm leading-6 text-white/60">
+              <div className="rounded-[22px] border border-[#b6ff00]/12 bg-[#b6ff00]/5 p-4 sm:rounded-[26px] sm:p-5">
+                <p className="text-xs leading-5 text-white/60 sm:text-sm sm:leading-6">
                   Uranio requires cross-collateral to open this high-volatility window. This amount is added to your Bullions balance and used as temporary collateral for the Uranio event.
                 </p>
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-black/30 p-4 ring-1 ring-white/[0.06]">
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-5 sm:gap-3">
+                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06] sm:p-4">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Missing</p>
-                    <p className="mt-1 text-3xl font-semibold text-[#b6ff00]">${COLLATERAL}</p>
+                    <p className="mt-1 text-2xl font-semibold text-[#b6ff00] sm:text-3xl">${COLLATERAL}</p>
                   </div>
-                  <div className="rounded-2xl bg-black/30 p-4 ring-1 ring-white/[0.06]">
+                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06] sm:p-4">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Expires</p>
-                    <p className="mt-1 text-3xl font-semibold text-white">{minutes}:{secs}</p>
+                    <p className="mt-1 text-2xl font-semibold text-white sm:text-3xl">{minutes}:{secs}</p>
                   </div>
                 </div>
-                <p className="mt-4 text-xs leading-5 text-white/35">
+                <p className="mt-4 text-[11px] leading-5 text-white/35 sm:text-xs">
                   This is not a withdrawal fee and it is not a lost charge. It increases your active collateral while unlocking this Uranio window.
                 </p>
               </div>
@@ -117,7 +117,7 @@ export function UranioEvent({ isTorion, onAddCollateral }: Props) {
                   setOpen(false);
                   onAddCollateral?.();
                 }}
-                className="mt-5 h-14 w-full rounded-2xl bg-[#b6ff00] text-sm font-black text-black transition hover:scale-[1.01]"
+                className="mt-4 h-12 w-full rounded-2xl bg-[#b6ff00] text-sm font-black text-black transition hover:scale-[1.01] sm:mt-5 sm:h-14"
               >
                 Add ${COLLATERAL} Collateral
               </button>

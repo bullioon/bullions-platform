@@ -4,8 +4,40 @@ import { useEffect, useMemo, useState } from "react";
 
 type Props = {
   isTorion: boolean;
-  onAddCollateral?: () => void;
+  portfolioUsd: number;
+  onAddCollateral?: (amount: number) => void;
 };
+
+type Signal = {
+  expiresAt: number;
+  nextScanAt: number;
+  collateral: number;
+  signalId: string;
+  volumeScore: number;
+  volatilityScore: number;
+};
+
+const EVENT_MS = 15 * 60 * 1000;
+const EXPIRED_HIDE_MS = 5000;
+const MIN_NEXT_SCAN_MS = 20 * 60 * 1000;
+const MAX_NEXT_SCAN_MS = 6 * 60 * 60 * 1000;
+
+function randomBetween(min: number, max: number) {
+  return Math.floor(min + Math.random() * (max - min + 1));
+}
+
+function createSignal(): Signal {
+  const now = Date.now();
+
+  return {
+    expiresAt: now + EVENT_MS,
+    nextScanAt: now + randomBetween(MIN_NEXT_SCAN_MS, MAX_NEXT_SCAN_MS),
+    collateral: randomBetween(180, 380),
+    signalId: `UR-${randomBetween(41, 99)}`,
+    volumeScore: randomBetween(72, 96),
+    volatilityScore: randomBetween(68, 94),
+  };
+}
 
 function UranioMark() {
   return (
@@ -14,11 +46,11 @@ function UranioMark() {
       <div className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#b6ff00] shadow-[0_0_35px_rgba(182,255,0,0.85)]" />
 
       <div className="absolute inset-1 animate-[spin_6s_linear_infinite] rounded-full border border-[#b6ff00]/20">
-        <span className="absolute left-1/2 top-[-5px] h-3 w-3 -translate-x-1/2 rounded-full bg-[#b6ff00] shadow-[0_0_18px_rgba(182,255,0,0.8)]" />
+        <span className="absolute left-1/2 top-[-5px] h-3 w-3 -translate-x-1/2 rounded-full bg-[#b6ff00]" />
       </div>
 
       <div className="absolute inset-4 animate-[spin_8s_linear_infinite_reverse] rounded-full border border-dashed border-[#b6ff00]/25">
-        <span className="absolute right-[-4px] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white/80 shadow-[0_0_14px_rgba(255,255,255,0.65)]" />
+        <span className="absolute right-[-4px] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white/80" />
       </div>
 
       <div className="absolute inset-7 animate-[spin_4s_linear_infinite] rounded-full border border-[#b6ff00]/15">
@@ -28,55 +60,62 @@ function UranioMark() {
   );
 }
 
-export function UranioEvent({ isTorion, onAddCollateral }: Props) {
+export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) {
   const [open, setOpen] = useState(false);
-  const [expiresAt, setExpiresAt] = useState<number | null>(null);
-  const [seconds, setSeconds] = useState(14 * 60 + 52);
+  const [signal, setSignal] = useState<Signal | null>(null);
+  const [now, setNow] = useState(Date.now());
   const [dismissed, setDismissed] = useState(false);
 
-  const collateral = useMemo(() => {
-    return 180 + Math.floor(Math.random() * 280);
-  }, []);
+  const maxLoss = useMemo(() => Math.round(portfolioUsd * 0.1), [portfolioUsd]);
+  const maxWin = useMemo(() => Math.round(portfolioUsd * 0.3), [portfolioUsd]);
 
   useEffect(() => {
     if (!isTorion) return;
 
-    const key = "bullions_uranio_expires_at";
-    const existing = Number(localStorage.getItem(key) || 0);
-    const nextExpiresAt = existing > Date.now() ? existing : Date.now() + (14 * 60 + 52) * 1000;
+    const key = "bullions_uranio_signal";
+    const saved = localStorage.getItem(key);
+    const parsed = saved ? JSON.parse(saved) as Signal : null;
 
-    localStorage.setItem(key, String(nextExpiresAt));
-    setExpiresAt(nextExpiresAt);
+    if (parsed && parsed.nextScanAt > Date.now()) {
+      setSignal(parsed);
+    } else {
+      const fresh = createSignal();
+      localStorage.setItem(key, JSON.stringify(fresh));
+      setSignal(fresh);
+    }
 
-    const timer = setInterval(() => {
-      setSeconds(Math.max(0, Math.floor((nextExpiresAt - Date.now()) / 1000)));
-    }, 1000);
-
+    const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, [isTorion]);
 
   useEffect(() => {
-    if (seconds > 0) return;
+    if (!signal) return;
+
+    if (signal.expiresAt > now) return;
 
     const timer = setTimeout(() => {
       setDismissed(true);
-    }, 5000);
+      localStorage.setItem("bullions_uranio_signal", JSON.stringify({
+        ...signal,
+        nextScanAt: Date.now() + randomBetween(MIN_NEXT_SCAN_MS, MAX_NEXT_SCAN_MS),
+      }));
+    }, EXPIRED_HIDE_MS);
 
     return () => clearTimeout(timer);
-  }, [seconds]);
+  }, [signal, now]);
 
-  if (!isTorion || dismissed) return null;
+  if (!isTorion || !signal || dismissed) return null;
 
+  const seconds = Math.max(0, Math.floor((signal.expiresAt - now) / 1000));
+  const expired = seconds <= 0;
   const minutes = Math.floor(seconds / 60);
   const secs = String(seconds % 60).padStart(2, "0");
   const countdown = `${minutes}:${secs}`;
-  const expired = seconds <= 0;
 
   return (
     <>
       <section className="relative overflow-hidden rounded-[34px] border border-[#b6ff00]/15 bg-[#050705] p-6 shadow-[0_0_90px_rgba(182,255,0,0.08)]">
         <div className="absolute right-[-90px] top-[-90px] h-[260px] w-[260px] rounded-full bg-[#b6ff00]/10 blur-[90px]" />
-        <div className="absolute bottom-[-120px] left-[-120px] h-[260px] w-[260px] rounded-full bg-[#b6ff00]/5 blur-[100px]" />
 
         <div className="relative z-10 grid gap-6 lg:grid-cols-[auto_1fr_auto] lg:items-center">
           <UranioMark />
@@ -92,20 +131,18 @@ export function UranioEvent({ isTorion, onAddCollateral }: Props) {
             </div>
 
             <h3 className="mt-3 text-4xl font-semibold leading-[0.95] tracking-[-0.06em] text-white sm:text-5xl">
-              Rare signal detected
+              Opportunity detected
             </h3>
 
             <p className="mt-4 max-w-2xl text-sm leading-6 text-white/52">
-              Temporary high-volatility window detected. Review the signal before the opportunity expires.
+              Volume spike and volatility window detected. Uranio calculated a temporary event with defined risk limits.
             </p>
 
             <div className="mt-5 flex flex-wrap gap-2 text-xs text-white/45">
-              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">
-                Signal ID UR-047
-              </span>
-              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">
-                Torion-only access
-              </span>
+              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Signal {signal.signalId}</span>
+              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Volume {signal.volumeScore}%</span>
+              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Max loss ${maxLoss}</span>
+              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Max upside ${maxWin}</span>
             </div>
           </div>
 
@@ -113,14 +150,16 @@ export function UranioEvent({ isTorion, onAddCollateral }: Props) {
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#b6ff00]/65">
               Window closes in
             </p>
-            <p className="mt-2 text-5xl font-black tracking-[-0.06em] text-[#b6ff00]">
-              {countdown}
+            <p className={expired ? "mt-2 text-4xl font-black text-red-400" : "mt-2 text-5xl font-black text-[#b6ff00]"}>
+              {expired ? "EXPIRED" : countdown}
             </p>
+
+            {expired && <p className="mt-2 text-xs font-bold uppercase tracking-[0.2em] text-white/35">Scanning market...</p>}
 
             <button
               disabled={expired}
               onClick={() => !expired && setOpen(true)}
-              className={expired ? "mt-5 h-13 w-full rounded-2xl bg-white/[0.08] px-6 py-4 text-sm font-black text-white/35" : "mt-5 h-13 w-full rounded-2xl bg-[#b6ff00] px-6 py-4 text-sm font-black text-black transition hover:scale-[1.01]"}
+              className={expired ? "mt-5 w-full rounded-2xl bg-white/[0.08] px-6 py-4 text-sm font-black text-white/35" : "mt-5 w-full rounded-2xl bg-[#b6ff00] px-6 py-4 text-sm font-black text-black"}
             >
               {expired ? "Signal Expired" : "Unlock Uranio"}
             </button>
@@ -129,72 +168,94 @@ export function UranioEvent({ isTorion, onAddCollateral }: Props) {
       </section>
 
       {open && (
-        <div className="fixed inset-0 z-[9999] flex items-end justify-center overflow-y-auto bg-black/75 px-3 py-4 backdrop-blur-md sm:items-center sm:px-4 sm:py-6">
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center overflow-y-auto bg-black/75 px-3 py-4 backdrop-blur-md sm:items-center">
           <div className="relative max-h-[92vh] w-full max-w-[520px] overflow-y-auto rounded-[28px] border border-[#b6ff00]/20 bg-[#070807] p-4 shadow-[0_0_120px_rgba(182,255,0,0.12)] sm:rounded-[34px] sm:p-6">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="absolute right-3 top-3 z-50 grid h-10 w-10 place-items-center rounded-full border border-white/[0.10] bg-black/70 text-2xl font-bold leading-none text-white/70 backdrop-blur hover:text-white sm:right-5 sm:top-5"
-            >
+            <button type="button" onClick={() => setOpen(false)} className="absolute right-3 top-3 z-50 grid h-10 w-10 place-items-center rounded-full border border-white/[0.10] bg-black/70 text-2xl font-bold leading-none text-white/70">
               ×
             </button>
 
-            <div className="absolute right-[-80px] top-[-80px] h-[220px] w-[220px] rounded-full bg-[#b6ff00]/10 blur-[90px]" />
-
             <div className="relative z-10">
-              <div className="mb-4 flex items-start gap-3 pr-10 sm:gap-4 sm:pr-12">
+              <div className="mb-4 flex items-start gap-3 pr-10">
                 <UranioMark />
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#b6ff00]">
-                    Uranio activation
-                  </p>
-                  <h3 className="mt-1 text-[32px] font-semibold leading-[0.98] tracking-[-0.06em] text-white sm:text-3xl">
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#b6ff00]">Uranio activation</p>
+                  <h3 className="mt-1 text-[32px] font-semibold leading-[0.98] tracking-[-0.06em] text-white">
                     Cross-collateral required
                   </h3>
                 </div>
               </div>
 
-              <div className="rounded-[22px] border border-[#b6ff00]/12 bg-[#b6ff00]/5 p-4 sm:rounded-[26px] sm:p-5">
-                <p className="text-[13px] leading-5 text-white/58 sm:text-sm sm:leading-6">
-                  Uranio requires cross-collateral to open this high-volatility window. This amount is added to your Bullions balance and used as temporary collateral for the Uranio event.
+              <div className="rounded-[22px] border border-[#b6ff00]/12 bg-[#b6ff00]/5 p-4">
+                <p className="text-[13px] leading-5 text-white/58">
+                  Uranio requires cross-collateral to open this high-volatility window. The event is calculated with defined risk limits and no guaranteed result.
                 </p>
 
-                <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-5 sm:gap-3">
-                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06] sm:p-4">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
-                      Required
-                    </p>
-                    <p className="mt-1 text-2xl font-semibold text-[#b6ff00] sm:text-3xl">
-                      ${collateral}
-                    </p>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06]">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Collateral</p>
+                    <p className="mt-1 text-2xl font-semibold text-[#b6ff00]">${signal.collateral}</p>
                   </div>
 
-                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06] sm:p-4">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
-                      Expires
-                    </p>
-                    <p className="mt-1 text-2xl font-semibold text-white sm:text-3xl">
-                      {countdown}
-                    </p>
+                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06]">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Expires</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">{countdown}</p>
+                  </div>
+
+                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06]">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Max loss</p>
+                    <p className="mt-1 text-2xl font-semibold text-red-300">${maxLoss}</p>
+                  </div>
+
+                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06]">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Max upside</p>
+                    <p className="mt-1 text-2xl font-semibold text-[#b6ff00]">${maxWin}</p>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-2 text-[11px] leading-5 text-white/45 sm:text-xs">
-                  <p>✓ Added to your Bullions balance</p>
-                  <p>✓ Not a withdrawal fee</p>
-                  <p>✓ Not consumed or lost</p>
-                  <p>✓ Unlocks this Uranio window</p>
+                <div className="mt-4 grid gap-2 text-[11px] leading-5 text-white/45">
+                 <div className="mt-4 rounded-2xl border border-[#b6ff00]/10 bg-black/20 p-4">
+  <p className="text-sm leading-6 text-white/60">
+    Uranio events operate using cross-collateral protection.
+    Additional collateral increases available margin during
+    high-volatility execution windows and helps absorb temporary
+    drawdowns while the event remains active.
+  </p>
+
+  <div className="mt-4 space-y-2 text-xs text-white/45">
+    <div className="flex justify-between">
+      <span>Collateral required</span>
+      <span className="text-[#b6ff00] font-semibold">
+        ${signal.collateral}
+      </span>
+    </div>
+
+    <div className="flex justify-between">
+      <span>Maximum downside</span>
+      <span className="text-red-300 font-semibold">
+        ${maxLoss}
+      </span>
+    </div>
+
+    <div className="flex justify-between">
+      <span>Maximum upside</span>
+      <span className="text-[#b6ff00] font-semibold">
+        ${maxWin}
+      </span>
+    </div>
+  </div>
+</div>
+
                 </div>
               </div>
 
               <button
                 onClick={() => {
                   setOpen(false);
-                  onAddCollateral?.();
+                  onAddCollateral?.(signal.collateral);
                 }}
-                className="sticky bottom-0 mt-4 h-12 w-full rounded-2xl bg-[#b6ff00] text-sm font-black text-black shadow-[0_-12px_35px_rgba(0,0,0,0.45)] transition hover:scale-[1.01] sm:static sm:mt-5 sm:h-14"
+                className="sticky bottom-0 mt-4 h-12 w-full rounded-2xl bg-[#b6ff00] text-sm font-black text-black"
               >
-                Add ${collateral} Cross-Collateral
+                Add ${signal.collateral} Cross-Collateral
               </button>
             </div>
           </div>

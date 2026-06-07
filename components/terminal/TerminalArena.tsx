@@ -19,6 +19,7 @@ import {
   type BullionsUser,
 } from "@/lib/bullionsUser";
 import { TerminalLeaderboard } from "@/components/terminal/TerminalLeaderboard";
+import { TierOpportunity } from "@/components/terminal/TierOpportunity";
 import { UranioEvent } from "@/components/terminal/UranioEvent";
 import { UranioProtocol } from "@/components/terminal/UranioProtocol";
 import { TerminalInvestPanel } from "@/components/terminal/TerminalInvestPanel";
@@ -203,8 +204,8 @@ export function TerminalArena() {
   const userId = authUser?.uid || null;
   const activeUser = user || guestUser;
   const isLoggedIn = Boolean(authUser && user);
-  const tier = resolveTier(activeUser.depositedUsd || 0);
   const portfolioUsd = (activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0);
+  const tier = resolveTier(portfolioUsd);
   const maxAllocatableUsd = Number((portfolioUsd * maxAllocationPct(tier)).toFixed(2));
   const remainingAllocationRoom = Math.max(0, maxAllocatableUsd - (activeUser.allocatedUsd || 0));
 
@@ -564,7 +565,6 @@ export function TerminalArena() {
           setCashAmount(380);
         }}
       />
-
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-5">
 
@@ -577,6 +577,17 @@ export function TerminalArena() {
 
         <ChallengeRegister />
       </div>
+
+
+
+      <TierOpportunity
+        depositedUsd={activeUser.depositedUsd || 0}
+        profitUsd={activeUser.profitUsd || 0}
+        onDepositAmount={(amount) => {
+          setCashModal("deposit");
+          setCashAmount(amount);
+        }}
+      />
 
       <SurvivalPanel
         tier={tier}

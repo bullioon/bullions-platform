@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { HomeIconStrip } from "@/components/home/HomeIconStrip";
 import { TopFloatingMenu } from "@/components/layout/TopFloatingMenu";
 import { BullionsHomeHero } from "@/components/home/BullionsHomeHero";
+import { SocialProofToast } from "@/components/home/SocialProofToast";
 
 export default function Home() {
   return (
@@ -15,8 +16,11 @@ export default function Home() {
       <div className="relative">
         <TopFloatingMenu />
         <BullionsHomeHero />
+      <SocialProofToast />
       </div>
-          <TierAccessSection />
+
+
+      <TierAccessSection />
       <DiscordProof />
       <PrivateRoomCTA />
       <HomeIconStrip />

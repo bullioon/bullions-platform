@@ -19,6 +19,8 @@ import {
   type BullionsUser,
 } from "@/lib/bullionsUser";
 import { TerminalLeaderboard } from "@/components/terminal/TerminalLeaderboard";
+import { UranioEvent } from "@/components/terminal/UranioEvent";
+import { UranioProtocol } from "@/components/terminal/UranioProtocol";
 import { TerminalInvestPanel } from "@/components/terminal/TerminalInvestPanel";
 import { TerminalChat } from "@/components/terminal/TerminalChat";
 import { ChallengeRegister } from "@/components/terminal/ChallengeRegister";
@@ -555,12 +557,23 @@ export function TerminalArena() {
         />
       </div>
 
+      <UranioEvent
+        isTorion={(activeUser.depositedUsd || 0) >= 1000}
+        onAddCollateral={() => {
+          setCashModal("deposit");
+          setCashAmount(380);
+        }}
+      />
+
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-        <TerminalLeaderboard
-          traders={traders}
-          selectedTraderId={selectedTraderId}
-          onSelectTrader={setSelectedTraderId}
-        />
+        <div className="space-y-5">
+
+          <TerminalLeaderboard
+            traders={traders}
+            selectedTraderId={selectedTraderId}
+            onSelectTrader={setSelectedTraderId}
+          />
+        </div>
 
         <ChallengeRegister />
       </div>

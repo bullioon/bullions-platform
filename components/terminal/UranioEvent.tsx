@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
   isTorion: boolean;
@@ -8,47 +8,57 @@ type Props = {
   onAddCollateral?: (amount: number) => void;
 };
 
-type Certificate = {
-  id: string;
-  resultUsd: number;
-  createdAt: number;
+type Signal = {
+  signalId: string;
+  status: "waiting" | "active" | "complete";
+  collateral: number;
+  volume: number;
   maxLoss: number;
   maxWin: number;
-};
-
-type Signal = {
-  status?: "detected" | "active" | "complete";
-  activeUntil?: number;
   resultUsd?: number;
+  createdAt: number;
   expiresAt: number;
+  activeUntil?: number;
   nextScanAt: number;
-  collateral: number;
-  signalId: string;
-  volumeScore: number;
-  volatilityScore: number;
 };
 
 const EVENT_MS = 15 * 60 * 1000;
-const EXPIRED_HIDE_MS = 5000;
-const MIN_NEXT_SCAN_MS = 20 * 60 * 1000;
-const MAX_NEXT_SCAN_MS = 6 * 60 * 60 * 1000;
+const ACTIVE_MS = 15 * 60 * 1000;
 
 function randomBetween(min: number, max: number) {
   return Math.floor(min + Math.random() * (max - min + 1));
 }
 
-function createSignal(): Signal {
-  const now = Date.now();
+function nextScanTime() {
+  return Date.now() + randomBetween(4, 48) * 60 * 60 * 1000;
+}
 
+function createSignal(portfolioUsd: number): Signal {
   return {
-    status: "detected",
-    expiresAt: now + EVENT_MS,
-    nextScanAt: now + randomBetween(MIN_NEXT_SCAN_MS, MAX_NEXT_SCAN_MS),
+    signalId: `UR-${randomBetween(100, 999)}`,
+    status: "waiting",
     collateral: randomBetween(180, 380),
-    signalId: `UR-${randomBetween(41, 99)}`,
-    volumeScore: randomBetween(72, 96),
-    volatilityScore: randomBetween(68, 94),
+    volume: randomBetween(75, 98),
+    maxLoss: Math.round(portfolioUsd * 0.1),
+    maxWin: Math.round(portfolioUsd * 0.3),
+    createdAt: Date.now(),
+    expiresAt: Date.now() + EVENT_MS,
+    nextScanAt: nextScanTime(),
   };
+}
+
+function calculateResult(maxLoss: number, maxWin: number) {
+  const roll = Math.random();
+
+  if (roll < 0.7) {
+    return -Math.round(maxLoss * (0.3 + Math.random() * 0.7));
+  }
+
+  if (roll < 0.95) {
+    return Math.round(maxWin * (0.1 + Math.random() * 0.4));
+  }
+
+  return Math.round(maxWin);
 }
 
 function UranioMark() {
@@ -56,15 +66,12 @@ function UranioMark() {
     <div className="relative h-20 w-20 shrink-0 sm:h-24 sm:w-24">
       <div className="absolute inset-0 rounded-full bg-[#b6ff00]/10 blur-2xl" />
       <div className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#b6ff00] shadow-[0_0_35px_rgba(182,255,0,0.85)]" />
-
       <div className="absolute inset-1 animate-[spin_6s_linear_infinite] rounded-full border border-[#b6ff00]/20">
         <span className="absolute left-1/2 top-[-5px] h-3 w-3 -translate-x-1/2 rounded-full bg-[#b6ff00]" />
       </div>
-
       <div className="absolute inset-4 animate-[spin_8s_linear_infinite_reverse] rounded-full border border-dashed border-[#b6ff00]/25">
         <span className="absolute right-[-4px] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white/80" />
       </div>
-
       <div className="absolute inset-7 animate-[spin_4s_linear_infinite] rounded-full border border-[#b6ff00]/15">
         <span className="absolute bottom-[-4px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-[#b6ff00]/90" />
       </div>
@@ -76,17 +83,12 @@ export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) 
   const [open, setOpen] = useState(false);
   const [signal, setSignal] = useState<Signal | null>(null);
   const [now, setNow] = useState(Date.now());
-  const [dismissed, setDismissed] = useState(false);
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
-
-  const maxLoss = useMemo(() => Math.round(portfolioUsd * 0.1), [portfolioUsd]);
-  const maxWin = useMemo(() => Math.round(portfolioUsd * 0.3), [portfolioUsd]);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [alertVisible, setAlertVisible] = useState(false);
 
   useEffect(() => {
-    const savedCertificates = localStorage.getItem("bullions_uranio_certificates");
-    if (savedCertificates) {
-      setCertificates(JSON.parse(savedCertificates));
-    }
+    const savedSound = localStorage.getItem("bullions_uranio_sound");
+    if (savedSound === "off") setSoundEnabled(false);
   }, []);
 
   useEffect(() => {
@@ -94,71 +96,123 @@ export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) 
 
     const key = "bullions_uranio_signal";
     const saved = localStorage.getItem(key);
-    const parsed = saved ? JSON.parse(saved) as Signal : null;
+    const parsed = saved ? (JSON.parse(saved) as Signal) : null;
 
-    if (parsed && parsed.nextScanAt > Date.now()) {
-      setSignal(parsed);
-    } else {
-      const fresh = createSignal();
+    if (parsed) {
+      if (parsed.status === "complete") {
+        setSignal(parsed);
+      } else if (parsed.expiresAt > Date.now() || parsed.activeUntil && parsed.activeUntil > Date.now()) {
+        setSignal(parsed);
+      } else if (Date.now() >= parsed.nextScanAt && Math.random() < 0.18) {
+        const fresh = createSignal(portfolioUsd);
+        localStorage.setItem(key, JSON.stringify(fresh));
+        setSignal(fresh);
+      } else {
+        setSignal(null);
+      }
+    } else if (Math.random() < 0.18) {
+      const fresh = createSignal(portfolioUsd);
       localStorage.setItem(key, JSON.stringify(fresh));
       setSignal(fresh);
     }
 
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
-  }, [isTorion]);
+  }, [isTorion, portfolioUsd]);
 
   useEffect(() => {
     if (!signal) return;
 
     if (signal.status === "active" && signal.activeUntil && signal.activeUntil <= now) {
-      const completeSignal = { ...signal, status: "complete" as const };
-      const certificate: Certificate = {
-        id: signal.signalId,
-        resultUsd: signal.resultUsd || 0,
-        createdAt: Date.now(),
-        maxLoss,
-        maxWin,
+      const completeSignal: Signal = {
+        ...signal,
+        status: "complete",
+        resultUsd: signal.resultUsd ?? calculateResult(signal.maxLoss, signal.maxWin),
+        nextScanAt: nextScanTime(),
       };
 
-      const updatedCertificates = [certificate, ...certificates].slice(0, 6);
-      localStorage.setItem("bullions_uranio_certificates", JSON.stringify(updatedCertificates));
       localStorage.setItem("bullions_uranio_signal", JSON.stringify(completeSignal));
 
-      setCertificates(updatedCertificates);
+      const certs = JSON.parse(localStorage.getItem("bullions_uranio_certificates") || "[]");
+      localStorage.setItem(
+        "bullions_uranio_certificates",
+        JSON.stringify([completeSignal, ...certs].slice(0, 6))
+      );
+
       setSignal(completeSignal);
-      return;
     }
 
-    if (signal.status === "complete") return;
+    if (signal.status === "waiting" && signal.expiresAt <= now) {
+      localStorage.setItem(
+        "bullions_uranio_signal",
+        JSON.stringify({ ...signal, expiresAt: 0, nextScanAt: nextScanTime() })
+      );
 
-    if (signal.expiresAt > now) return;
-
-    const timer = setTimeout(() => {
-      setDismissed(true);
-      localStorage.setItem("bullions_uranio_signal", JSON.stringify({
-        ...signal,
-        nextScanAt: Date.now() + randomBetween(MIN_NEXT_SCAN_MS, MAX_NEXT_SCAN_MS),
-      }));
-    }, EXPIRED_HIDE_MS);
-
-    return () => clearTimeout(timer);
+      setTimeout(() => setSignal(null), 5000);
+    }
   }, [signal, now]);
 
-  if (!isTorion || !signal || dismissed) return null;
+  useEffect(() => {
+    if (!signal || signal.status !== "waiting") return;
 
-  const activeSeconds = signal.activeUntil ? Math.max(0, Math.floor((signal.activeUntil - now) / 1000)) : 0;
-  const seconds = signal.status === "active" ? activeSeconds : Math.max(0, Math.floor((signal.expiresAt - now) / 1000));
-  const expired = seconds <= 0;
+    const key = `bullions_uranio_notified_${signal.signalId}`;
+    if (localStorage.getItem(key)) return;
+
+    localStorage.setItem(key, "1");
+    setAlertVisible(true);
+
+    if (soundEnabled) {
+      try {
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+for (let i = 0; i < 4; i++) {
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  const t = audioCtx.currentTime + i * 0.55;
+  oscillator.type = "square";
+  oscillator.frequency.setValueAtTime(980, t);
+  oscillator.frequency.setValueAtTime(620, t + 0.18);
+  gainNode.gain.setValueAtTime(0.0001, t);
+  gainNode.gain.exponentialRampToValueAtTime(0.22, t + 0.03);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  oscillator.start(t);
+  oscillator.stop(t + 0.45);
+}
+navigator.vibrate?.([250, 120, 250, 120, 250]);
+      } catch {}
+    }
+
+    const timer = setTimeout(() => setAlertVisible(false), 7000);
+    return () => clearTimeout(timer);
+  }, [signal, soundEnabled]);
+
+  if (!isTorion || !signal) return null;
+
+  const targetTime = signal.status === "active" ? signal.activeUntil || now : signal.expiresAt;
+  const seconds = Math.max(0, Math.floor((targetTime - now) / 1000));
+  const expired = signal.status === "waiting" && seconds <= 0;
   const minutes = Math.floor(seconds / 60);
   const secs = String(seconds % 60).padStart(2, "0");
   const countdown = `${minutes}:${secs}`;
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-[34px] border border-[#b6ff00]/15 bg-[#050705] p-6 shadow-[0_0_90px_rgba(182,255,0,0.08)]">
-        <div className="absolute right-[-90px] top-[-90px] h-[260px] w-[260px] rounded-full bg-[#b6ff00]/10 blur-[90px]" />
+      {alertVisible && (
+        <div className="fixed left-1/2 top-5 z-[9999] w-[calc(100%-28px)] max-w-[520px] -translate-x-1/2 rounded-[24px] border border-[#b6ff00]/25 bg-[#071007]/95 p-4 shadow-[0_0_80px_rgba(182,255,0,0.18)] backdrop-blur-xl">
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#b6ff00]">
+            Uranio alert
+          </p>
+          <p className="mt-1 text-lg font-black text-white">
+            Rare opportunity detected
+          </p>
+          <p className="mt-1 text-sm text-white/45">
+            Signal {signal.signalId} · Window active for 15 minutes
+          </p>
+        </div>
+      )}
 
+      <section className="relative overflow-hidden rounded-[34px] border border-[#b6ff00]/15 bg-[#050705] p-6 shadow-[0_0_90px_rgba(182,255,0,0.08)]">
         <div className="relative z-10 grid gap-6 lg:grid-cols-[auto_1fr_auto] lg:items-center">
           <UranioMark />
 
@@ -168,82 +222,97 @@ export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) 
                 Uranio opportunity live
               </p>
               <span className="rounded-full border border-[#b6ff00]/20 bg-[#b6ff00]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#b6ff00]">
-                Rare event
+                {signal.status === "complete" ? "Certificate ready" : "Rare event"}
               </span>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !soundEnabled;
+                  setSoundEnabled(next);
+                  localStorage.setItem("bullions_uranio_sound", next ? "on" : "off");
+                }}
+                className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/45"
+              >
+                {soundEnabled ? "Sound on" : "Muted"}
+              </button>
             </div>
 
             <h3 className="mt-3 text-4xl font-semibold leading-[0.95] tracking-[-0.06em] text-white sm:text-5xl">
-              Opportunity detected
+              {signal.status === "active"
+                ? "Uranio active"
+                : signal.status === "complete"
+                  ? "Event complete"
+                  : expired
+                    ? "Market window closed"
+                    : "Opportunity detected"}
             </h3>
 
             <p className="mt-4 max-w-2xl text-sm leading-6 text-white/52">
-              Volume spike and volatility window detected. Uranio calculated a temporary event with defined risk limits.
+              {signal.status === "active"
+                ? "Cross-collateral confirmed. Uranio exposure window is running."
+                : signal.status === "complete"
+                  ? "Uranio sequence closed. Certificate generated for this event."
+                  : expired
+                    ? "Uranio is searching for new opportunities."
+                    : "Volume spike and volatility window detected. Uranio calculated a temporary event with defined risk limits."}
             </p>
 
             <div className="mt-5 flex flex-wrap gap-2 text-xs text-white/45">
               <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Signal {signal.signalId}</span>
-              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Volume {signal.volumeScore}%</span>
-              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Max loss ${maxLoss}</span>
-              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Max upside ${maxWin}</span>
+              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Volume {signal.volume}%</span>
+              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Max loss ${signal.maxLoss}</span>
+              <span className="rounded-full bg-white/[0.04] px-3 py-1 ring-1 ring-white/[0.06]">Max upside ${signal.maxWin}</span>
             </div>
           </div>
 
           <div className="min-w-[220px] rounded-[26px] border border-[#b6ff00]/12 bg-[#b6ff00]/5 p-5 text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#b6ff00]/65">
-              Window closes in
-            </p>
-            <p className={expired ? "mt-2 text-4xl font-black text-red-400" : "mt-2 text-5xl font-black text-[#b6ff00]"}>
-              {expired ? "EXPIRED" : countdown}
+              {signal.status === "active" ? "Active window" : signal.status === "complete" ? "Certificate" : "Window closes in"}
             </p>
 
-            {expired && <p className="mt-2 text-xs font-bold uppercase tracking-[0.2em] text-white/35">Searching for new opportunities</p>}
+            <p className={expired ? "mt-2 text-4xl font-black text-red-400" : "mt-2 text-5xl font-black text-[#b6ff00]"}>
+              {signal.status === "complete"
+                ? `${signal.resultUsd && signal.resultUsd >= 0 ? "+" : ""}$${signal.resultUsd || 0}`
+                : expired
+                  ? "EXPIRED"
+                  : countdown}
+            </p>
+
+            {expired && (
+              <p className="mt-2 text-xs font-bold uppercase tracking-[0.2em] text-white/35">
+                Searching for new opportunities
+              </p>
+            )}
 
             <button
               disabled={expired}
-              onClick={() => !expired && setOpen(true)}
+              onClick={() => {
+                if (expired) return;
+
+                if (signal.status === "waiting") {
+                  setOpen(true);
+                  return;
+                }
+
+                if (signal.status === "active" || signal.status === "complete") {
+                  return;
+                }
+
+                setOpen(true);
+              }}
               className={expired ? "mt-5 w-full rounded-2xl bg-white/[0.08] px-6 py-4 text-sm font-black text-white/35" : "mt-5 w-full rounded-2xl bg-[#b6ff00] px-6 py-4 text-sm font-black text-black"}
             >
-              {expired ? "Market window closed" : signal.status === "active" ? "Uranio Active" : signal.status === "complete" ? "Certificate Ready" : "Unlock Uranio"}
+              {signal.status === "active"
+                ? "Uranio Active"
+                : signal.status === "complete"
+                  ? "Certificate Ready"
+                  : expired
+                    ? "Market window closed"
+                    : "Unlock Uranio"}
             </button>
           </div>
         </div>
-        {certificates.length > 0 && (
-          <div className="relative z-10 mt-5 rounded-[26px] border border-white/[0.06] bg-black/25 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/35">
-                  Certificate vault
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white/75">
-                  Uranio events completed
-                </p>
-              </div>
-
-              <span className="rounded-full bg-[#b6ff00]/10 px-3 py-1 text-xs font-black text-[#b6ff00]">
-                {certificates.length}
-              </span>
-            </div>
-
-            <div className="mt-4 grid gap-2 sm:grid-cols-3">
-              {certificates.slice(0, 3).map((cert) => (
-                <div
-                  key={`${cert.id}-${cert.createdAt}`}
-                  className="rounded-2xl bg-white/[0.035] p-3 ring-1 ring-white/[0.05]"
-                >
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/30">
-                    {cert.id}
-                  </p>
-                  <p className={cert.resultUsd >= 0 ? "mt-1 text-lg font-black text-[#b6ff00]" : "mt-1 text-lg font-black text-red-300"}>
-                    {cert.resultUsd >= 0 ? "+" : ""}${cert.resultUsd}
-                  </p>
-                  <p className="mt-1 text-[10px] text-white/35">
-                    Max risk ${cert.maxLoss} · Upside ${cert.maxWin}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </section>
 
       {open && (
@@ -266,85 +335,27 @@ export function UranioEvent({ isTorion, portfolioUsd, onAddCollateral }: Props) 
 
               <div className="rounded-[22px] border border-[#b6ff00]/12 bg-[#b6ff00]/5 p-4">
                 <p className="text-[13px] leading-5 text-white/58">
-                  Uranio requires cross-collateral to open this high-volatility window. The event is calculated with defined risk limits and no guaranteed result.
+                  Uranio events operate using cross-collateral protection. Additional collateral increases available margin during high-volatility execution windows and helps absorb temporary drawdowns while the event remains active.
                 </p>
 
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06]">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Collateral</p>
-                    <p className="mt-1 text-2xl font-semibold text-[#b6ff00]">${signal.collateral}</p>
+                <div className="mt-4 space-y-2 text-xs text-white/45">
+                  <div className="flex justify-between">
+                    <span>Collateral required</span>
+                    <span className="font-semibold text-[#b6ff00]">${signal.collateral}</span>
                   </div>
-
-                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06]">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Expires</p>
-                    <p className="mt-1 text-2xl font-semibold text-white">{countdown}</p>
+                  <div className="flex justify-between">
+                    <span>Maximum downside</span>
+                    <span className="font-semibold text-red-300">${signal.maxLoss}</span>
                   </div>
-
-                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06]">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Max loss</p>
-                    <p className="mt-1 text-2xl font-semibold text-red-300">${maxLoss}</p>
+                  <div className="flex justify-between">
+                    <span>Maximum upside</span>
+                    <span className="font-semibold text-[#b6ff00]">${signal.maxWin}</span>
                   </div>
-
-                  <div className="rounded-2xl bg-black/30 p-3 ring-1 ring-white/[0.06]">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">Max upside</p>
-                    <p className="mt-1 text-2xl font-semibold text-[#b6ff00]">${maxWin}</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid gap-2 text-[11px] leading-5 text-white/45">
-                 <div className="mt-4 rounded-2xl border border-[#b6ff00]/10 bg-black/20 p-4">
-  <p className="text-sm leading-6 text-white/60">
-    Uranio events operate using cross-collateral protection.
-    Additional collateral increases available margin during
-    high-volatility execution windows and helps absorb temporary
-    drawdowns while the event remains active.
-  </p>
-
-  <div className="mt-4 space-y-2 text-xs text-white/45">
-    <div className="flex justify-between">
-      <span>Collateral required</span>
-      <span className="text-[#b6ff00] font-semibold">
-        ${signal.collateral}
-      </span>
-    </div>
-
-    <div className="flex justify-between">
-      <span>Maximum downside</span>
-      <span className="text-red-300 font-semibold">
-        ${maxLoss}
-      </span>
-    </div>
-
-    <div className="flex justify-between">
-      <span>Maximum upside</span>
-      <span className="text-[#b6ff00] font-semibold">
-        ${maxWin}
-      </span>
-    </div>
-  </div>
-</div>
-
                 </div>
               </div>
 
               <button
                 onClick={() => {
-                  const maxLossAmount = Math.round(portfolioUsd * 0.1);
-                  const maxWinAmount = Math.round(portfolioUsd * 0.3);
-                  const negative = Math.random() < 0.75;
-                  const resultUsd = negative
-                    ? -Math.round(maxLossAmount * (0.35 + Math.random() * 0.65))
-                    : Math.round(maxWinAmount * (0.15 + Math.random() * 0.85));
-
-                  const activeSignal = {
-                    ...signal,
-                    status: "active" as const,
-                    activeUntil: Date.now() + EVENT_MS,
-                    resultUsd,
-                  };
-
-                  localStorage.setItem("bullions_uranio_signal", JSON.stringify(activeSignal));
-                  setSignal(activeSignal);
                   setOpen(false);
                   onAddCollateral?.(signal.collateral);
                 }}

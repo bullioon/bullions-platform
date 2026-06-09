@@ -69,15 +69,18 @@ function last7Days(depositedUsd: number, profitUsd: number): DailyPerformance[] 
   });
 }
 
-export async function ensureBullionsUser(userId: string, email: string) {
+export async function ensureBullionsUser(userId: string, email: string, referralCode?: string | null) {
   const ref = doc(db, "users", userId);
   const snap = await getDoc(ref);
+
+  const cleanReferralCode = referralCode?.trim().toLowerCase() || null;
 
   if (!snap.exists()) {
     await setDoc(ref, {
       name: email.split("@")[0] || "Bullions User",
       username: email.split("@")[0] || "user",
       email,
+      referredBy: cleanReferralCode,
       emoji: "💀",
       depositedUsd: 0,
       profitUsd: 0,
@@ -96,6 +99,7 @@ export async function ensureBullionsUser(userId: string, email: string) {
       name: snap.data().name || email.split("@")[0] || "Bullions User",
       username: snap.data().username || email.split("@")[0] || "user",
       email,
+      referredBy: snap.data().referredBy || cleanReferralCode || null,
       emoji: snap.data().emoji || "💀",
     },
     { merge: true }

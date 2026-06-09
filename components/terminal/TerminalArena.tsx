@@ -24,6 +24,7 @@ import { UranioEvent } from "@/components/terminal/UranioEvent";
 import { TerminalInvestPanel } from "@/components/terminal/TerminalInvestPanel";
 import { TerminalChat } from "@/components/terminal/TerminalChat";
 import { ChallengeRegister } from "@/components/terminal/ChallengeRegister";
+import { AffiliateDashboard } from "@/components/terminal/AffiliateDashboard";
 import { PerformanceChart } from "@/components/ui/PerformanceChart";
 import { UserIntroCard } from "@/components/wallet/UserIntroCard";
 import { CopyEnginePanel } from "@/components/terminal/CopyEnginePanel";
@@ -219,6 +220,15 @@ export function TerminalArena() {
   );
 
   useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+
+    if (ref) {
+      localStorage.setItem("bullions_ref", ref);
+      console.log("Referral captured:", ref);
+    }
+  }, []);
+
+  useEffect(() => {
     let active = true;
 
     async function loadLeaderboard() {
@@ -270,7 +280,14 @@ export function TerminalArena() {
         return;
       }
 
-      await ensureBullionsUser(firebaseUser.uid, firebaseUser.email || "");
+      const referralCode =
+        typeof window !== "undefined"
+          ? localStorage.getItem("bullions_ref")
+          : null;
+
+      console.log("Referral before user creation:", referralCode);
+
+      await ensureBullionsUser(firebaseUser.uid, firebaseUser.email || "", referralCode);
       unsubscribeUser = subscribeBullionsUser(firebaseUser.uid, setUser);
     });
 
@@ -566,7 +583,9 @@ export function TerminalArena() {
           />
         </div>
 
-        <ChallengeRegister />
+        <div className="space-y-5">
+          <ChallengeRegister />
+        </div>
       </div>
 
 
@@ -591,6 +610,7 @@ export function TerminalArena() {
         enginePhase={enginePhase}
       />
 
+
       <div id="copy-terminal" className="grid scroll-mt-28 gap-5 lg:grid-cols-[0.85fr_1.15fr]">
         <CopyEnginePanel
           isActive={activeUser.systemActive}
@@ -612,6 +632,8 @@ export function TerminalArena() {
           onInvest={handleCopy}
         />
       </div>
+
+      <AffiliateDashboard username={activeUser.username || "user"} />
 
       <TerminalChat events={events} userName={isLoggedIn ? activeUser.username || activeUser.name || authUser?.email?.split("@")[0] || "User" : "Guest"} />
 

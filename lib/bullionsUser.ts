@@ -47,6 +47,22 @@ export type BullionsUser = {
     requestedAt: number;
     weekKey: string;
   };
+  uranioPosition?: {
+    active?: boolean;
+    status?: "pending_deposit" | "active" | "completed";
+    signalId?: string;
+    collateral?: number;
+    maxLoss?: number;
+    maxProfit?: number;
+    startedAt?: number;
+    endsAt?: number;
+    activatedAt?: number;
+    depositTxHash?: string;
+    result?: "WIN" | "LOSS";
+    payout?: number;
+    resolvedAt?: number;
+    seen?: boolean;
+  };
 };
 
 function last7Days(depositedUsd: number, profitUsd: number): DailyPerformance[] {

@@ -5,6 +5,7 @@ import { UranioEvent } from "@/components/terminal/UranioEvent";
 type Props = {
   depositedUsd: number;
   profitUsd: number;
+  userId?: string | null;
   onDepositAmount: (amount: number) => void;
 };
 
@@ -19,7 +20,7 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-export function TierOpportunity({ depositedUsd, profitUsd, onDepositAmount }: Props) {
+export function TierOpportunity({ depositedUsd, profitUsd, userId, onDepositAmount }: Props) {
   const portfolio = Math.max(0, depositedUsd + profitUsd);
 
   if (portfolio < 500 && portfolio >= 350) {
@@ -115,7 +116,7 @@ export function TierOpportunity({ depositedUsd, profitUsd, onDepositAmount }: Pr
   }
 
   if (portfolio >= 1000) {
-    return <UranioEvent isTorion portfolioUsd={portfolio} onAddCollateral={(amount) => onDepositAmount(amount)} />;
+    return <UranioEvent isTorion portfolioUsd={portfolio} userId={userId} onAddCollateral={(amount) => onDepositAmount(amount)} />;
   }
 
   return null;

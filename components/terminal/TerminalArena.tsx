@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { mockTraders, type Trader } from "@/lib/mockTraders";
 import {
   subscribeWeeklyLeaderboard,
@@ -188,6 +189,7 @@ export function TerminalArena() {
   const [txHash, setTxHash] = useState("");
   const [loginHint, setLoginHint] = useState<"deposit" | "withdraw" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [showUranioResult, setShowUranioResult] = useState(false);
 
   const [events, setEvents] = useState<string[]>([
     "BullPad loaded in guest mode.",
@@ -209,7 +211,17 @@ export function TerminalArena() {
   const maxAllocatableUsd = Number((portfolioUsd * maxAllocationPct(tier)).toFixed(2));
   const remainingAllocationRoom = Math.max(0, maxAllocatableUsd - (activeUser.allocatedUsd || 0));
 
-  const availableUsd = Math.max(
+  
+  useEffect(() => {
+    if (
+      user?.uranioPosition?.status === "completed" &&
+      user?.uranioPosition?.seen === false
+    ) {
+      setShowUranioResult(true);
+    }
+  }, [user]);
+
+const availableUsd = Math.max(
     0,
     Number(
       Math.min(
@@ -536,6 +548,75 @@ export function TerminalArena() {
         </div>
       )}
 
+
+      {showUranioResult && user?.uranioPosition && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 px-4 backdrop-blur-md">
+          <div className="relative w-full max-w-md overflow-hidden rounded-[40px] border border-white/10 bg-[#0b0b0b]/95 p-10 text-center shadow-[0_30px_120px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+
+            <div className={`absolute inset-x-0 top-0 h-px ${
+              user.uranioPosition.result === "WIN"
+                ? "bg-[#b6ff00]/50"
+                : "bg-red-400/40"
+            }`} />
+
+            <div className={`mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full border ${
+              user.uranioPosition.result === "WIN"
+                ? "border-[#b6ff00]/25 bg-[#b6ff00]/10"
+                : "border-red-400/20 bg-red-400/10"
+            } text-5xl`}>
+              {user.uranioPosition.result === "WIN" ? "☢️" : "✕"}
+            </div>
+
+            <p className="text-[10px] font-black uppercase tracking-[0.45em] text-white/40">
+              URANIO EVENT
+            </p>
+
+            <h2 className="mt-5 text-4xl font-semibold tracking-[-0.05em] text-white">
+              {user.uranioPosition.result === "WIN"
+                ? "Opportunity Captured"
+                : "Window Closed"}
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-xs text-sm leading-6 text-white/55">
+              {user.uranioPosition.result === "WIN"
+                ? "The AI identified a profitable market inefficiency."
+                : "Protection mechanisms limited exposure during the event."}
+            </p>
+
+            <p className={`mt-10 text-6xl font-black tracking-[-0.06em] ${
+              user.uranioPosition.result === "WIN"
+                ? "text-[#b6ff00]"
+                : "text-red-400"
+            }`}>
+              {user.uranioPosition.result === "WIN" ? "+" : "−"}
+              ${Math.abs(user.uranioPosition.payout || 0)}
+            </p>
+
+            <div className="mt-5 inline-flex rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-semibold text-white/45">
+              {user.uranioPosition.result === "WIN"
+                ? "Credited instantly to your account"
+                : "Cross-collateral protection applied"}
+            </div>
+
+            <button
+              onClick={async () => {
+                if (!userId) return;
+
+                await updateDoc(doc(db, "users", userId), {
+                  "uranioPosition.seen": true,
+                  updatedAt: Date.now(),
+                });
+
+                setShowUranioResult(false);
+              }}
+              className="mt-10 h-14 w-full rounded-2xl bg-[#b6ff00] text-sm font-black text-black transition hover:scale-[1.01]"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
       <section id="bullpad" className="mx-auto w-full max-w-[1480px] min-w-0 overflow-x-hidden scroll-mt-28 space-y-5 pb-10 px-4 sm:px-0">
       <div className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
         <UserIntroCard
@@ -590,7 +671,7 @@ export function TerminalArena() {
 
 
 
-      <TierOpportunity
+      <TierOpportunity userId={userId}
         depositedUsd={activeUser.depositedUsd || 0}
         profitUsd={activeUser.profitUsd || 0}
         onDepositAmount={(amount) => {
@@ -726,6 +807,15 @@ export function TerminalArena() {
               amountCrypto: deposit.amountCrypto,
               txHash: deposit.txHash,
             });
+
+            if (user?.uranioPosition?.status === "pending_deposit") {
+              await updateDoc(doc(db, "users", userId), {
+                "uranioPosition.status": "active",
+                "uranioPosition.depositTxHash": deposit.txHash,
+                "uranioPosition.activatedAt": Date.now(),
+                updatedAt: Date.now(),
+              });
+            }
 
             setEvents((current) =>
               [`SOL deposit verified: ${deposit.amountCrypto.toFixed(4)} SOL`, ...current].slice(0, 6)

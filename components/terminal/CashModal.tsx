@@ -303,6 +303,13 @@ export function CashModal({
                     if (network !== "SOL") return;
                     try {
                       setStatus("waiting");
+                      const provider = (window as any).solana;
+
+                      if (!provider?.isPhantom) {
+                        window.location.href = paymentUri;
+                        return;
+                      }
+
                       const signature = await sendSolWithPhantom(cryptoAmount);
                       setStatus("verified");
                       onAutoVerified?.({

@@ -146,13 +146,6 @@ export async function registerCryptoDeposit({
 }) {
   if (!txHash) throw new Error("Missing transaction hash");
 
-  const txRef = doc(db, "processed_transactions", txHash);
-const txSnap = await getDoc(txRef);
-
-if (txSnap.exists()) {
-  throw new Error("Transaction already used");
-}
-
   const depositRef = doc(db, "users", userId, "deposits", txHash);
   const existing = await getDoc(depositRef);
 
@@ -168,16 +161,6 @@ if (txSnap.exists()) {
     status: "confirmed",
     createdAt: serverTimestamp(),
   });
-
-  await setDoc(txRef, {
-  userId,
-  network,
-  amountUsd,
-  amountCrypto,
-  txHash,
-  createdAt: serverTimestamp(),
-});
-
 
   await updateDoc(doc(db, "users", userId), {
     depositedUsd: increment(amountUsd),

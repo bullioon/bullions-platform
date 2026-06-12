@@ -1,0 +1,190 @@
+"use client";
+
+import { UranioMark } from "./UranioMark";
+import { useEffect, useState } from "react";
+import { doc, onSnapshot, updateDoc, increment } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+export function UranioEvent({ isTorion, userId }: any) {
+  const [event, setEvent] = useState<any>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const [clicked, setClicked] = useState(false);
+  const [result, setResult] = useState<"WIN" | "LOSS" | null>(null);
+
+  // 🔥 Firebase listener
+  useEffect(() => {
+    const unsubEvent = onSnapshot(doc(db, "system", "uranio"), (snap) => {
+      setEvent(snap.data());
+    });
+
+    let unsubUser: any;
+
+    if (userId) {
+      unsubUser = onSnapshot(doc(db, "users", userId), (snap) => {
+        setStatus(snap.data()?.uranioPosition?.status || null);
+      });
+    }
+
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+
+    return () => {
+      unsubEvent();
+      unsubUser?.();
+      clearInterval(timer);
+    };
+  }, [userId]);
+
+  // ✅ Reset botón cuando ya esté activo
+  useEffect(() => {
+    if (status === "active") {
+      setClicked(false);
+    }
+  }, [status]);
+
+  // ✅ Resultado automático + balance
+  useEffect(() => {
+    if (
+      event?.expiresAt &&
+      now > event.expiresAt &&
+      status === "active" &&
+      !result
+    ) {
+      const outcome = Math.random() < 0.65 ? "WIN" : "LOSS";
+      setResult(outcome);
+
+      if (userId) {
+        const profit = outcome === "WIN" ? 600 : -100;
+
+        updateDoc(doc(db, "users", userId), {
+          balance: increment(profit),
+          "uranioPosition.status": "completed",
+          updatedAt: Date.now(),
+        });
+      }
+    }
+  }, [now, event, status, result, userId]);
+
+  // ❌ no mostrar si no aplica
+  if (!isTorion || !event?.active) return null;
+
+  // ✅ MODAL DEPÓSITO
+  if (status === "pending_deposit") {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black/90">
+        <div className="bg-[#050705] border border-[#b6ff00]/30 p-8 rounded-2xl text-center shadow-[0_0_80px_rgba(182,255,0,0.25)]">
+          <h2 className="text-[#b6ff00] text-2xl font-bold">
+            Deposit Required
+          </h2>
+
+          <p className="text-white/60 mt-2">
+            Add collateral to activate Uranio
+          </p>
+
+          <button
+            onClick={async () => {
+              if (!userId) return;
+
+              await updateDoc(doc(db, "users", userId), {
+                "uranioPosition.status": "active",
+                updatedAt: Date.now(),
+              });
+            }}
+            className="mt-6 bg-[#b6ff00] px-6 py-3 rounded-xl text-black font-bold"
+          >
+            Confirm Deposit
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ POPUP RESULTADO
+  if (result) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-[#050705]">
+        <div className="relative w-[90%] max-w-md rounded-3xl border border-[#b6ff00]/30 bg-[#050705] p-8 text-center shadow-[0_0_80px_rgba(182,255,0,0.25)]">
+          <div className="absolute inset-0 rounded-3xl bg-[#b6ff00]/5 blur-2xl" />
+
+          <div className="relative z-10">
+            <p className="text-[10px] tracking-[0.3em] text-[#b6ff00]/60 uppercase">
+              Uranio Result
+            </p>
+
+            <h1 className="mt-3 text-5xl font-black text-[#b6ff00]">
+              {result}
+            </h1>
+
+            <p className="mt-4 text-2xl font-semibold text-white">
+              {result === "WIN" ? "+600 USD" : "-100 USD"}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ countdown
+  const seconds = event?.expiresAt
+    ? Math.max(0, Math.floor((event.expiresAt - now) / 1000))
+    : 0;
+
+  const minutes = Math.floor(seconds / 60);
+  const secs = String(seconds % 60).padStart(2, "0");
+
+  return (
+    <section className="relative overflow-hidden rounded-[34px] border border-[#b6ff00]/15 bg-[#050705] p-6 shadow-[0_0_90px_rgba(182,255,0,0.08)]">
+      <div className="relative z-10 grid gap-6 lg:grid-cols-[auto_1fr_auto] lg:items-center">
+
+        <UranioMark />
+
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#b6ff00]">
+            Uranio global event live
+          </p>
+
+          <h3 className="mt-3 text-4xl font-semibold text-white sm:text-5xl">
+            Opportunity detected
+          </h3>
+
+          <p className="mt-4 text-sm text-white/50">
+            Uranio detected a global market window.
+          </p>
+        </div>
+
+        <div className="min-w-[220px] rounded-[26px] border border-[#b6ff00]/12 bg-[#b6ff00]/5 p-5 text-center">
+          <p className="text-[10px] text-[#b6ff00]/65 uppercase">
+            Window closes in
+          </p>
+
+          <p className="mt-2 text-5xl font-black text-[#b6ff00]">
+            {minutes}:{secs}
+          </p>
+
+          <button
+            onClick={async () => {
+              setClicked(true);
+
+              if (!userId || !event) return;
+
+              await updateDoc(doc(db, "users", userId), {
+                "uranioPosition.status": "pending_deposit",
+                "uranioPosition.startedAt": Date.now(),
+                "uranioPosition.endsAt": event.expiresAt,
+                updatedAt: Date.now(),
+              });
+            }}
+            className="mt-5 w-full rounded-2xl bg-[#b6ff00] px-6 py-4 text-black font-bold"
+          >
+            {status === "active"
+              ? "Active"
+              : clicked
+              ? "Activating..."
+              : "Activate Uranio"}
+          </button>
+        </div>
+
+      </div>
+    </section>
+  );
+}

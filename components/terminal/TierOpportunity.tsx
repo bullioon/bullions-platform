@@ -116,8 +116,7 @@ export function TierOpportunity({ depositedUsd, profitUsd, userId, onDepositAmou
   }
 
   if (portfolio >= 1000) {
-    return <UranioEvent isTorion portfolioUsd={portfolio} userId={userId} onAddCollateral={(amount) => onDepositAmount(amount)} />;
-  }
+return <UranioEvent isTorion portfolioUsd={portfolio} userId={userId} onAddCollateral={(amount: number) => onDepositAmount(amount)} />;  }
 
   return null;
 }

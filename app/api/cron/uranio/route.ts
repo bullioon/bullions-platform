@@ -18,6 +18,17 @@ export async function GET(request: Request) {
 
   const now = Date.now();
 
+const lastResolvedAt = Number(current?.resolvedAt || 0);
+const cooldownMs = 60 * 60 * 1000;
+
+if (!force && lastResolvedAt && now - lastResolvedAt < cooldownMs) {
+  return NextResponse.json({
+    ok: true,
+    skipped: "uranio_cooldown_after_resolve",
+    remainingMs: cooldownMs - (now - lastResolvedAt),
+  });
+}
+
   if (
     !force &&
     current?.active &&
@@ -29,6 +40,18 @@ export async function GET(request: Request) {
       webhookConfigured: Boolean(webhook),
     });
   }
+
+
+  if (
+  current?.active &&
+  Number(current?.expiresAt || 0) <= now &&
+  !current?.resolved
+) {
+  return NextResponse.json({
+    ok: true,
+    skipped: "uranio_expired_waiting_resolve",
+  });
+}
 
   const shouldActivate = force || Math.random() < 0.25;
 

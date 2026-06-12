@@ -1,7 +1,5 @@
 "use client";
 
-import { UranioCertificate } from "@/components/terminal/UranioCertificate";
-import html2canvas from "html2canvas";
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
@@ -602,27 +600,6 @@ const availableUsd = Math.max(
 
             <button
               onClick={async () => {
-                const node = document.getElementById("uranio-certificate");
-                if (!node) return;
-
-                const canvas = await html2canvas(node, {
-                  backgroundColor: "#050705",
-                  scale: 3,
-                });
-
-                const link = document.createElement("a");
-                link.href = canvas.toDataURL("image/png");
-                link.download = `Bullions-Uranio-${user?.uranioPosition?.result || "RESULT"}.png`;
-                link.click();
-                alert("Uranio result image downloaded.");
-              }}
-              className="mt-7 h-14 w-full rounded-2xl bg-[#5865F2] text-sm font-black text-white shadow-[0_0_45px_rgba(88,101,242,0.28)] transition hover:scale-[1.01] hover:bg-[#4752C4]"
-            >
-              Download Result Image
-            </button>
-
-            <button
-              onClick={async () => {
                 if (!userId) return;
 
                 await updateDoc(doc(db, "users", userId), {
@@ -636,13 +613,6 @@ const availableUsd = Math.max(
             >
               Continue
             </button>
-
-            <UranioCertificate
-              result={user?.uranioPosition?.result}
-              payout={user?.uranioPosition?.payout}
-              signalId={user?.uranioPosition?.signalId}
-              username={activeUser.username}
-            />
           </div>
         </div>
       )}

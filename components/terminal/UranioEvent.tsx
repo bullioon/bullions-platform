@@ -40,6 +40,19 @@ export function UranioEvent({ isTorion, userId, onAddCollateral }: any) {
   const currentStatus =
     userPosition?.signalId === event?.signalId ? userPosition?.status || null : null;
 
+  // ✅ Auto resolve when Uranio expires
+  useEffect(() => {
+    if (!event?.active || !event?.expiresAt) return;
+    if (now < Number(event.expiresAt)) return;
+
+    fetch("/api/cron/uranio-resolve", {
+      cache: "no-store",
+    }).catch(() => {
+      // ignore resolve errors
+    });
+  }, [event?.active, event?.expiresAt, now]);
+
+
   // ✅ Reset botón cuando cambia el estado válido de este Uranio
   useEffect(() => {
     if (currentStatus === "active" || currentStatus === "pending_deposit" || !currentStatus) {

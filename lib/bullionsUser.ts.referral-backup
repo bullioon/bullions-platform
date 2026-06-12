@@ -3,10 +3,7 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
   increment,
-  query,
-  where,
   onSnapshot,
   serverTimestamp,
   setDoc,
@@ -43,8 +40,6 @@ export type BullionsUser = {
   updatedAt?: number;
   lastEngineUpdate?: number;
   avatarEmoji?: string;
-  referredBy?: string | null;
-  referralRewardPaid?: boolean;
   pendingWithdrawal?: {
     amountUsd: number;
     wallet: string;
@@ -121,11 +116,6 @@ export async function ensureBullionsUser(userId: string, email: string, referral
       username: snap.data().username || email.split("@")[0] || "user",
       email,
       referredBy: snap.data().referredBy || cleanReferralCode || null,
-      referralCapturedAt: snap.data().referredBy
-        ? snap.data().referralCapturedAt || null
-        : cleanReferralCode
-        ? Date.now()
-        : snap.data().referralCapturedAt || null,
       emoji: snap.data().emoji || "💀",
     },
     { merge: true }
@@ -189,53 +179,9 @@ if (txSnap.exists()) {
 });
 
 
-  const userRef = doc(db, "users", userId);
-  const userSnap = await getDoc(userRef);
-  const userData = userSnap.data() as BullionsUser | undefined;
-
-  await updateDoc(userRef, {
+  await updateDoc(doc(db, "users", userId), {
     depositedUsd: increment(amountUsd),
   });
-
-  const shouldPayReferralReward =
-    amountUsd >= 200 &&
-    Boolean(userData?.referredBy) &&
-    userData?.referralRewardPaid !== true;
-
-  if (shouldPayReferralReward && userData?.referredBy) {
-    const referrerQuery = query(
-      collection(db, "users"),
-      where("username", "==", userData.referredBy)
-    );
-
-    const referrerSnap = await getDocs(referrerQuery);
-    const referrerDoc = referrerSnap.docs[0];
-
-    if (referrerDoc && referrerDoc.id !== userId) {
-      await updateDoc(userRef, {
-        depositedUsd: increment(100),
-        referralRewardPaid: true,
-        referralRewardPaidAt: Date.now(),
-        referralRewardAmount: 100,
-      });
-
-      await updateDoc(referrerDoc.ref, {
-        depositedUsd: increment(100),
-        referralRewardsUsd: increment(100),
-        updatedAt: Date.now(),
-      });
-
-      await addDoc(collection(db, "referral_rewards"), {
-        referredUserId: userId,
-        referrerUserId: referrerDoc.id,
-        referralCode: userData.referredBy,
-        amountUsd: 100,
-        depositTxHash: txHash,
-        status: "paid",
-        createdAt: serverTimestamp(),
-      });
-    }
-  }
 }
 
 

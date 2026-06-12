@@ -1,12 +1,3 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/uranio",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/uranio-resolve",
-      "schedule": "5 0 * * *"
-    }
-  ]
+  "crons": []
 }

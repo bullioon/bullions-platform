@@ -1,6 +1,7 @@
 "use client";
 
 import { UranioMark } from "./UranioMark";
+import { UranioParticles } from "./UranioParticles";
 import { useEffect, useState } from "react";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -11,6 +12,9 @@ export function UranioEvent({ isTorion, userId, onAddCollateral }: any) {
   const [userPosition, setUserPosition] = useState<any>(null);
   const [now, setNow] = useState(Date.now());
   const [clicked, setClicked] = useState(false);
+  const [activationPhase, setActivationPhase] = useState<
+    "idle" | "connecting" | "matching" | "locking"
+  >("idle");
 
   // 🔥 Firebase listener
   useEffect(() => {
@@ -71,8 +75,57 @@ export function UranioEvent({ isTorion, userId, onAddCollateral }: any) {
   const minutes = Math.floor(seconds / 60);
   const secs = String(seconds % 60).padStart(2, "0");
 
+  if (activationPhase !== "idle") {
+    return (
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center overflow-hidden bg-black/95 px-4">
+        <UranioParticles active />
+
+        <div className="relative z-10 w-full max-w-[460px] text-center">
+          <p className="text-[11px] font-black uppercase tracking-[0.36em] text-[#b6ff00]/70">
+            Bullions AI
+          </p>
+
+          <div className="mx-auto mt-6 grid h-28 w-28 place-items-center rounded-full border border-[#b6ff00]/30 bg-[#b6ff00]/10 text-6xl shadow-[0_0_90px_rgba(182,255,0,0.26)]">
+            ☢️
+          </div>
+
+          <h1 className="mt-8 text-5xl font-black tracking-[-0.07em] text-white">
+            URANIO
+          </h1>
+
+          <p className="mt-5 min-h-[32px] text-lg font-semibold text-[#b6ff00]">
+            {activationPhase === "connecting" && "Connecting Neural Engine..."}
+            {activationPhase === "matching" && "Matching Liquidity Pools..."}
+            {activationPhase === "locking" && "Locking Cross Collateral..."}
+          </p>
+
+          <div className="mx-auto mt-8 h-2 w-full max-w-[340px] overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-[#b6ff00] shadow-[0_0_30px_rgba(182,255,0,0.45)] transition-all duration-700"
+              style={{
+                width:
+                  activationPhase === "connecting"
+                    ? "33%"
+                    : activationPhase === "matching"
+                    ? "66%"
+                    : "100%",
+              }}
+            />
+          </div>
+
+          <div className="mt-8 grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/35">
+            <p>Scanning institutional routes</p>
+            <p>{activationPhase === "matching" || activationPhase === "locking" ? "OTC liquidity detected" : ""}</p>
+            <p>{activationPhase === "locking" ? "Collateral route secured" : ""}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <section className="relative overflow-hidden rounded-[34px] border border-[#b6ff00]/15 bg-[#050705] p-6 shadow-[0_0_90px_rgba(182,255,0,0.08)]">
+    <section className="relative overflow-hidden rounded-[34px] border border-[#b6ff00]/20 bg-[#050705] p-6 shadow-[0_0_110px_rgba(182,255,0,0.12)]">
+      <UranioParticles active={currentStatus === "active" || currentStatus === "pending_deposit"} />
       <div className="relative z-10 grid gap-6 lg:grid-cols-[auto_1fr_auto] lg:items-center">
 
         <UranioMark />
@@ -123,6 +176,15 @@ export function UranioEvent({ isTorion, userId, onAddCollateral }: any) {
 
               if (!userId || !event) return;
 
+              setActivationPhase("connecting");
+              await new Promise((resolve) => setTimeout(resolve, 1100));
+
+              setActivationPhase("matching");
+              await new Promise((resolve) => setTimeout(resolve, 1100));
+
+              setActivationPhase("locking");
+              await new Promise((resolve) => setTimeout(resolve, 1100));
+
               if (currentStatus !== "pending_deposit") {
                 await updateDoc(doc(db, "users", userId), {
                   uranioPosition: {
@@ -140,6 +202,7 @@ export function UranioEvent({ isTorion, userId, onAddCollateral }: any) {
                 });
               }
 
+              setActivationPhase("idle");
               onAddCollateral?.(100);
             }}
             disabled={currentStatus === "active"}

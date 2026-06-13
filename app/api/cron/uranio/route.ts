@@ -53,7 +53,7 @@ if (!force && lastResolvedAt && now - lastResolvedAt < cooldownMs) {
   });
 }
 
-  const shouldActivate = force || Math.random() < 0.40;
+  const shouldActivate = force || Math.random() < 0.20;
 
   if (!shouldActivate) {
     await setDoc(

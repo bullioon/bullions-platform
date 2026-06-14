@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -258,6 +259,16 @@ export async function requestWithdrawal({
   const feeUsd = Number((amount * (feePct / 100)).toFixed(2));
   const netUsd = Number((amount - feeUsd).toFixed(2));
 
+  const userRef = doc(db, "users", userId);
+  const userSnap = await getDoc(userRef);
+  const userData = userSnap.data() as BullionsUser | undefined;
+
+  const currentDeposited = Number(userData?.depositedUsd || 0);
+  const currentProfit = Number(userData?.profitUsd || 0);
+
+  const profitDeduction = Math.min(currentProfit, amount);
+  const depositedDeduction = Math.max(0, amount - profitDeduction);
+
   await addDoc(collection(db, "withdrawals"), {
     userId,
     amountUsd: amount,
@@ -265,13 +276,18 @@ export async function requestWithdrawal({
     feeUsd,
     netUsd,
     wallet,
+    balanceDeduction: {
+      fromProfitUsd: profitDeduction,
+      fromDepositedUsd: depositedDeduction,
+    },
     status: "pending",
     weekKey,
     createdAt: serverTimestamp(),
   });
 
-  await updateDoc(doc(db, "users", userId), {
-    depositedUsd: increment(-amount),
+  await updateDoc(userRef, {
+    profitUsd: increment(-profitDeduction),
+    depositedUsd: increment(-depositedDeduction),
     systemActive: false,
     allocatedUsd: 0,
     copiedTraderId: null,
@@ -294,6 +310,29 @@ export async function withdrawUsd(userId: string, amountUsd: number) {
     amountUsd,
     wallet: "legacy",
     weekKey: new Date().toISOString().slice(0, 10),
+  });
+}
+
+export async function cancelWithdrawal({
+  userId,
+  amountUsd,
+}: {
+  userId: string;
+  amountUsd: number;
+}) {
+  const amount = Math.abs(amountUsd);
+
+  await updateDoc(doc(db, "users", userId), {
+    depositedUsd: increment(amount),
+    pendingWithdrawal: deleteField(),
+    updatedAt: Date.now(),
+  });
+
+  await addDoc(collection(db, "withdrawal_events"), {
+    userId,
+    amountUsd: amount,
+    type: "cancelled",
+    createdAt: serverTimestamp(),
   });
 }
 

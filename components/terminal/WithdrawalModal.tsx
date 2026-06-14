@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { requestWithdrawal } from "@/lib/bullionsUser";
+import { cancelWithdrawal, requestWithdrawal } from "@/lib/bullionsUser";
 
 type Props = {
   open: boolean;
@@ -16,7 +16,7 @@ type Props = {
   pendingWithdrawal?: {
     amountUsd: number;
     wallet: string;
-    status: "pending" | "released";
+    status: "pending" | "released" | "cancelled";
     requestedAt: number;
     weekKey: string;
   };
@@ -78,6 +78,16 @@ export function WithdrawalModal({
   const invalidAmount =
     !amountNumber || amountNumber <= 0 || amountNumber > maxWithdrawUsd;
 
+  const pendingRequestedAt = Number(pendingWithdrawal?.requestedAt || 0);
+  const pendingAgeMs = pendingRequestedAt ? Date.now() - pendingRequestedAt : 0;
+  const delayedProcessing = blockedByPending && pendingAgeMs >= 2 * 60 * 60 * 1000;
+  const cancelDeadlineMs = pendingRequestedAt + 7 * 60 * 60 * 1000;
+  const cancelRemainingMs = Math.max(0, cancelDeadlineMs - Date.now());
+  const canCancelPending = delayedProcessing && cancelRemainingMs > 0;
+
+  const cancelHours = Math.floor(cancelRemainingMs / (1000 * 60 * 60));
+  const cancelMinutes = Math.floor((cancelRemainingMs / (1000 * 60)) % 60);
+
   const canRequest =
     Boolean(userId) &&
     !blockedByEngine &&
@@ -97,6 +107,17 @@ export function WithdrawalModal({
     });
 
     setAmount("");
+  }
+
+  async function handleCancelWithdrawal() {
+    if (!canCancelPending || !userId || !pendingWithdrawal) return;
+
+    await cancelWithdrawal({
+      userId,
+      amountUsd: pendingWithdrawal.amountUsd,
+    });
+
+    onClose();
   }
 
   const nextSunday = new Date(now);
@@ -272,7 +293,7 @@ export function WithdrawalModal({
 
           {blockedByPending ? (
             <div className="mt-4 rounded-[22px] border border-[#8b5cf6]/25 bg-[#8b5cf6]/10 p-4 text-sm leading-6 text-white/70">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <p className="font-semibold text-white">
                   Withdrawal already requested this week.
                 </p>
@@ -286,6 +307,29 @@ export function WithdrawalModal({
                   <p>Wallet: {pendingWithdrawal?.wallet}</p>
                   <p>Status: {pendingWithdrawal?.status}</p>
                 </div>
+
+                {delayedProcessing && (
+                  <div className="rounded-2xl border border-[#f59e0b]/20 bg-[#f59e0b]/10 p-4 text-[#f5c27a]">
+                    <p className="font-bold text-white">
+                      Transaction in process
+                    </p>
+                    <p className="mt-2">
+                      The transaction is still processing and may take up to 3 days,
+                      depending on the connection speed between our liquidity provider
+                      and Phantom Wallet.
+                    </p>
+
+                    {canCancelPending ? (
+                      <p className="mt-3 font-semibold">
+                        Cancellation window: {cancelHours}H {cancelMinutes}M remaining.
+                      </p>
+                    ) : (
+                      <p className="mt-3 font-semibold">
+                        Cancellation window expired. The withdrawal is now locked for processing.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ) : blockedByEngine ? (
@@ -304,8 +348,8 @@ export function WithdrawalModal({
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <button
-              onClick={handleWithdrawalRequest}
-              disabled={!canRequest}
+              onClick={canCancelPending ? handleCancelWithdrawal : handleWithdrawalRequest}
+              disabled={canCancelPending ? false : !canRequest}
               className={`
                 min-h-[72px] flex-1 rounded-full px-7 px-6 py-4
                 text-[15px] font-semibold
@@ -324,11 +368,13 @@ export function WithdrawalModal({
             >
               {blockedByEngine
                 ? "Turn Off Engine First"
-                : blockedByPending
-                  ? "Withdrawal Pending"
-                  : blockedByDay
-                    ? `Unlocks Sunday`
-                    : "Request Withdrawal"}
+                : canCancelPending
+                  ? `Cancel Withdrawal · ${cancelHours}H ${cancelMinutes}M`
+                  : blockedByPending
+                    ? "Withdrawal Pending"
+                    : blockedByDay
+                      ? `Unlocks Sunday`
+                      : "Request Withdrawal"}
             </button>
 
             <button

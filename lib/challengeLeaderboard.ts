@@ -158,8 +158,8 @@ export async function pulseWeeklyLeaderboard() {
       const trader = d.data() as Trader & { isBot?: boolean };
       const currentRoi = Number(trader.roi || 0);
 
-      const botMove = trader.isBot ? 0.15 + Math.random() * 0.45 : 0;
-      const humanMove = trader.isBot ? 0 : Math.random() * 1.2 - 0.25;
+      const botMove = trader.isBot ? 0.01 + Math.random() * 0.04 : 0;
+      const humanMove = trader.isBot ? 0 : Math.random() * 0.08 - 0.02;
       const founderMove =
         trader.name === "axbullions" ? 0.25 + Math.random() * 0.75 : 0;
 
@@ -170,7 +170,7 @@ export async function pulseWeeklyLeaderboard() {
       await updateDoc(d.ref, {
         pair: trader.pair || pairForTrader(trader.name, trader.tag),
         roi,
-        balance: Math.round(10000 + roi * 920),
+        balance: Math.round(10000 * (1 + roi / 100)),
         topTrade: Number(
           Math.max(Number(trader.topTrade || 0), roi * 0.22).toFixed(1)
         ),

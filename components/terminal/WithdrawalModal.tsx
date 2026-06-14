@@ -81,11 +81,15 @@ export function WithdrawalModal({
   const pendingRequestedAt = Number(pendingWithdrawal?.requestedAt || 0);
   const pendingAgeMs = pendingRequestedAt ? Date.now() - pendingRequestedAt : 0;
   const delayedProcessing = blockedByPending && pendingAgeMs >= 2 * 60 * 60 * 1000;
-  const cancelDeadlineMs = pendingRequestedAt + 7 * 60 * 60 * 1000;
-  const cancelRemainingMs = Math.max(0, cancelDeadlineMs - Date.now());
+  const cancelDeadline = new Date(now);
+  cancelDeadline.setDate(now.getDate() + ((1 - now.getDay() + 7) % 7));
+  cancelDeadline.setHours(23, 59, 59, 999);
+
+  const cancelRemainingMs = Math.max(0, cancelDeadline.getTime() - Date.now());
   const canCancelPending = delayedProcessing && cancelRemainingMs > 0;
 
-  const cancelHours = Math.floor(cancelRemainingMs / (1000 * 60 * 60));
+  const cancelDays = Math.floor(cancelRemainingMs / (1000 * 60 * 60 * 24));
+  const cancelHours = Math.floor((cancelRemainingMs / (1000 * 60 * 60)) % 24);
   const cancelMinutes = Math.floor((cancelRemainingMs / (1000 * 60)) % 60);
 
   const canRequest =
@@ -321,7 +325,7 @@ export function WithdrawalModal({
 
                     {canCancelPending ? (
                       <p className="mt-3 font-semibold">
-                        Cancellation window: {cancelHours}H {cancelMinutes}M remaining.
+                        Cancellation window: {cancelDays}D {cancelHours}H {cancelMinutes}M remaining.
                       </p>
                     ) : (
                       <p className="mt-3 font-semibold">
@@ -369,7 +373,7 @@ export function WithdrawalModal({
               {blockedByEngine
                 ? "Turn Off Engine First"
                 : canCancelPending
-                  ? `Cancel Withdrawal · ${cancelHours}H ${cancelMinutes}M`
+                  ? `Cancel Withdrawal · ${cancelDays}D ${cancelHours}H ${cancelMinutes}M`
                   : blockedByPending
                     ? "Withdrawal Pending"
                     : blockedByDay

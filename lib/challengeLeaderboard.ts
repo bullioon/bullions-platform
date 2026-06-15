@@ -59,6 +59,46 @@ export function getWeekId() {
   return getSundayStart().toISOString().slice(0, 10);
 }
 
+function generateBullionsBotLeaderboardMove(currentRoi: number) {
+  const daySeed = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  const cycle = daySeed % 17;
+  const roll = Math.random();
+
+  let move = 0;
+
+  // Same market psychology as Torion:
+  // 0-2 Euphoria, 3-7 Consolidation, 8-12 Distribution,
+  // 13-14 Capitulation, 15-16 Recovery.
+
+  if (cycle <= 2) {
+    move = roll < 0.68
+      ? 0.15 + Math.random() * 0.45
+      : -(0.10 + Math.random() * 0.35);
+  } else if (cycle <= 7) {
+    move = Math.random() * 0.35 - 0.18;
+  } else if (cycle <= 12) {
+    move = roll < 0.62
+      ? -(0.20 + Math.random() * 0.65)
+      : 0.08 + Math.random() * 0.25;
+  } else if (cycle <= 14) {
+    move = roll < 0.82
+      ? -(0.45 + Math.random() * 1.15)
+      : 0.12 + Math.random() * 0.35;
+  } else {
+    move = roll < 0.62
+      ? 0.20 + Math.random() * 0.75
+      : -(0.10 + Math.random() * 0.35);
+  }
+
+  // If bot is too far above the field, mean revert a bit.
+  if (currentRoi > 25 && move > 0) {
+    move = -(0.05 + Math.random() * 0.35);
+  }
+
+  // Keep leaderboard bot realistic.
+  return Number(move.toFixed(2));
+}
+
 function seededNames(weekId: string) {
   const offset =
     weekId.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % names.length;
@@ -158,13 +198,13 @@ export async function pulseWeeklyLeaderboard() {
       const trader = d.data() as Trader & { isBot?: boolean };
       const currentRoi = Number(trader.roi || 0);
 
-      const botMove = trader.isBot ? 0.01 + Math.random() * 0.04 : 0;
+      const botMove = trader.isBot ? generateBullionsBotLeaderboardMove(currentRoi) : 0;
       const humanMove = trader.isBot ? 0 : Math.random() * 0.08 - 0.02;
       const founderMove =
         trader.name === "axbullions" ? 0.25 + Math.random() * 0.75 : 0;
 
       const roi = Number(
-        Math.max(0, currentRoi + botMove + humanMove + founderMove).toFixed(1)
+        Math.max(-25, currentRoi + botMove + humanMove + founderMove).toFixed(1)
       );
 
       await updateDoc(d.ref, {

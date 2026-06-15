@@ -73,7 +73,7 @@ export function TerminalLeaderboard({
 
                     {isBot && (
                       <span className="rounded-full bg-[#b6ff00]/10 px-2 py-0.5 text-[10px] font-semibold text-[#b6ff00] ring-1 ring-[#b6ff00]/20">
-                        TORION
+                        IA
                       </span>
                     )}
 
@@ -103,7 +103,7 @@ export function TerminalLeaderboard({
 
               {active && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-white/35">
-                  <span>{isBot ? "TORION adaptive system" : "Selected"}</span>
+                  <span>{isBot ? "IA adaptive system" : "Selected"}</span>
                   <span>•</span>
                   <span>Top trade +{trader.topTrade}%</span>
                   <span>•</span>

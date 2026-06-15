@@ -13,7 +13,7 @@ import {
   type EngineState,
 } from "@/lib/engineBehavior";
 
-const ENGINE_PULSE_MS = 5 * 60 * 1000;
+const ENGINE_PULSE_MS = 2 * 60 * 1000;
 
 function generateTorionMove({
   profitUsd,

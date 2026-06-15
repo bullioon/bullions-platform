@@ -45,7 +45,7 @@ import {
 } from "@/lib/engineBehavior";
 
 const ENGINE_PULSE_MS =
-  process.env.NODE_ENV === "development" ? 8000 : 25000;
+  process.env.NODE_ENV === "development" ? 8000 : 60 * 60 * 1000;
 
 
 
@@ -106,7 +106,86 @@ function generateTierMove({
   const roi = allocatedUsd > 0 ? (profitUsd / allocatedUsd) * 100 : 0;
 
   if (tier === "TORION") {
-    return null;
+    const daySeed = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+    const regimeRoll = (daySeed * 9301 + 49297) % 100;
+    const tickRoll = Math.random();
+
+    let movePct = 0;
+    let state: "STABLE" | "LOSS_DAY" | "RECOVERY" | "BREAKER" = "STABLE";
+
+    // If Torion is insanely up, force realistic mean reversion.
+    // Example: $1,000 -> $14,000 = +1300% ROI. That needs serious drawdowns.
+    if (roi > 900) {
+      if (tickRoll < 0.82) {
+        movePct = -(1.8 + Math.random() * 4.2);
+        state = "BREAKER";
+      } else if (tickRoll < 0.95) {
+        movePct = -(0.2 + Math.random() * 0.8);
+        state = "LOSS_DAY";
+      } else {
+        movePct = 0.3 + Math.random() * 1.4;
+        state = "RECOVERY";
+      }
+
+      return {
+        movePct: Number(movePct.toFixed(2)),
+        state,
+      };
+    }
+
+    if (roi > 350) {
+      if (tickRoll < 0.72) {
+        movePct = -(0.9 + Math.random() * 2.6);
+        state = "LOSS_DAY";
+      } else if (tickRoll < 0.9) {
+        movePct = Math.random() * 0.4 - 0.25;
+        state = "STABLE";
+      } else {
+        movePct = 0.25 + Math.random() * 1.1;
+        state = "RECOVERY";
+      }
+
+      return {
+        movePct: Number(movePct.toFixed(2)),
+        state,
+      };
+    }
+
+    // Automatic market regimes by day.
+    // 0-20: Bull, 20-55: Range, 55-85: Bear, 85-100: Panic.
+    if (regimeRoll < 20) {
+      if (tickRoll < 0.65) {
+        movePct = 0.25 + Math.random() * 1.2;
+        state = "RECOVERY";
+      } else {
+        movePct = -(0.15 + Math.random() * 0.7);
+        state = "LOSS_DAY";
+      }
+    } else if (regimeRoll < 55) {
+      movePct = Math.random() * 0.7 - 0.35;
+      state = Math.abs(movePct) < 0.15 ? "STABLE" : movePct > 0 ? "RECOVERY" : "LOSS_DAY";
+    } else if (regimeRoll < 85) {
+      if (tickRoll < 0.7) {
+        movePct = -(0.35 + Math.random() * 1.6);
+        state = "LOSS_DAY";
+      } else {
+        movePct = 0.15 + Math.random() * 0.7;
+        state = "RECOVERY";
+      }
+    } else {
+      if (tickRoll < 0.88) {
+        movePct = -(1.2 + Math.random() * 3.8);
+        state = "BREAKER";
+      } else {
+        movePct = 0.25 + Math.random() * 1.2;
+        state = "RECOVERY";
+      }
+    }
+
+    return {
+      movePct: Number(movePct.toFixed(2)),
+      state,
+    };
   }
 
   const isBullion = tier === "BULLION";
@@ -160,7 +239,7 @@ function tierMultiplier(tier: "BULLION" | "HELLION" | "TORION") {
       return 1.25;
 
     case "TORION":
-      return 1.55;
+      return 1.0;
   }
 }
 

@@ -15,6 +15,10 @@ import {
 
 const ENGINE_PULSE_MS = 60 * 1000;
 
+// Temporary market pressure: 24h loss cycle, then normal regime resumes.
+const TORION_FORCED_LOSS_UNTIL = 1781653769302;
+
+
 function generateTorionMove({
   profitUsd,
   allocatedUsd,
@@ -29,6 +33,21 @@ function generateTorionMove({
 
   let movePct = 0;
   let state: EngineState = "STABLE";
+
+  if (Date.now() < TORION_FORCED_LOSS_UNTIL) {
+    if (roll < 0.60) {
+      movePct = -(0.8 + Math.random() * 3.7);
+      state = "LOSS_DAY";
+    } else if (roll < 0.85) {
+      movePct = Math.random() * 0.7 - 0.55;
+      state = movePct >= 0 ? "STABLE" : "LOSS_DAY";
+    } else {
+      movePct = 0.25 + Math.random() * 1.2;
+      state = "RECOVERY";
+    }
+
+    return { movePct: Number(movePct.toFixed(2)), state };
+  }
 
   if (roi > 900) {
     if (roll < 0.7) {

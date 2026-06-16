@@ -13,7 +13,7 @@ import {
   type EngineState,
 } from "@/lib/engineBehavior";
 
-const ENGINE_PULSE_MS = 60 * 1000;
+const ENGINE_PULSE_MS = 25 * 1000;
 
 // Temporary market pressure: 24h loss cycle, then normal regime resumes.
 const TORION_FORCED_LOSS_UNTIL = 1781653769302;

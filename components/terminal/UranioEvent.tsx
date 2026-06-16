@@ -2,11 +2,12 @@
 
 import { UranioMark } from "./UranioMark";
 import { UranioParticles } from "./UranioParticles";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export function UranioEvent({ isTorion, userId, onAddCollateral }: any) {
+  const discordUranioTriggeredRef = useRef<string | null>(null);
   const [event, setEvent] = useState<any>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<any>(null);
@@ -27,6 +28,32 @@ export function UranioEvent({ isTorion, userId, onAddCollateral }: any) {
     if (userId) {
       unsubUser = onSnapshot(doc(db, "users", userId), (snap) => {
         const position = snap.data()?.uranioPosition || null;
+
+        const status = position?.status || null;
+        const signalId = position?.signalId || snap.data()?.signalId || String(position?.startedAt || snap.data()?.startedAt || "");
+
+        if (
+          status &&
+          ["active", "pending_deposit"].includes(status) &&
+          signalId &&
+          discordUranioTriggeredRef.current !== signalId
+        ) {
+          discordUranioTriggeredRef.current = signalId;
+
+          fetch("http://localhost:3007/uranio/activate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-bullions-secret": "uranio-demo-secret-123",
+            },
+            body: JSON.stringify({
+              fast: false,
+              signalId,
+              pnlPct: position?.pnlPct,
+              pnlUsd: position?.payout,
+            }),
+          }).catch(() => {});
+        }
         setUserPosition(position);
         setStatus(position?.status || null);
       });

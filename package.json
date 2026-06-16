@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@discordjs/voice": "^0.19.2",
     "@solana/web3.js": "^1.98.4",
+    "discord.js": "^14.26.4",
     "firebase": "^12.12.1",
     "framer-motion": "^12.40.0",
     "html2canvas": "^1.4.1",

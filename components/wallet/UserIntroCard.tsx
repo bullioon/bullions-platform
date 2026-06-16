@@ -102,7 +102,7 @@ export function UserIntroCard({
 
         <div className="mt-6 flex flex-wrap items-center gap-2 text-sm text-[#8f96a3]">
           <span className={systemActive ? "text-[#b6ff00]" : "text-[#8f96a3]"}>
-            ● {systemActive ? "Hellion Active" : "Hellion Paused"}
+            ● {systemActive ? "Engine Live" : "Hellion Paused"}
           </span>
           <span>•</span>
           <span>Risk Medium</span>

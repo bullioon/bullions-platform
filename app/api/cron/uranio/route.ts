@@ -97,6 +97,39 @@ if (!force && lastResolvedAt && now - lastResolvedAt < cooldownMs) {
 
   let discordStatus: number | null = null;
   let discordText = "";
+  let discordBotStatus: number | null = null;
+  let discordBotText = "";
+
+  const discordBotUrl = process.env.DISCORD_BOT_URANIO_URL;
+  const discordBotSecret = process.env.DISCORD_API_SECRET;
+
+  if (discordBotUrl && discordBotSecret) {
+    try {
+      const botRes = await fetch(discordBotUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-bullions-secret": discordBotSecret,
+        },
+        body: JSON.stringify({
+          signalId,
+          volume,
+          volatility,
+          expiresInMinutes: 15,
+        }),
+      });
+
+      discordBotStatus = botRes.status;
+      discordBotText = await botRes.text();
+
+      console.log("DISCORD BOT STATUS:", discordBotStatus);
+      console.log("DISCORD BOT RESPONSE:", discordBotText);
+    } catch (error) {
+      discordBotStatus = 500;
+      discordBotText = error instanceof Error ? error.message : "unknown_error";
+      console.error("DISCORD BOT ERROR:", error);
+    }
+  }
 
   if (webhook) {
     const discordRes = await fetch(webhook, {
@@ -132,6 +165,8 @@ if (!force && lastResolvedAt && now - lastResolvedAt < cooldownMs) {
     webhookConfigured: Boolean(webhook),
     discordStatus,
     discordText,
+    discordBotStatus,
+    discordBotText,
     signalId,
     expiresAt,
     volume,

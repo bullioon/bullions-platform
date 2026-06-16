@@ -36,13 +36,13 @@ function generateTorionMove({
 
   if (Date.now() < TORION_FORCED_LOSS_UNTIL) {
     if (roll < 0.60) {
-      movePct = -(0.8 + Math.random() * 3.7);
+      movePct = -(1.4 + Math.random() * 5.6);
       state = "LOSS_DAY";
     } else if (roll < 0.85) {
-      movePct = Math.random() * 0.7 - 0.55;
+      movePct = Math.random() * 1.1 - 0.85;
       state = movePct >= 0 ? "STABLE" : "LOSS_DAY";
     } else {
-      movePct = 0.25 + Math.random() * 1.2;
+      movePct = 0.45 + Math.random() * 1.8;
       state = "RECOVERY";
     }
 
@@ -51,13 +51,13 @@ function generateTorionMove({
 
   if (roi > 900) {
     if (roll < 0.7) {
-      movePct = -(2.5 + Math.random() * 7.5);
+      movePct = -(3.5 + Math.random() * 10.5);
       state = "BREAKER";
     } else if (roll < 0.9) {
-      movePct = -(0.8 + Math.random() * 2.4);
+      movePct = -(1.2 + Math.random() * 3.6);
       state = "LOSS_DAY";
     } else {
-      movePct = 0.4 + Math.random() * 2.0;
+      movePct = 0.7 + Math.random() * 3.0;
       state = "RECOVERY";
     }
 
@@ -66,14 +66,14 @@ function generateTorionMove({
 
   if (cycle <= 2) {
     if (roll < 0.68) {
-      movePct = 0.3 + Math.random() * 1.7;
+      movePct = 0.5 + Math.random() * 2.4;
       state = "RECOVERY";
     } else {
-      movePct = -(0.4 + Math.random() * 1.8);
+      movePct = -(0.7 + Math.random() * 2.7);
       state = "LOSS_DAY";
     }
   } else if (cycle <= 7) {
-    movePct = Math.random() * 1.2 - 0.65;
+    movePct = Math.random() * 1.9 - 0.95;
     state =
       Math.abs(movePct) < 0.18
         ? "STABLE"
@@ -82,26 +82,26 @@ function generateTorionMove({
           : "LOSS_DAY";
   } else if (cycle <= 12) {
     if (roll < 0.62) {
-      movePct = -(0.9 + Math.random() * 3.6);
+      movePct = -(1.4 + Math.random() * 5.4);
       state = "LOSS_DAY";
     } else {
-      movePct = 0.25 + Math.random() * 1.1;
+      movePct = 0.45 + Math.random() * 1.7;
       state = "RECOVERY";
     }
   } else if (cycle <= 14) {
     if (roll < 0.82) {
-      movePct = -(3.0 + Math.random() * 9.0);
+      movePct = -(4.5 + Math.random() * 13.5);
       state = "BREAKER";
     } else {
-      movePct = 0.5 + Math.random() * 2.2;
+      movePct = 0.8 + Math.random() * 3.4;
       state = "RECOVERY";
     }
   } else {
     if (roll < 0.62) {
-      movePct = 0.6 + Math.random() * 3.2;
+      movePct = 0.9 + Math.random() * 4.6;
       state = "RECOVERY";
     } else {
-      movePct = -(0.4 + Math.random() * 2.0);
+      movePct = -(0.7 + Math.random() * 3.0);
       state = "LOSS_DAY";
     }
   }

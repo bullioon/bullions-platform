@@ -7,7 +7,7 @@ function randomBetween(min: number, max: number) {
 }
 
 export async function GET(request: Request) {
-  const webhook = process.env.DISCORD_URANIO_WEBHOOK;
+  const webhook = ""; // disabled: Uranio now posts only through Railway bot into #uranio-history
 
   const { searchParams } = new URL(request.url);
   const force = searchParams.get("force") === "1";

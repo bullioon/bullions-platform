@@ -45,7 +45,7 @@ import {
 } from "@/lib/engineBehavior";
 
 const ENGINE_PULSE_MS =
-  process.env.NODE_ENV === "development" ? 8000 : 60 * 60 * 1000;
+  process.env.NODE_ENV === "development" ? 8000 : 15000;
 
 
 
@@ -440,8 +440,7 @@ const availableUsd = Math.max(
   useEffect(() => {
     if (!userId || !engineIsActive || !copiedTrader || (user?.allocatedUsd || 0) <= 0) return;
 
-    if (process.env.NODE_ENV !== "development") return;
-
+    // Frontend live pulse stays active so BullPad feels alive.
     const interval = setInterval(async () => {
       const accountSize = user?.allocatedUsd || 0;
 

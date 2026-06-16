@@ -440,7 +440,8 @@ const availableUsd = Math.max(
   useEffect(() => {
     if (!userId || !engineIsActive || !copiedTrader || (user?.allocatedUsd || 0) <= 0) return;
 
-    // Frontend live pulse stays active so BullPad feels alive.
+    if (process.env.NODE_ENV !== "development") return;
+
     const interval = setInterval(async () => {
       const accountSize = user?.allocatedUsd || 0;
 

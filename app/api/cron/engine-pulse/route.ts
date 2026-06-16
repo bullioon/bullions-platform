@@ -15,6 +15,8 @@ import {
 
 const ENGINE_PULSE_MS = 25 * 1000;
 
+const BULLIONS_GLOBAL_CRASH_UNTIL = 1781754871006;
+
 // Temporary market pressure: 24h loss cycle, then normal regime resumes.
 const TORION_FORCED_LOSS_UNTIL = 1781653769302;
 
@@ -109,6 +111,53 @@ function generateTorionMove({
   return { movePct: Number(movePct.toFixed(2)), state };
 }
 
+function generateGlobalCrashMove({
+  liveWallet,
+  depositedUsd,
+}: {
+  liveWallet: number;
+  depositedUsd: number;
+}) {
+  const roll = Math.random();
+
+  const floorWallet = depositedUsd * 1.25; // stop crash around +25% ROI
+  const nearFloor = liveWallet <= floorWallet * 1.18;
+
+  let movePct = 0;
+  let state: EngineState = "LOSS_DAY";
+
+  if (nearFloor) {
+    // Once near the target, reduce pressure and let normal engine take over soon.
+    if (roll < 0.45) {
+      movePct = -(0.4 + Math.random() * 1.4);
+      state = "LOSS_DAY";
+    } else if (roll < 0.75) {
+      movePct = Math.random() * 1.2 - 0.6;
+      state = "STABLE";
+    } else {
+      movePct = 0.4 + Math.random() * 1.6;
+      state = "RECOVERY";
+    }
+  } else {
+    // Black swan phase: mostly red, with fake bounces.
+    if (roll < 0.68) {
+      movePct = -(4 + Math.random() * 8); // -4% to -12%
+      state = "BREAKER";
+    } else if (roll < 0.90) {
+      movePct = -(1 + Math.random() * 3); // -1% to -4%
+      state = "LOSS_DAY";
+    } else {
+      movePct = 0.5 + Math.random() * 2.5; // fake bounce
+      state = "RECOVERY";
+    }
+  }
+
+  return {
+    movePct: Number(movePct.toFixed(2)),
+    state,
+  };
+}
+
 function generateTierMove({
   tier,
   profitUsd,
@@ -192,11 +241,25 @@ export async function GET() {
     const currentRoi =
       allocatedUsd > 0 ? (Number(user.profitUsd || 0) / allocatedUsd) * 100 : 0;
 
-    const tierMove = generateTierMove({
-      tier,
-      profitUsd: Number(user.profitUsd || 0),
-      allocatedUsd,
-    });
+    const liveWallet =
+      Number(user.depositedUsd || 0) + Number(user.profitUsd || 0);
+
+    const depositedUsd = Math.max(1, Number(user.depositedUsd || 0));
+
+    const crashActive =
+      Date.now() < BULLIONS_GLOBAL_CRASH_UNTIL &&
+      liveWallet > depositedUsd * 1.25;
+
+    const tierMove = crashActive
+      ? generateGlobalCrashMove({
+          liveWallet,
+          depositedUsd,
+        })
+      : generateTierMove({
+          tier,
+          profitUsd: Number(user.profitUsd || 0),
+          allocatedUsd,
+        });
 
     const nextState =
       (tierMove?.state as EngineState | undefined) ||

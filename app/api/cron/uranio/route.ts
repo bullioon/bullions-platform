@@ -116,6 +116,7 @@ if (!force && lastResolvedAt && now - lastResolvedAt < cooldownMs) {
           volume,
           volatility,
           expiresInMinutes: 15,
+          outcome,
         }),
       });
 
@@ -145,9 +146,10 @@ if (!force && lastResolvedAt && now - lastResolvedAt < cooldownMs) {
           `Signal: ${signalId}\n` +
           `Volume: ${volume}%\n` +
           `Volatility: ${volatility}%\n\n` +
-          `⏳ Available for 15 minutes\n` +
-          `☢️ Manual activation required\n` +
-          `📈 Risk profile calculated individually\n\n` +
+          `⏳ Live execution window: 15 minutes\n` +
+          `☢️ AI allocation engine engaged\n` +
+          `📡 Results will be published automatically\n\n` +
+          `➡️ Follow live execution in #uranio-history\n` +
           `https://bullions6x.com/bullpad`,
       }),
     });

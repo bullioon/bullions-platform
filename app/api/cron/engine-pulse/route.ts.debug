@@ -263,14 +263,7 @@ export async function GET() {
     const nextMove = allocatedUsd * (movePct / 100);
     const nextProfitUsd = Number(user.profitUsd || 0) + nextMove;
 
-    console.log({
-  user: user.username,
-  allocatedUsd,
-  movePct,
-  nextMove,
-  profitUsd: user.profitUsd,
-  crashActive,
-});await addProfit(userDoc.id, nextMove);
+    await addProfit(userDoc.id, nextMove);
 
     await recordPerformanceSnapshot({
       userId: userDoc.id,

@@ -1,3 +1,16 @@
 {
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/cron/engine-pulse",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/uranio",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/uranio-resolve",
+      "schedule": "* * * * *"
+    }
+  ]
 }

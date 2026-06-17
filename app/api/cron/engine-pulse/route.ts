@@ -15,7 +15,7 @@ import {
 
 const ENGINE_PULSE_MS = 25 * 1000;
 
-const BULLIONS_GLOBAL_CRASH_UNTIL = 1781754871006;
+const BULLIONS_GLOBAL_CRASH_UNTIL = 0;
 
 // Temporary market pressure: 24h loss cycle, then normal regime resumes.
 const TORION_FORCED_LOSS_UNTIL = 1781653769302;

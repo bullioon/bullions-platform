@@ -228,12 +228,6 @@ export async function GET() {
       continue;
     }
 
-    const last = Number(user.lastEngineUpdate || user.updatedAt || 0);
-    if (last && now - last < ENGINE_PULSE_MS) {
-      skipped++;
-      continue;
-    }
-
     const portfolioUsd =
       Number(user.depositedUsd || 0) + Number(user.profitUsd || 0);
 

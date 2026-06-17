@@ -1,16 +1,13 @@
-name: Bullions Pulse
+name: Bullions Engine Pulse
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "* * * * *"
   workflow_dispatch:
 
 jobs:
   pulse:
     runs-on: ubuntu-latest
     steps:
-      - name: Pulse leaderboard
-        run: curl -s https://bullions6x.com/api/leaderboard/pulse
-
-      - name: Pulse copy engine
-        run: curl -s https://bullions6x.com/api/engine/pulse
+      - name: Call backend engine pulse
+        run: curl -fsS https://bullions6x.com/api/cron/engine-pulse

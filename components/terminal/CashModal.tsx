@@ -20,7 +20,7 @@ type Props = {
     txHash: string;
   }) => void;
 };
-const MIN_DEPOSIT = 200;
+const MIN_DEPOSIT = 280;
 const assets = [
   { symbol: "SOL", name: "Solana", icon: "/assets/solana.png", time: "~15 sec" },
 ] as const;
@@ -241,7 +241,7 @@ const phantomBrowserUrl =
               />
             </div>
             {amount > 0 && amount < MIN_DEPOSIT && (
-              <p className="mt-2 text-xs text-red-400">Minimum deposit is $200</p>
+              <p className="mt-2 text-xs text-red-400">Minimum deposit is $280</p>
             )}
             {amount >= MIN_DEPOSIT && (
               <>

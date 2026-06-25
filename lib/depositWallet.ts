@@ -1,1 +1,1 @@
-export const DEPOSIT_WALLET = "AVL315ZjNhfzfPsSYAM1U3T1f9sXcEwfKybbZWk5EBTY";
+export const DEPOSIT_WALLET = "8MnxAPFQb7JjsSdUoAsmKxK6QVcf3i3WoefJBWGqyfGb";

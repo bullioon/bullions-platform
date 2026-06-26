@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
   addProfit,
@@ -244,16 +244,38 @@ export async function GET() {
       Date.now() < BULLIONS_GLOBAL_CRASH_UNTIL &&
       liveWallet > depositedUsd * 1.25;
 
-    const tierMove = crashActive
-      ? generateGlobalCrashMove({
-          liveWallet,
-          depositedUsd,
-        })
-      : generateTierMove({
-          tier,
-          profitUsd: Number(user.profitUsd || 0),
-          allocatedUsd,
-        });
+    const manualRecoveryUsd = Number((user as any).manualRecoveryUsd || 0);
+    const manualRecoveryActive = Boolean((user as any).manualRecoveryActive);
+
+    const manualDrawdownActive = Boolean((user as any).manualDrawdownActive);
+    const manualDrawdownPctLeft = Number((user as any).manualDrawdownPctLeft || 0);
+    const manualDrawdownDailyPct = Number((user as any).manualDrawdownDailyPct || 8);
+
+    const manualDrawdownMovePct =
+      manualDrawdownActive && manualDrawdownPctLeft > 0
+        ? -Math.min(manualDrawdownPctLeft, manualDrawdownDailyPct / 1440)
+        : 0;
+
+    const tierMove = manualDrawdownMovePct < 0
+      ? {
+          movePct: Number(manualDrawdownMovePct.toFixed(4)),
+          state: "LOSS_DAY" as EngineState,
+        }
+      : manualRecoveryActive && manualRecoveryUsd > 0
+        ? {
+            movePct: Number(((Math.min(250, manualRecoveryUsd) / allocatedUsd) * 100).toFixed(2)),
+            state: "RECOVERY" as EngineState,
+          }
+        : crashActive
+        ? generateGlobalCrashMove({
+            liveWallet,
+            depositedUsd,
+          })
+        : generateTierMove({
+            tier,
+            profitUsd: Number(user.profitUsd || 0),
+            allocatedUsd,
+          });
 
     const nextState =
       (tierMove?.state as EngineState | undefined) ||
@@ -270,7 +292,22 @@ export async function GET() {
   nextMove,
   profitUsd: user.profitUsd,
   crashActive,
-});await addProfit(userDoc.id, nextMove);
+});
+
+    await addProfit(userDoc.id, nextMove);
+
+    if (manualDrawdownMovePct < 0) {
+      const remainingDrawdown = Math.max(
+        0,
+        manualDrawdownPctLeft - Math.abs(manualDrawdownMovePct)
+      );
+
+      await updateDoc(doc(db, "users", userDoc.id), {
+        manualDrawdownPctLeft: Number(remainingDrawdown.toFixed(4)),
+        manualDrawdownActive: remainingDrawdown > 0,
+        updatedAt: Date.now(),
+      });
+    }
 
     await recordPerformanceSnapshot({
       userId: userDoc.id,

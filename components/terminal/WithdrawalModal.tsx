@@ -36,9 +36,9 @@ const tierConfig = {
     progress: "78%",
   },
   TORION: {
-    pct: "Unlimited",
-    next: "MAX LEVEL",
-    requirement: "Unlocked",
+    pct: "10%",
+    next: "DOMINION",
+    requirement: "Broker connection above $5,000",
     progress: "100%",
   },
 };
@@ -60,6 +60,7 @@ export function WithdrawalModal({
   if (!open) return null;
 
   const current = tierConfig[tier];
+  const dominionRequired = tier === "TORION" && portfolioUsd > 5000;
 
   const now = new Date();
   const isSunday = now.getDay() === 0;
@@ -94,6 +95,7 @@ export function WithdrawalModal({
 
   const canRequest =
     Boolean(userId) &&
+    !dominionRequired &&
     !blockedByEngine &&
     !blockedByDay &&
     !blockedByPending &&
@@ -134,6 +136,112 @@ export function WithdrawalModal({
   const countdownHours = Math.floor((diff / (1000 * 60 * 60)) % 24);
   const countdownMinutes = Math.floor((diff / (1000 * 60)) % 60);
 
+  if (dominionRequired) {
+    return (
+      <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/80 px-4 py-8 backdrop-blur-xl">
+        <div className="relative mx-auto w-full max-w-[820px] overflow-hidden rounded-[42px] border border-[#ff2d6f]/25 bg-[#070407] p-6 shadow-[0_40px_160px_rgba(255,45,111,0.18)] sm:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,45,111,0.28),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(120,0,45,0.22),transparent_42%)]" />
+
+          <div className="relative z-10">
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#ff4f8b]">
+                  Dominion Access
+                </p>
+
+                <h2 className="mt-4 text-[46px] font-black leading-[0.92] text-white sm:text-[58px]">
+                  Activate
+                  <br />
+                  Dominion
+                </h2>
+
+                <p className="mt-5 max-w-[610px] text-sm leading-7 text-white/55">
+                  Congratulations. You've exceeded Torion capacity. Your account now qualifies for Dominion,
+                  Bullions institutional infrastructure for professional investors.
+                </p>
+              </div>
+
+              <button
+                onClick={onClose}
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[#ff4f8b]/20 bg-[#ff4f8b]/10 text-2xl text-white/70 transition hover:bg-[#ff4f8b]/20 hover:text-white"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-[24px] border border-[#ff4f8b]/25 bg-[#ff2d6f]/[0.075] p-4 text-sm font-semibold leading-6 text-[#ff9abd]">
+              Torion supports up to $5,000 inside the platform. Accounts above that level must migrate capital
+              to a verified broker account before any withdrawal can be processed.
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="rounded-[26px] border border-[#ff4f8b]/18 bg-black/35 p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#ff4f8b]">Step 1</p>
+                <h3 className="mt-4 text-xl font-black text-white">Valida tu broker</h3>
+                <p className="mt-3 text-sm leading-6 text-white/45">
+                  Ingresa tu cuenta MT5, broker o wallet de broker. Primero validamos que realmente sea tu cuenta.
+                </p>
+              </div>
+
+              <div className="rounded-[26px] border border-[#ff4f8b]/18 bg-black/35 p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#ff4f8b]">Step 2</p>
+                <h3 className="mt-4 text-xl font-black text-white">Migra capital</h3>
+                <p className="mt-3 text-sm leading-6 text-white/45">
+                  Tu capital se migra desde Torion hacia tu broker verificado. El proceso puede tomar hasta 10 días.
+                </p>
+              </div>
+
+              <div className="rounded-[26px] border border-[#ff4f8b]/18 bg-black/35 p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#ff4f8b]">Step 3</p>
+                <h3 className="mt-4 text-xl font-black text-white">Opera sin límites</h3>
+                <p className="mt-3 text-sm leading-6 text-white/45">
+                  Capital en tu broker, 0% comisión interna, retiros desde broker y acceso a estrategias Dominion.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-[28px] border border-[#ff4f8b]/20 bg-black/35 p-5">
+              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/30">
+                Required information
+              </p>
+
+              <div className="mt-4 grid gap-3">
+                <input
+                  placeholder="Broker name — example: Eightcap, Vantage, IC Markets"
+                  className="h-14 w-full rounded-2xl border border-[#ff4f8b]/20 bg-black/40 px-4 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-[#ff4f8b]/50"
+                />
+
+                <input
+                  placeholder="MT5 login / broker account number"
+                  className="h-14 w-full rounded-2xl border border-[#ff4f8b]/20 bg-black/40 px-4 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-[#ff4f8b]/50"
+                />
+
+                <input
+                  value={wallet}
+                  onChange={(e) => setWallet(e.target.value)}
+                  placeholder="Broker wallet / funding wallet"
+                  className="h-14 w-full rounded-2xl border border-[#ff4f8b]/20 bg-black/40 px-4 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-[#ff4f8b]/50"
+                />
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.035] p-4 text-sm leading-6 text-white/55">
+                <span className="font-black text-white">Dominion Membership:</span> $900/month · 0% Bullions withdrawal commission · no platform liquidity bottleneck.
+              </div>
+            </div>
+
+            <button
+              disabled={wallet.trim().length < 5}
+              className="mt-6 h-16 w-full rounded-2xl bg-[#ff2d6f] text-sm font-black uppercase tracking-[0.28em] text-white shadow-[0_0_70px_rgba(255,45,111,0.32)] transition hover:scale-[1.01] hover:bg-[#ff4f8b] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none"
+            >
+              Activate Dominion
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/75 px-4 py-8 backdrop-blur-xl">
       <div className="relative mx-auto w-full max-w-[720px] overflow-hidden rounded-[42px] border border-[#6CFF72]/15 bg-[#050607] p-6 shadow-[0_40px_140px_rgba(108,255,114,0.12)] before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.22),transparent_35%)] sm:p-8">
@@ -171,6 +279,58 @@ export function WithdrawalModal({
             Your survival level controls withdrawal limits, payout priority and
             how much capital remains active inside the Bullions AI engine.
           </p>
+
+          {dominionRequired && (
+            <div className="mt-6 rounded-[26px] border border-[#b6ff00]/20 bg-[#b6ff00]/[0.055] p-5">
+              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#b6ff00]">
+                Dominion Migration Required
+              </p>
+
+              <h3 className="mt-3 text-2xl font-black text-white">
+                Torion withdrawals are locked above $5,000
+              </h3>
+
+              <p className="mt-3 text-sm leading-6 text-white/50">
+                Torion supports up to $5,000 inside the Bullions platform. Since this account is above that limit,
+                capital must be migrated to a verified broker account before any withdrawal can be processed.
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/8 bg-black/25 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Step 1</p>
+                  <p className="mt-2 text-sm font-bold text-white">Submit broker wallet/account</p>
+                </div>
+
+                <div className="rounded-2xl border border-white/8 bg-black/25 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Step 2</p>
+                  <p className="mt-2 text-sm font-bold text-white">Broker ownership validation</p>
+                </div>
+
+                <div className="rounded-2xl border border-white/8 bg-black/25 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Step 3</p>
+                  <p className="mt-2 text-sm font-bold text-white">Migration up to 10 days</p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/8 bg-black/25 p-4 text-sm leading-6 text-white/55">
+                <span className="font-black text-white">Dominion:</span> $900/month · broker connected · 0% internal commission · no platform liquidity bottleneck · continue copying Bullions managers from your own broker.
+              </div>
+
+              <input
+                value={wallet}
+                onChange={(e) => setWallet(e.target.value)}
+                placeholder="Broker wallet / broker account / MT5 login"
+                className="mt-4 h-14 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-[#b6ff00]/40"
+              />
+
+              <button
+                disabled={wallet.trim().length < 5}
+                className="mt-4 h-14 w-full rounded-2xl bg-[#b6ff00] text-sm font-black uppercase tracking-[0.18em] text-black transition disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30"
+              >
+                Request Dominion Migration
+              </button>
+            </div>
+          )}
 
           <div className="mt-7 grid gap-4 sm:grid-cols-2">
             <div className="rounded-[24px] border border-white/[0.06] bg-black/30 p-5">

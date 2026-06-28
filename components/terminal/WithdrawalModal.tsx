@@ -177,25 +177,25 @@ export function WithdrawalModal({
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               <div className="rounded-[26px] border border-[#ff4f8b]/18 bg-black/35 p-5">
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#ff4f8b]">Step 1</p>
-                <h3 className="mt-4 text-xl font-black text-white">Valida tu broker</h3>
+                <h3 className="mt-4 text-xl font-black text-white">Verify your broker</h3>
                 <p className="mt-3 text-sm leading-6 text-white/45">
-                  Ingresa tu cuenta MT5, broker o wallet de broker. Primero validamos que realmente sea tu cuenta.
+                  Connect your MT5 account, broker account or broker funding wallet. We will verify ownership before migration.
                 </p>
               </div>
 
               <div className="rounded-[26px] border border-[#ff4f8b]/18 bg-black/35 p-5">
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#ff4f8b]">Step 2</p>
-                <h3 className="mt-4 text-xl font-black text-white">Migra capital</h3>
+                <h3 className="mt-4 text-xl font-black text-white">Migrate capital</h3>
                 <p className="mt-3 text-sm leading-6 text-white/45">
-                  Tu capital se migra desde Torion hacia tu broker verificado. El proceso puede tomar hasta 10 días.
+                  Your Torion capital will be migrated to your verified broker account. Processing may take up to 10 business days.
                 </p>
               </div>
 
               <div className="rounded-[26px] border border-[#ff4f8b]/18 bg-black/35 p-5">
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#ff4f8b]">Step 3</p>
-                <h3 className="mt-4 text-xl font-black text-white">Opera sin límites</h3>
+                <h3 className="mt-4 text-xl font-black text-white">Trade without limits</h3>
                 <p className="mt-3 text-sm leading-6 text-white/45">
-                  Capital en tu broker, 0% comisión interna, retiros desde broker y acceso a estrategias Dominion.
+                  Your capital remains inside your broker. 0% Bullions withdrawal commission. Withdraw directly from your broker while continuing to copy Dominion strategies.
                 </p>
               </div>
             </div>

@@ -38,6 +38,16 @@ export type BullionsUser = {
   maxAllocationPct?: number;
   copiedTraderId: string | null;
   systemActive: boolean;
+  roles?: {
+    investor?: boolean;
+    trader?: boolean;
+    admin?: boolean;
+  };
+  activeTraderId?: string | null;
+  mt5Login?: string | null;
+  mt5Password?: string | null;
+  mt5Server?: string | null;
+  mt5Status?: "pending" | "active" | "disabled" | null;
   dailyPerformance?: DailyPerformance[];
   allocatedUsd: number;
   maxLossUsd: number;
@@ -113,6 +123,12 @@ export async function ensureBullionsUser(userId: string, email: string, referral
       maxLossUsd: 10,
       copiedTraderId: null,
       systemActive: false,
+      roles: {
+        investor: true,
+        trader: false,
+        admin: false,
+      },
+      activeTraderId: null,
       dailyPerformance: last7Days(0, 0),
     });
     return;
@@ -131,6 +147,12 @@ export async function ensureBullionsUser(userId: string, email: string, referral
         ? Date.now()
         : snap.data().referralCapturedAt || null,
       emoji: snap.data().emoji || "💀",
+      roles: snap.data().roles || {
+        investor: true,
+        trader: false,
+        admin: false,
+      },
+      activeTraderId: snap.data().activeTraderId || null,
     },
     { merge: true }
   );
@@ -389,6 +411,12 @@ export async function setCopyEngine({
   userId: string;
   copiedTraderId: string | null;
   systemActive: boolean;
+  roles?: {
+    investor?: boolean;
+    trader?: boolean;
+    admin?: boolean;
+  };
+  activeTraderId?: string | null;
   allocationUsd?: number;
 }) {
   await updateDoc(doc(db, "users", userId), {

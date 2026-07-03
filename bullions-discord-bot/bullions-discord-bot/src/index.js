@@ -248,13 +248,24 @@ Status:
 Core offline.
 `);
 
-  if (player) player.stop();
-  if (connection) connection.destroy();
+  console.log("URANIO CLEANUP 1");
+
+  player?.stop?.();
+  connection?.destroy?.();
+
+  console.log("URANIO CLEANUP 2");
 
   await wait(5000);
 
-  await voiceChannel.delete().catch(() => {});
+  console.log("URANIO CLEANUP 3");
+
+  await voiceChannel?.delete?.().catch(() => {});
+
+  console.log("URANIO CLEANUP 4");
+
   await me.setNickname("Bullions AI").catch(() => {});
+
+  console.log("URANIO CLEANUP 5");
 
   client.user.setPresence({
     activities: [{ name: "Idle", type: ActivityType.Watching }],
@@ -262,6 +273,7 @@ Core offline.
   });
 
   activeUranio = null;
+  console.log("URANIO COMPLETE RESET");
 }
 
 client.on("interactionCreate", async (interaction) => {

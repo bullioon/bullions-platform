@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+
+import { AuthProvider } from "@/providers/AuthProvider";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
 
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=AW-18184728367"

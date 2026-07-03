@@ -1,0 +1,42 @@
+export type BullionsTraderStatus = "ACTIVE" | "PAUSED" | "DISQUALIFIED";
+export type BullionsTraderType = "AI" | "REAL" | "DEMO";
+export type BullionsChallengeTier = "BULLION" | "HELLION" | "TORION" | "URANIO";
+
+export type BullionsTrader = {
+  id: string;
+  name: string;
+  tag: string;
+  avatar: string;
+  type: BullionsTraderType;
+  status: BullionsTraderStatus;
+  verified: boolean;
+  challengeTier: BullionsChallengeTier;
+  challengeId: string;
+  seasonId: string;
+  initialBalance: number;
+  balance: number;
+  equity: number;
+  roi: number;
+  maxDrawdown: number;
+  winRate: number;
+  profitFactor: number;
+  consistency: number;
+  activity: number;
+  bullionsScore: number;
+  followers: number;
+  capitalFollowing: number;
+  pair: string;
+  style: string;
+  specialty?: string;
+  riskProfile?: "LOW" | "MEDIUM" | "HIGH";
+  skills?: {
+    entries: number;
+    exits: number;
+    riskControl: number;
+    consistency: number;
+    recovery: number;
+    discipline: number;
+  };
+  createdAt: number;
+  updatedAt: number;
+};

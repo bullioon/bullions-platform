@@ -6,7 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { FundService } from "@/core/v2/services/FundService";
+import { getSixMessage } from "@/lib/six";
 import { mockTraders, type Trader } from "@/lib/mockTraders";
+import { subscribeLeaderboardV2 } from "@/lib/leaderboardV2";
 import {
   subscribeWeeklyLeaderboard,
 } from "@/lib/challengeLeaderboard";
@@ -22,6 +25,9 @@ import {
   type BullionsUser,
 } from "@/lib/bullionsUser";
 import { TerminalLeaderboard } from "@/components/terminal/TerminalLeaderboard";
+import { TraderPassport } from "@/components/trader/TraderPassport";
+import { FundBuilder } from "@/components/fund/FundBuilder";
+import { ProtocolPanel } from "@/components/fund/ProtocolPanel";
 import { TierOpportunity } from "@/components/terminal/TierOpportunity";
 import { UranioEvent } from "@/components/terminal/UranioEvent";
 import { TerminalInvestPanel } from "@/components/terminal/TerminalInvestPanel";
@@ -33,7 +39,6 @@ import { UserIntroCard } from "@/components/wallet/UserIntroCard";
 import { CopyEnginePanel } from "@/components/terminal/CopyEnginePanel";
 import { CashModal } from "@/components/terminal/CashModal";
 import { createWithdrawalRequest } from "@/lib/withdrawals";
-import { SurvivalPanel } from "@/components/terminal/SurvivalPanel";
 import { WithdrawalModal } from "@/components/terminal/WithdrawalModal";
 import { resolveTier, maxAllocationPct } from "@/lib/tierSystem";
 import {
@@ -263,6 +268,16 @@ export function TerminalArena() {
   const [user, setUser] = useState<BullionsUser | null>(null);
   const [traders, setTraders] = useState<Trader[]>([]);
   const [selectedTraderId, setSelectedTraderId] = useState("");
+  const [passportOpen, setPassportOpen] = useState(false);
+  const [fundTraderIds, setFundTraderIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!authUser?.uid) return;
+
+    FundService.getSelectedTraderIds(authUser.uid).then((ids) => {
+      setFundTraderIds(ids);
+    });
+  }, [authUser?.uid]);
   const [cashModal, setCashModal] = useState<"deposit" | "withdraw" | null>(null);
   const [cashAmount, setCashAmount] = useState(0);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -271,6 +286,7 @@ export function TerminalArena() {
   const [loginHint, setLoginHint] = useState<"deposit" | "withdraw" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [showUranioResult, setShowUranioResult] = useState(false);
+  const [showMt5Password, setShowMt5Password] = useState(false);
 
   const [events, setEvents] = useState<string[]>([
     "BullPad loaded in guest mode.",
@@ -322,39 +338,19 @@ const availableUsd = Math.max(
   }, []);
 
   useEffect(() => {
-    let active = true;
+    const unsubscribe = subscribeLeaderboardV2((nextTraders) => {
+      if (nextTraders.length > 0) {
+        setTraders(nextTraders);
 
-    async function loadLeaderboard() {
-      try {
-        const res = await fetch("/api/leaderboard/pulse", {
-          cache: "no-store",
-        });
-
-        const data = await res.json();
-
-        if (!active) return;
-
-        if (Array.isArray(data.traders) && data.traders.length > 0) {
-          setTraders(data.traders);
-
-          if (!selectedTraderId && data.traders[0]?.id) {
-            setSelectedTraderId(data.traders[0].id);
-          }
-        }
-      } catch {
-        // retry silently
+        setSelectedTraderId((current) => current);
+      } else {
+        setTraders(mockTraders);
+        setSelectedTraderId((current) => current);
       }
-    }
+    });
 
-    loadLeaderboard();
-
-    const interval = setInterval(loadLeaderboard, 10000);
-
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [selectedTraderId]);
+    return () => unsubscribe();
+  }, []);
 
 
   useEffect(() => {
@@ -527,6 +523,13 @@ const availableUsd = Math.max(
 
     return () => clearInterval(interval);
   }, [userId, engineIsActive, user?.allocatedUsd, user?.profitUsd, copiedTrader]);
+
+  const fundSelectedTrader =
+    copiedTrader ||
+    selectedTrader ||
+    traders.find((t) => t.id === fundTraderIds[0]) ||
+    mockTraders.find((t) => t.id === fundTraderIds[0]) ||
+    null;
 
   async function handleCopy(amount: number, traderOverride?: Trader) {
     if (!requireLogin() || !userId || !user) return;
@@ -765,22 +768,194 @@ const availableUsd = Math.max(
           dailyPerformance={activeUser.dailyPerformance || []}
         />
       </div>
-      <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-        <div className="space-y-5">
 
-          <TerminalLeaderboard
-            traders={traders}
-            selectedTraderId={selectedTraderId}
-            onSelectTrader={setSelectedTraderId}
-          />
+
+      {(() => {
+        const topTrader = [...(traders || [])]
+          .sort((a, b) => Number((b as any).bullionsScore || b.topTrade || 0) - Number((a as any).bullionsScore || a.topTrade || 0))[0];
+
+        const six = getSixMessage({
+          engineOn: Boolean(activeUser.systemActive),
+          selectedManagers: fundTraderIds.length,
+          copiedTraderName: copiedTrader?.name,
+          depositedUsd: Number(activeUser.depositedUsd || 0),
+          profitUsd: Number(activeUser.profitUsd || 0),
+          topTraderName: topTrader?.name,
+          hasBullionsAiAccess: false,
+        });
+
+        const toneClass =
+          six.tone === "risk"
+            ? "border-red-400/25 bg-red-400/10 text-red-300"
+            : six.tone === "attention"
+              ? "border-[#ffd23f]/25 bg-[#ffd23f]/10 text-[#ffd23f]"
+              : six.tone === "opportunity"
+                ? "border-[#b66dff]/25 bg-[#b66dff]/10 text-[#d8b4ff]"
+                : six.tone === "achievement"
+                  ? "border-[#b6ff00]/25 bg-[#b6ff00]/10 text-[#b6ff00]"
+                  : "border-white/10 bg-white/[0.035] text-white/70";
+
+        return (
+          <section className="border-y border-white/10 py-5">
+            <div className="flex flex-wrap items-center justify-between gap-5">
+              <div className="flex min-w-0 items-start gap-5">
+                <div className="flex shrink-0 items-center gap-3 pt-1">
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-black ${toneClass}`}>
+                    6
+                  </span>
+
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-[0.24em] text-white">
+                      SIX
+                    </p>
+                    <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.18em] text-white/25">
+                      {six.tone}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="h-11 w-px bg-white/10" />
+
+                <div className="min-w-0">
+                  <p className="text-base font-black leading-6 text-white">
+                    {six.title}
+                  </p>
+                  <p className="mt-1 max-w-4xl text-sm leading-6 text-white/40">
+                    {six.body}
+                  </p>
+                </div>
+              </div>
+
+              <p className="shrink-0 text-xs font-semibold text-white/30">
+                Updated 2m ago
+              </p>
+            </div>
+          </section>
+        );
+      })()}
+
+      <section className="rounded-[30px] border border-white/10 bg-[#080909] p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.32em] text-[#b6ff00]">
+              MT5 Beta
+            </p>
+            <h3 className="mt-2 text-2xl font-black text-white">
+              MetaTrader Access
+            </h3>
+            <p className="mt-1 text-sm text-white/40">
+              Some users will receive MT5 login credentials during the beta rollout.
+            </p>
+          </div>
+
+          <span className="rounded-full border border-[#b6ff00]/20 bg-[#b6ff00]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#b6ff00]">
+            Beta
+          </span>
         </div>
 
-        <div className="space-y-5">
-          <ChallengeRegister />
+        <div className="mt-5 grid gap-3 md:grid-cols-4">
+          <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Login</p>
+            <p className="mt-2 text-lg font-black text-white/60">
+              {activeUser.mt5Login || "Pending"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Server</p>
+            <p className="mt-2 text-lg font-black text-white/60">
+              {activeUser.mt5Server || (activeUser as any)["mt5Server "] || "Pending"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Password</p>
+            <button
+              onClick={() => setShowMt5Password((v) => !v)}
+              className="mt-2 text-left text-lg font-black text-white/60 hover:text-[#b6ff00]"
+            >
+              {showMt5Password
+                ? activeUser.mt5Password || "Pending"
+                : activeUser.mt5Password
+                  ? "••••••••"
+                  : "Pending"}
+            </button>
+          </div>
+
+          <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Status</p>
+            <p className="mt-2 text-lg font-black text-[#b6ff00]">
+              {activeUser.mt5Status === "active" ? "Active" : "Beta Queue"}
+            </p>
+          </div>
         </div>
+      </section>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <TerminalLeaderboard
+          traders={traders.length ? traders : mockTraders}
+          selectedTraderId={selectedTraderId}
+          fundTraderIds={fundTraderIds}
+          currentUserId={authUser?.uid || ""}
+          currentUsername={activeUser.username || activeUser.name || ""}
+          currentEmail={authUser?.email || activeUser.email || ""}
+          onSelectTrader={(id) => {
+            setSelectedTraderId(id);
+          }}
+          onAddToFund={(traderId) => {
+            setFundTraderIds((current) => {
+              if (current.includes(traderId)) return current;
+
+              const maxManagers =
+                tier === "TORION" ? 3 : tier === "HELLION" ? 2 : 1;
+
+              if (current.length >= maxManagers) {
+                setNotice(`${tier} Protocol allows up to ${maxManagers} manager${maxManagers === 1 ? "" : "s"}.`);
+                return current;
+              }
+
+              return [...current, traderId];
+            });
+          }}
+        />
+
+        <ChallengeRegister />
       </div>
 
+      <div className="mt-5 grid gap-5 xl:grid-cols-2">
+        <ProtocolPanel
+          tier={tier}
+          selectedCount={fundTraderIds.length}
+          portfolioUsd={portfolioUsd}
+        />
 
+        <FundBuilder
+          traders={traders.length ? traders : mockTraders}
+          selectedIds={fundTraderIds}
+          tier={tier}
+          onAdd={(traderId) => {
+            setFundTraderIds((current) => {
+              if (current.includes(traderId)) return current;
+
+              const maxManagers =
+                tier === "TORION" ? 3 : tier === "HELLION" ? 2 : 1;
+
+              if (current.length >= maxManagers) {
+                setNotice(`${tier} Protocol allows up to ${maxManagers} manager${maxManagers === 1 ? "" : "s"}.`);
+                return current;
+              }
+
+              return [...current, traderId];
+            });
+          }}
+          onRemove={(traderId) => {
+            setFundTraderIds((current) => current.filter((id) => id !== traderId));
+          }}
+          onActivate={async (managers) => {
+            setNotice("Use Fund Setup to deploy capital through your tier rules.");
+          }}
+        />
+      </div>
 
       <TierOpportunity userId={userId}
         depositedUsd={activeUser.depositedUsd || 0}
@@ -791,16 +966,7 @@ const availableUsd = Math.max(
         }}
       />
 
-      <SurvivalPanel
-        tier={tier}
-        depositedUsd={activeUser.depositedUsd || 0}
-        profitUsd={activeUser.profitUsd || 0}
-        allocatedUsd={activeUser.allocatedUsd || 0}
-        availableUsd={availableUsd}
-        maxAllocationPct={maxAllocationPct(tier)}
-        systemActive={activeUser.systemActive}
-        enginePhase={enginePhase}
-      />
+        {/* SurvivalPanel removed - merged into Fund Protocol */}
 
 
       <div id="copy-terminal" className="grid scroll-mt-28 gap-5 lg:grid-cols-[0.85fr_1.15fr]">
@@ -816,7 +982,7 @@ const availableUsd = Math.max(
         />
 
         <TerminalInvestPanel
-          trader={copiedTrader || selectedTrader}
+          trader={fundSelectedTrader || undefined}
           totalInvested={availableUsd}
           estimatedProfit={activeUser.profitUsd}
           allocatedUsd={activeUser.allocatedUsd || 0}
@@ -836,11 +1002,28 @@ const availableUsd = Math.max(
       </p>
 
 
+
+      <TraderPassport
+        open={passportOpen}
+        trader={traders.find((t) => t.id === selectedTraderId) || null}
+        onClose={() => setPassportOpen(false)}
+        onCopy={(traderId) => {
+          setSelectedTraderId(traderId);
+          setFundTraderIds((current) => {
+            if (current.includes(traderId)) return current;
+            if (current.length >= 3) return current;
+            return [...current, traderId];
+          });
+          setPassportOpen(false);
+          setNotice("Manager added to your fund.");
+        }}
+      />
+
       <WithdrawalModal
         open={withdrawOpen}
         onClose={() => setWithdrawOpen(false)}
         tier={tier}
-        maxWithdrawUsd={Math.max(0, ((activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0)) * (tier === "BULLION" ? 0.3 : tier === "HELLION" ? 0.3 : 1))}
+        maxWithdrawUsd={Math.max(0, ((activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0)) * (tier === "BULLION" ? 0.3 : tier === "HELLION" ? 0.3 : 0.1))}
         portfolioUsd={(activeUser.depositedUsd || 0) + (activeUser.profitUsd || 0)}
         onUpgrade={() => {
           setCashModal(null);

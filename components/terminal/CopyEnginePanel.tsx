@@ -27,12 +27,12 @@ export function CopyEnginePanel({
     <section className="w-full max-w-full min-w-0 overflow-hidden rounded-[24px] bg-[#111214] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)] sm:p-8">
       <div className="flex items-start justify-between gap-5">
         <div>
-          <p className="text-sm text-[#8f96a3]">Copy Engine</p>
+          <p className="text-sm text-[#8f96a3]">Fund Engine</p>
           <h2 className="mt-1 text-[30px] font-semibold tracking-tight text-white sm:text-3xl">
             {isActive ? "System active" : "System paused"}
           </h2>
           <p className="mt-2 text-sm text-[#8f96a3]">
-            {displayTrader ? `Ready to copy ${displayTrader}` : "Select a trader from the leaderboard."}
+            {displayTrader ? `Ready to deploy ${displayTrader}` : "Build your fund from the weekly leaderboard."}
           </p>
         </div>
 
@@ -82,10 +82,10 @@ export function CopyEnginePanel({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] uppercase tracking-[0.22em] text-[#b6ff00]">
-              TORION Scan
+              Fund Protocol
             </p>
             <p className="mt-1 text-sm font-medium text-white">
-              {isActive ? "Engine active" : "Waiting for activation"}
+              {isActive ? "Fund engine active" : "Waiting for fund deployment"}
             </p>
           </div>
 
@@ -95,7 +95,7 @@ export function CopyEnginePanel({
         </div>
 
         <div className="mt-3 grid gap-1.5 sm:mt-4 sm:gap-2">
-          {["Risk calibrated", "Entry optimized", "Lot size adjusted"].map((item) => (
+          {["Protocol calibrated", "Manager allocation ready", "Risk distribution synced"].map((item) => (
             <div
               key={item}
               className="flex items-center justify-between rounded-full bg-white/[0.04] px-3 py-1.5 sm:py-2"
@@ -112,7 +112,7 @@ export function CopyEnginePanel({
 
         <div className="mt-2 flex min-w-0 items-center justify-between gap-3 text-[10px] text-white/35 sm:text-[11px]">
           <span className="shrink-0">Next scan in 05s</span>
-          <span className="min-w-0 truncate text-right">TORION adaptive AI</span>
+          <span className="min-w-0 truncate text-right">Bullions Fund Protocol</span>
         </div>
       </div>
 
@@ -121,7 +121,7 @@ export function CopyEnginePanel({
           onClick={onDisconnect}
           className="mt-5 h-[52px] w-full rounded-full border border-white/10 text-sm font-semibold text-white/70 transition hover:bg-white/[0.05] sm:mt-8 sm:h-[56px]"
         >
-          Disconnect Trader
+          Deactivate Fund
         </button>
       )}
     </section>

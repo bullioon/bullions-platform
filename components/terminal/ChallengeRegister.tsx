@@ -1,154 +1,150 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChallengeRepository } from "@/core/v2/repositories/ChallengeRepository";
 
-type TimeLeft = {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-};
+const PRODUCTS = [
+  {
+    id: "demo_50k",
+    badge: "50K DEMO",
+    label: "$50,000",
+    prize: "MONTHLY CASH PRIZE",
+    entry: "$350",
+    description: "Access a $50,000 demo challenge account.",
+  },
+  {
+    id: "demo_200k",
+    badge: "200K DEMO",
+    label: "$200,000",
+    prize: "MONTHLY CASH PRIZE",
+    entry: "$1,080",
+    description: "Access a $200,000 demo challenge account.",
+  },
+];
 
-function getTimeLeft(): TimeLeft {
+function getNextMonth() {
   const now = new Date();
-  const nextSunday = new Date(now);
+  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  next.setHours(0, 0, 0, 0);
+  return next.getTime();
+}
 
-  const day = now.getDay();
-  const daysUntilSunday = (7 - day) % 7 || 7;
-
-  nextSunday.setDate(now.getDate() + daysUntilSunday);
-  nextSunday.setHours(0, 0, 0, 0);
-
-  const diff = Math.max(0, nextSunday.getTime() - now.getTime());
+function formatCountdown(ms: number) {
+  const safe = Math.max(0, ms);
+  const totalSeconds = Math.floor(safe / 1000);
 
   return {
-    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((diff / (1000 * 60)) % 60),
-    seconds: Math.floor((diff / 1000) % 60),
+    d: Math.floor(totalSeconds / 86400),
+    h: Math.floor((totalSeconds % 86400) / 3600),
+    m: Math.floor((totalSeconds % 3600) / 60),
+    s: totalSeconds % 60,
   };
 }
 
-const emptyTime: TimeLeft = {
-  days: 0,
-  hours: 0,
-  minutes: 0,
-  seconds: 0,
-};
-
 export function ChallengeRegister() {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(emptyTime);
-  const [mounted, setMounted] = useState(false);
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    setTimeLeft(getTimeLeft());
-
-    const timer = setInterval(() => {
-      setTimeLeft(getTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
+    setNow(Date.now());
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  const displayTime = mounted ? timeLeft : emptyTime;
+  const remaining = now ? formatCountdown(getNextMonth() - now) : { d: 0, h: 0, m: 0, s: 0 };
 
   return (
-    <section
-      id="challenge"
-      className="relative overflow-hidden rounded-[28px] bg-[#101114] p-7 ring-1 ring-white/5"
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(182,255,0,0.14),transparent_42%)]" />
-
-      <div className="relative z-10">
+    <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[#070807] p-5">
+      <div className="relative">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-[#b6ff00]">Next Challenge</p>
-
-            <h2 className="mt-2 text-4xl font-semibold tracking-tight text-white">
-              $10,000 Cash
-            </h2>
-
-            <p className="mt-2 max-w-[430px] text-sm leading-6 text-white/45">
-              1st place wins cash. 2nd and 3rd receive direct $10K funding accounts.
+            <p className="text-[10px] font-black uppercase tracking-[0.32em] text-white/35">
+              TRADER CHALLENGE
+            </p>
+            <h3 className="mt-2 text-4xl font-black tracking-[-0.04em] text-white">
+              Monthly Challenge
+            </h3>
+            <p className="mt-1 text-sm font-semibold text-white/35">
+              Top 5 traders earn from Sunday allocator withdrawals.
             </p>
           </div>
 
-          <span className="rounded-full bg-white/[0.06] px-4 py-2 text-xs font-semibold text-white/55 ring-1 ring-white/10">
-            Prize pool
-          </span>
-        </div>
-
-        <div className="mt-6 grid gap-3">
-          <div className="rounded-[22px] bg-black/35 p-5 ring-1 ring-[#b6ff00]/25 shadow-[0_0_35px_rgba(182,255,0,0.10)]">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b6ff00]">
-                  1st place
-                </p>
-                <p className="mt-1 text-3xl font-black text-white">
-                  $10,000 Cash
-                </p>
-              </div>
-
-              <div className="rounded-full bg-[#b6ff00]/10 px-4 py-2 text-xs font-bold text-[#b6ff00] ring-1 ring-[#b6ff00]/20">
-                CASH
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[20px] bg-white/[0.055] p-4 ring-1 ring-white/5">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/35">
-                2nd place
-              </p>
-              <p className="mt-1 text-xl font-semibold text-white">
-                $10K Funding
-              </p>
-            </div>
-
-            <div className="rounded-[20px] bg-white/[0.055] p-4 ring-1 ring-white/5">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/35">
-                3rd place
-              </p>
-              <p className="mt-1 text-xl font-semibold text-white">
-                $10K Funding
-              </p>
-            </div>
+          <div className="rounded-full bg-white/[0.04] px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/40 ring-1 ring-white/10">
+            20 spots / month
           </div>
         </div>
-
-        <p className="mt-6 text-sm text-white/55">
-          Resets every Sunday at 00:00.
-        </p>
 
         <div className="mt-5 grid grid-cols-4 gap-2">
           {[
-            [displayTime.days, "D"],
-            [displayTime.hours, "H"],
-            [displayTime.minutes, "M"],
-            [displayTime.seconds, "S"],
-          ].map(([value, label]) => (
-            <div
-              key={label}
-              className="rounded-[18px] bg-black/30 py-4 text-center ring-1 ring-white/5"
-            >
-              <p className="text-2xl font-semibold text-white">
-                {String(value).padStart(2, "0")}
-              </p>
-              <p className="mt-1 text-[11px] text-[#b6ff00]">{label}</p>
+            ["D", remaining.d],
+            ["H", remaining.h],
+            ["M", remaining.m],
+            ["S", remaining.s],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-white/8 bg-black/25 p-3 text-center">
+              <p className="text-2xl font-black text-white">{String(value).padStart(2, "0")}</p>
+              <p className="mt-1 text-[10px] font-black text-white/35">{label}</p>
             </div>
           ))}
         </div>
 
-        <button
-          onClick={() => {
-            window.open("https://discord.gg/YkFBXRD6rz", "_blank", "noopener,noreferrer");
-          }}
-          className="mt-6 h-[58px] w-full rounded-full bg-[#b6ff00] text-sm font-semibold text-black shadow-[0_0_45px_rgba(182,255,0,0.20)] transition hover:opacity-90 active:scale-[0.98]"
-        >
-          Register for next challenge
-        </button>
+        <div className="mt-5 space-y-3">
+          {PRODUCTS.map((p) => (
+            <div
+              key={p.id}
+              className="group rounded-[22px] border border-white/8 bg-white/[0.025] p-4 transition hover:border-[#b6ff00]/45 hover:bg-[#b6ff00]/[0.035]"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-white/45 ring-1 ring-white/8 group-hover:text-[#b6ff00]">
+                    {p.badge}
+                  </span>
+
+                  <div className="mt-3 flex items-end gap-3">
+                    <h4 className="text-3xl font-black tracking-[-0.04em] text-white">{p.label}</h4>
+                    <p className="pb-1 text-xs font-black uppercase tracking-[0.18em] text-white/35 group-hover:text-[#b6ff00]">
+                      {p.prize}
+                    </p>
+                  </div>
+
+                  <p className="mt-1 text-xs text-white/35">
+                    {p.description}
+                  </p>
+
+                  <p className="mt-2 text-xs text-white/30">
+                    Rules: 30% max daily loss · 40% max drawdown · News allowed · Copy/EA allowed
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/25">Entry</p>
+                  <p className="mt-1 text-2xl font-black text-white">{p.entry}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={async () => {
+                  const season = await ChallengeRepository.getActiveSeason();
+
+                  if (!season) {
+                    alert("No active season.");
+                    return;
+                  }
+
+                  await ChallengeRepository.createEntry({
+                    seasonId: season.id,
+                    strategyId: "aa07ccd7-bae1-471c-84ab-185d881e9f97",
+                    tierId: p.id as "demo_50k" | "demo_200k",
+                  });
+
+                  alert(`Challenge entry created: ${p.label}`);
+                }}
+                className="mt-4 h-11 w-full rounded-full bg-white/10 text-xs font-black uppercase tracking-[0.2em] text-white/55 transition hover:scale-[1.01] group-hover:bg-[#b6ff00] group-hover:text-black"
+              >
+                Enter Challenge
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

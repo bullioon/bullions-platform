@@ -1,0 +1,173 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { type Trader } from "@/lib/mockTraders";
+
+type Props = {
+  traders: Trader[];
+  selectedTraderId: string;
+  onSelectTrader: (id: string) => void;
+  onAddToFund?: (id: string) => void;
+};
+
+export function TerminalLeaderboard({
+  traders,
+  selectedTraderId,
+  onSelectTrader,
+  onAddToFund,
+}: Props) {
+  const sorted = useMemo(
+    () =>
+      [...(traders || [])]
+        .sort((a, b) => Number(b.topTrade || 0) - Number(a.topTrade || 0))
+        .slice(0, 6),
+    [traders]
+  );
+
+  const [hoveredId, setHoveredId] = useState("");
+  const previewTrader =
+    sorted.find((t) => t.id === hoveredId) ||
+    sorted.find((t) => t.id === selectedTraderId) ||
+    sorted[0];
+
+  return (
+    <section id="leaderboard" className="rounded-[28px] border border-white/8 bg-[#0b0c0d] p-5">
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.34em] text-[#b6ff00]">COPY</p>
+          <h2 className="mt-1 text-3xl font-black tracking-tight text-white">Build Your Fund</h2>
+          <p className="mt-1 text-sm text-white/35">Invest behind elite Bullions Managers.</p>
+        </div>
+        <div className="rounded-full border border-white/10 bg-white/[0.035] px-3 py-1 text-xs font-bold text-white/45">Live</div>
+      </div>
+
+      <div className="overflow-hidden rounded-[22px] border border-white/8 bg-white/[0.025]">
+        <div className="grid grid-cols-[42px_1.5fr_0.6fr_0.6fr_0.85fr_140px] gap-3 border-b border-white/8 px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/30">
+          <span>#</span><span>Capital Manager</span><span>DNA</span><span>ROI</span><span>Following</span><span className="text-right">Action</span>
+        </div>
+
+        {sorted.map((trader, index) => {
+          const active = selectedTraderId === trader.id || hoveredId === trader.id;
+          const anyTrader = trader as any;
+          const score = Number(trader.topTrade || 0);
+          const specialty = anyTrader.specialty || trader.tag || "Balanced Manager";
+          const riskProfile = anyTrader.riskProfile || "MEDIUM";
+          const capitalFollowing = Number(anyTrader.capitalFollowing || 0);
+
+          return (
+            <div
+              key={trader.id}
+              onMouseEnter={() => setHoveredId(trader.id)}
+              className={
+                active
+                  ? "grid grid-cols-[42px_1.5fr_0.6fr_0.6fr_0.85fr_140px] gap-3 border-b border-white/6 bg-[#b6ff00]/[0.055] px-4 py-3 last:border-b-0"
+                  : "grid grid-cols-[42px_1.5fr_0.6fr_0.6fr_0.85fr_140px] gap-3 border-b border-white/6 px-4 py-3 transition hover:bg-white/[0.025] last:border-b-0"
+              }
+            >
+              <div className="flex items-center"><span className="text-sm font-semibold text-white/35">{String(index + 1).padStart(2, "0")}</span></div>
+
+              <button onClick={() => setHoveredId(trader.id)} className="min-w-0 text-left">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.05] text-sm ring-1 ring-white/8">{trader.avatar || "⚔️"}</div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-white">{trader.name}</p>
+                    <p className="mt-0.5 truncate text-xs text-white/35">{specialty} · Risk {riskProfile}</p>
+                  </div>
+                </div>
+              </button>
+
+              <div className="flex items-center"><span className="rounded-full bg-[#b6ff00]/10 px-2.5 py-1 text-xs font-black text-[#b6ff00] ring-1 ring-[#b6ff00]/15">{score.toFixed(0)}</span></div>
+              <div className="flex items-center"><p className="text-sm font-black text-white">+{Number(trader.roi || 0).toFixed(1)}%</p></div>
+              <div className="flex items-center"><p className="text-sm font-semibold text-white/60">${Math.round(capitalFollowing).toLocaleString()}</p></div>
+
+              <div className="flex items-center justify-end">                <button onClick={() => onAddToFund?.(trader.id)} className="rounded-full bg-[#b6ff00] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-black">
+                  Add Fund
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {previewTrader ? (
+        <TraderDnaPreview trader={previewTrader} />
+      ) : (
+        <div className="rounded-[34px] border border-white/8 bg-[#090909] p-12 text-center">
+          <p className="text-xs font-black uppercase tracking-[0.35em] text-[#b6ff00]">
+            Bullions Seal
+          </p>
+          <h2 className="mt-6 text-3xl font-black text-white">
+            No trader selected
+          </h2>
+          <p className="mx-auto mt-4 max-w-md text-sm font-medium text-white/40">
+            Display Trader DNA by clicking any trader from the leaderboard.
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TraderDnaPreview({ trader }: { trader: Trader }) {
+  const anyTrader = trader as any;
+  const skills = anyTrader.skills || { entries: 75, exits: 65, riskControl: 70, consistency: 70, recovery: 70, discipline: 70 };
+  const rows = [
+    ["⚡", "Entries", Number(skills.entries || 0)],
+    ["🎯", "Exits", Number(skills.exits || 0)],
+    ["🛡", "Risk", Number(skills.riskControl || 0)],
+    ["📈", "Consistency", Number(skills.consistency || 0)],
+    ["🔄", "Recovery", Number(skills.recovery || 0)],
+    ["🧠", "Discipline", Number(skills.discipline || 0)],
+  ] as const;
+
+  const best = [...rows].sort((a, b) => b[2] - a[2])[0];
+  const weak = [...rows].sort((a, b) => a[2] - b[2])[0];
+
+  return (
+    <div className="mt-5 overflow-hidden rounded-[24px] border border-[#b6ff00]/12 bg-[#071006] p-5">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#b6ff00]">Bullions Seal</p>
+          <h3 className="mt-1 text-xl font-black uppercase text-white">{trader.name} DNA</h3>
+          <p className="mt-1 text-xs text-white/35">{anyTrader.specialty || trader.tag} · {trader.pair || "MULTI"} · Bullions Verified</p>
+        </div>
+        <div className="rounded-2xl bg-[#b6ff00]/10 px-4 py-3 text-right ring-1 ring-[#b6ff00]/15">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#b6ff00]/70">Overall</p>
+          <p className="text-2xl font-black text-white">{Number(trader.topTrade || 0).toFixed(0)}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1fr_0.85fr]">
+        <div className="grid gap-3">{rows.map(([icon, label, value]) => <Skill key={label} icon={icon} label={label} value={value} />)}</div>
+        <div className="grid gap-3">
+          <Seal label="Best Skill" value={`${best[1]} ${best[2]}/100`} />
+          <Seal label="Weakness" value={`${weak[1]} ${weak[2]}/100`} />
+          <Seal label="Risk Profile" value={anyTrader.riskProfile || "MEDIUM"} />
+          <Seal label="Following" value={`$${Math.round(Number(anyTrader.capitalFollowing || 0)).toLocaleString()}`} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Skill({ icon, label, value }: { icon: string; label: string; value: number }) {
+  const safe = Math.max(0, Math.min(100, value));
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-xs font-bold text-white/65"><span className="mr-2">{icon}</span>{label}</p>
+        <p className="text-xs font-black text-[#b6ff00]">{safe}/100</p>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#b6ff00]" style={{ width: `${safe}%` }} /></div>
+    </div>
+  );
+}
+
+function Seal({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-black/20 p-3 ring-1 ring-white/8">
+      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">{label}</p>
+      <p className="mt-1 text-sm font-black text-white">{value}</p>
+    </div>
+  );
+}

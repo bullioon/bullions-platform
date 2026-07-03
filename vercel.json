@@ -1,1 +1,8 @@
-{}
+{
+  "crons": [
+    {
+      "path": "/api/cron/bullions-kernel",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

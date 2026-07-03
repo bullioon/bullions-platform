@@ -47,7 +47,7 @@ export function TerminalInvestPanel({
     );
   }, [trader]);
 
-  const canCopy = Boolean(trader) && amount > 0 && amount <= available && !isActive;
+  const canDeploy = Boolean(trader) && amount > 0 && amount <= available && !isActive;
 
   function updateAmount(value: number) {
     const clean = Math.max(0, Math.min(value || 0, available));
@@ -56,18 +56,18 @@ export function TerminalInvestPanel({
 
   const statusMessage =
     isActive && hasAllocation
-      ? "Your allocation is already active in the copy engine."
+      ? "Your fund is already active in the Fund Engine."
       : available <= 0
-        ? "Deposit with Phantom first to activate copy setup."
-        : "Choose an amount to activate copy setup.";
+        ? "Deposit with Phantom first to deploy your fund."
+        : "Choose an amount to deploy your fund.";
 
   const buttonLabel = !trader
-    ? "Select trader"
+    ? "Build fund"
     : isActive && hasAllocation
-      ? `Copy Engine active with $${allocatedUsd.toLocaleString()}`
+      ? `Fund Engine active with $${allocatedUsd.toLocaleString()}`
       : available <= 0
         ? "Deposit required"
-        : `Copy ${trader.name} with $${amount.toLocaleString()}`;
+        : `Deploy ${trader.name} with $${amount.toLocaleString()}`;
 
   return (
     <section
@@ -78,10 +78,10 @@ export function TerminalInvestPanel({
         <div>
           <p className="text-sm text-[#8f96a3]">Bullions Terminal</p>
           <h2 className="mt-1 text-3xl font-semibold tracking-tight text-white">
-            Copy setup
+            Fund setup
           </h2>
           <p className="mt-2 text-sm text-[#8f96a3]">
-            Choose how much of your available balance to allocate.
+            Deploy capital through your tier-based fund protocol.
           </p>
         </div>
 
@@ -92,7 +92,7 @@ export function TerminalInvestPanel({
 
       <div className="mt-8 grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <p className="text-xs text-[#8f96a3]">Selected trader</p>
+          <p className="text-xs text-[#8f96a3]">Selected fund</p>
           <h3 className="mt-1 text-2xl font-semibold text-white">
             {trader?.name || "None"}
           </h3>
@@ -172,15 +172,15 @@ export function TerminalInvestPanel({
           <p className="mt-3 text-xs text-white/35">{statusMessage}</p>
 
           <button
-            onClick={() => trader && canCopy && onInvest(amount, trader)}
-            disabled={!canCopy}
+            onClick={() => trader && canDeploy && onInvest(amount, trader)}
+            disabled={!canDeploy}
             className="mt-5 h-[56px] w-full max-w-full overflow-hidden truncate rounded-full bg-[#b6ff00] px-4 text-sm font-semibold text-black transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {buttonLabel}
           </button>
 
           <p className="mt-4 text-center text-xs text-[#8f96a3]">
-            Capital becomes locked only after the Copy Engine is activated.
+            Capital becomes locked only after the Deploy Engine is activated.
           </p>
         </div>
       </div>

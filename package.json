@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
+    "@opentelemetry/api": "^1.9.1",
     "@solana/web3.js": "^1.98.4",
     "discord.js": "^14.26.4",
     "firebase": "^12.12.1",
+    "firebase-admin": "^14.1.0",
     "framer-motion": "^12.40.0",
     "html2canvas": "^1.4.1",
     "next": "16.2.4",

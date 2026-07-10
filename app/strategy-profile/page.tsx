@@ -1,6 +1,12 @@
-import { StrategyProfile } from "@/components/v2/strategy/StrategyProfile";
-import { strategiesV2 } from "@/mock/v2/strategies";
+import { StrategyProfilePage } from "@/components/v2/strategy-profile/StrategyProfilePage";
 
-export default function StrategyProfilePage() {
-  return <StrategyProfile strategy={strategiesV2[0]} />;
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string }>;
+}) {
+  const params = await searchParams;
+  const strategyId = params.id || "strategy_mia_capital";
+
+  return <StrategyProfilePage strategyId={strategyId} />;
 }

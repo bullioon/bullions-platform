@@ -49,7 +49,7 @@ export function ResearchCard({
 
       <div className="mt-6 flex justify-end">
 
-        <Button variant="outline">
+        <Button variant="secondary">
           Read Research →
         </Button>
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { FundPerformanceService } from "@/core/v2/services/FundPerformanceService";
 import {
   addProfit,
   recordPerformanceSnapshot,
@@ -207,7 +208,24 @@ function generateTierMove({
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  const expectedSecret = process.env.MT5_CRON_SECRET || process.env.CRON_SECRET;
+
+  if (!expectedSecret) {
+    return NextResponse.json(
+      { ok: false, error: "MT5_CRON_SECRET or CRON_SECRET is not configured" },
+      { status: 500 }
+    );
+  }
+
+  if (authHeader !== `Bearer ${expectedSecret}`) {
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   const now = Date.now();
   const usersSnap = await getDocs(collection(db, "users"));
 
@@ -225,6 +243,24 @@ export async function GET() {
     const allocatedUsd = Number(user.allocatedUsd || 0);
     if (allocatedUsd <= 0) {
       skipped++;
+      continue;
+    }
+
+    // Active multi-manager funds derive equity exclusively from
+    // weighted strategy performance. Do not apply legacy random moves.
+    if ((user as any).activeFundId) {
+      const fundResult = await FundPerformanceService.syncUserFund(userDoc.id);
+
+      if (fundResult.ok) {
+        processed++;
+      } else {
+        skipped++;
+        console.warn("Weighted fund sync skipped", {
+          userId: userDoc.id,
+          error: fundResult.error,
+        });
+      }
+
       continue;
     }
 
@@ -256,6 +292,23 @@ export async function GET() {
         ? -Math.min(manualDrawdownPctLeft, manualDrawdownDailyPct / 1440)
         : 0;
 
+    // Active funds are governed exclusively by strategy runtimes.
+    // Do not apply the legacy simulated engine movement to them.
+    if (
+      Boolean((user as any).fundActive) ||
+      Boolean((user as any).activeFundId)
+    ) {
+      const fundSync = await FundPerformanceService.syncUserFund(userDoc.id);
+
+      console.log("[engine-pulse] active fund delegated", {
+        userId: userDoc.id,
+        activeFundId: (user as any).activeFundId || null,
+        ok: fundSync.ok,
+      });
+
+      continue;
+    }
+
     const tierMove = manualDrawdownMovePct < 0
       ? {
           movePct: Number(manualDrawdownMovePct.toFixed(4)),
@@ -282,7 +335,15 @@ export async function GET() {
       resolveEngineState(currentRoi);
 
     const movePct = tierMove?.movePct ?? generateMove(nextState);
-    const nextMove = allocatedUsd * (movePct / 100);
+
+    const currentFundEquity = Math.max(
+      0,
+      Number((user as any).fundEquityUsd ?? allocatedUsd + Number(user.profitUsd || 0))
+    );
+
+    const nextMove = currentFundEquity * (movePct / 100);
+    const nextFundEquityUsd = Math.max(0, currentFundEquity + nextMove);
+    const nextFundPnlUsd = nextFundEquityUsd - allocatedUsd;
     const nextProfitUsd = Number(user.profitUsd || 0) + nextMove;
 
     console.log({
@@ -295,6 +356,12 @@ export async function GET() {
 });
 
     await addProfit(userDoc.id, nextMove);
+
+    await updateDoc(doc(db, "users", userDoc.id), {
+      fundEquityUsd: Number(nextFundEquityUsd.toFixed(2)),
+      fundPnlUsd: Number(nextFundPnlUsd.toFixed(2)),
+      updatedAt: Date.now(),
+    });
 
     if (manualDrawdownMovePct < 0) {
       const remainingDrawdown = Math.max(

@@ -3,9 +3,34 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { AllocateModal } from "@/components/v2/allocate/AllocateModal";
+import { SixAssessmentCard } from "@/components/v2/six/SixAssessmentCard";
+import { StrategyHero } from "@/components/v2/strategy-profile/StrategyHero";
+import { StrategyGallery } from "@/components/v2/strategy-profile/StrategyGallery";
 import { StrategyRepository } from "@/core/v2/repositories/StrategyRepository";
 import { useAuth } from "@/hooks/useAuth";
 import type { Strategy } from "@/types/v2/domain/strategy";
+import type { StrategyRuntime } from "@/core/v2/runtime";
+
+
+function timeAgo(ms: number | null | undefined) {
+  if (!ms) return "Pending";
+
+  const diff = Math.max(0, Date.now() - Number(ms));
+  const sec = Math.floor(diff / 1000);
+  const min = Math.floor(sec / 60);
+  const hr = Math.floor(min / 60);
+
+  if (sec < 60) return `${sec}s ago`;
+  if (min < 60) return `${min}m ago`;
+  if (hr < 24) return `${hr}h ago`;
+
+  return new Date(Number(ms)).toLocaleDateString();
+}
+
+function gradeLabel(value: string | undefined) {
+  if (!value) return "Pending";
+  return value.replace("_", " ").toUpperCase();
+}
 
 function money(n: number) {
   return `$${Math.round(n || 0).toLocaleString()}`;
@@ -18,6 +43,7 @@ function pct(n: number | null | undefined) {
 export function StrategyProfilePage({ strategyId }: { strategyId: string }) {
   const { user } = useAuth();
   const [strategy, setStrategy] = useState<Strategy | null>(null);
+  const [runtime, setRuntime] = useState<StrategyRuntime | null>(null);
   const [allocateOpen, setAllocateOpen] = useState(false);
   const [challengeRow, setChallengeRow] = useState<any | null>(null);
   const [challengeSeason, setChallengeSeason] = useState<any | null>(null);
@@ -25,6 +51,15 @@ export function StrategyProfilePage({ strategyId }: { strategyId: string }) {
 
   useEffect(() => {
     StrategyRepository.get(strategyId).then(setStrategy);
+
+    fetch(`/api/runtime/strategy/${encodeURIComponent(strategyId)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setRuntime(data.runtime || null);
+      })
+      .catch(() => {
+        setRuntime(null);
+      });
 
     fetch("/api/leaderboard/challenge")
       .then((res) => res.json())
@@ -52,21 +87,36 @@ export function StrategyProfilePage({ strategyId }: { strategyId: string }) {
   const metrics = useMemo(() => {
     if (!strategy) return [];
 
+    const performance = runtime?.performance ?? strategy.performance;
+    const livePerformance = performance as typeof performance & {
+      equity?: number;
+      balance?: number;
+      totalTrades?: number;
+    };
+    const scores = runtime?.scores;
+
     const score =
-      Number(strategy.performance.roi || 0) * 4 +
-      Number(strategy.performance.winRate || 0) * 0.2 -
-      Number(strategy.performance.maxDrawdown || 0) * 2 +
-      Number(strategy.performance.profitFactor || 0) * 8;
+      scores?.allocatorScore ??
+      (Number(performance.roi || 0) * 4 +
+        Number(performance.winRate || 0) * 0.2 -
+        Number(performance.maxDrawdown || 0) * 2 +
+        Number(performance.profitFactor || 0) * 8);
 
     return [
-      ["ROI", pct(strategy.performance.roi)],
-      ["Win Rate", pct(strategy.performance.winRate)],
-      ["Bullions Score", Math.max(0, Math.min(100, score)).toFixed(1)],
-      ["Capital Following", money(strategy.performance.capitalFollowing)],
-      ["Followers", strategy.performance.allocators.toLocaleString()],
-      ["Challenge", strategy.challenge.status === "enrolled" ? "Enrolled" : "Open"],
+      ["ROI", pct(performance.roi)],
+      ["Equity", money(Number(livePerformance.equity || 0))],
+      ["Balance", money(Number(livePerformance.balance || 0))],
+      ["Max DD", pct(performance.maxDrawdown)],
+      ["Win Rate", pct(performance.winRate)],
+      ["Profit Factor", Number(performance.profitFactor || 0).toFixed(2)],
+      ["Trades", Number(livePerformance.totalTrades || 0).toLocaleString()],
+      ["Score", Math.max(0, Math.min(100, score)).toFixed(1)],
+      ["Capital", money(strategy.performance.capitalFollowing)],
+      ["Allocators", Math.max(0, Number(strategy.performance.allocators || 0)).toLocaleString()],
+      ["Grade", runtime?.universe.grade ? runtime.universe.grade.toUpperCase() : "PENDING"],
+      ["Challenge", runtime?.challenge.status === "enrolled" || strategy.challenge.status === "enrolled" ? "Enrolled" : "Open"],
     ];
-  }, [strategy]);
+  }, [strategy, runtime]);
 
   if (!strategy) {
     return (
@@ -76,7 +126,12 @@ export function StrategyProfilePage({ strategyId }: { strategyId: string }) {
     );
   }
 
-  const roi = Number(strategy.performance.roi || 0);
+  const performance = runtime?.performance ?? strategy.performance;
+  const roi = Number(performance.roi || 0);
+  const runtimeGrade = gradeLabel(runtime?.universe.grade);
+  const allocatorScore = Number(runtime?.scores.allocatorScore || 0);
+  const lastSyncLabel = timeAgo(runtime?.performance.lastSyncedAt);
+  const mt5Live = Boolean(runtime?.performance.lastSyncedAt);
   const challengeRank = challengeRow?.position || strategy.challenge.rank || "-";
   const challengeScore = Number(challengeRow?.score || 0);
   const challengePrize = Number(challengeSeason?.prizePoolUsd || strategy.challenge.prizeUsd || 50000);
@@ -165,128 +220,50 @@ export function StrategyProfilePage({ strategyId }: { strategyId: string }) {
 
   return (
     <main className="min-h-screen bg-[#050606] text-white">
-      <section className="relative min-h-[68vh] overflow-hidden lg:min-h-[72vh]">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-70"
-          style={{
-            backgroundImage:
-              strategy.identity.bannerUrl
-                ? `url(${strategy.identity.bannerUrl})`
-                : "url(https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=2400&auto=format&fit=crop)",
-          }}
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(182,255,0,0.16),transparent_24%),linear-gradient(to_bottom,rgba(5,6,6,0.35),#050606_92%)]" />
-
-        <nav className="relative z-10 mx-auto flex max-w-[1600px] items-center justify-between px-6 py-6">
-          <div className="text-xl font-black italic">bullions</div>
-          <div className="hidden gap-8 text-sm font-semibold text-white/60 md:flex">
-            <span className="text-[#b6ff00]">Overview</span>
-            <span>Performance</span>
-            <span>Research</span>
-            <span>Gallery</span>
-            <span>Products</span>
-          </div>
-          <button className="rounded-full border border-white/15 px-5 py-2 text-sm font-bold text-white/75">
-            Share
-          </button>
-        </nav>
-
-        <div className="relative z-10 mx-auto flex max-w-[1600px] flex-col justify-end px-6 pb-8 pt-20">
-          <div className="max-w-5xl">
-            <p className="text-xs font-black uppercase tracking-[0.32em] text-white/70">
-              Verified Manager {strategy.status.verified ? "✓" : ""}
-            </p>
-
-            <h1 className="mt-4 text-6xl font-black tracking-[-0.08em] md:text-7xl">
-              {strategy.identity.name}
-            </h1>
-
-            <p className="mt-4 max-w-2xl text-xl text-white/75">
-              {strategy.identity.subtitle || strategy.identity.description}
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-end gap-8">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-white/40">
-                  ROI All Time
-                </p>
-                <p className="mt-2 text-5xl font-black tracking-[-0.08em] text-[#b6ff00]">
-                  {roi >= 0 ? "+" : ""}
-                  {roi.toFixed(1)}%
-                </p>
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-black/35 p-6 backdrop-blur-xl">
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/45">
-                  Top 5 Challenge
-                </p>
-                <p className="mt-3 text-5xl font-black text-[#b6ff00]">
-                  #{challengeRank}
-                </p>
-                <p className="mt-2 text-sm text-white/50">
-                  Current Score {challengeScore.toFixed(1)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-[34px] border border-white/10 bg-black/45 p-5 backdrop-blur-xl">
-            <div className="grid gap-6 lg:grid-cols-[auto_1fr_auto] lg:items-center">
-              <div className="h-28 w-28 overflow-hidden rounded-full border-2 border-[#b6ff00] bg-white/10">
-                {strategy.identity.avatarUrl ? (
-                  <img src={strategy.identity.avatarUrl} className="h-full w-full object-cover" alt="" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-5xl">👻</div>
-                )}
-              </div>
-
-              <div>
-                <h2 className="text-3xl font-black">
-                  {strategy.manager.displayName || strategy.manager.username || strategy.identity.name}
-                </h2>
-                <p className="mt-2 text-white/55">{strategy.identity.description || "Institutional macro strategy manager."}</p>
-                <p className="mt-3 text-sm text-white/35">
-                  Markets: {[strategy.markets.primary, ...(strategy.markets.secondary || [])].filter(Boolean).join(" · ")}
-                </p>
-              </div>
-
-              <div className="grid gap-3">
-                <button
-                  onClick={() => setAllocateOpen(true)}
-                  className="h-14 rounded-2xl bg-[#b6ff00] px-14 text-sm font-black uppercase tracking-[0.18em] text-black transition hover:scale-[1.01]"
-                >
-                  Copy Strategy →
-                </button>
-                <div className="grid grid-cols-3 gap-3">
-                  {["Follow", "Message", "Share"].map((x) => (
-                    <button key={x} className="rounded-2xl border border-white/10 px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-white/55">
-                      {x}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <StrategyHero
+        strategy={strategy}
+        runtime={runtime}
+        challengeRank={challengeRank}
+        challengeScore={challengeScore}
+        onAllocate={() => setAllocateOpen(true)}
+      />
 
       <div className="mx-auto max-w-[1600px] space-y-6 px-6 pb-12">
-        <section className="grid gap-3 rounded-[30px] border border-white/10 bg-[#080909] p-5 md:grid-cols-6">
+
+        <StrategyGallery strategy={strategy} />
+
+
+        <section className="grid gap-3 rounded-[30px] border border-white/10 bg-[#080909] p-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
           {metrics.map(([label, value]) => (
-            <div key={label} className="border-white/10 p-4 md:border-r md:last:border-r-0">
+            <div key={label} className="min-w-0 rounded-2xl border border-white/8 bg-white/[0.025] p-4">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">{label}</p>
-              <p className="mt-3 text-2xl font-black">{value}</p>
+              <p className="mt-3 break-words text-2xl font-black leading-tight">{value}</p>
             </div>
           ))}
         </section>
+
+        {runtime?.six ? (
+          <SixAssessmentCard
+            score={Math.max(1, Math.min(10, Math.round((runtime.scores.allocatorScore || 0) / 10)))}
+            execution={runtime.universe.grade}
+            risk={runtime.performance.maxDrawdown >= 10 ? "Elevated" : "Controlled"}
+            consistency={runtime.scores.consistencyScore >= 70 ? "Strong" : "Developing"}
+            summary={runtime.six.assessment}
+            updated={runtime.performance.lastSyncedAt ? new Date(runtime.performance.lastSyncedAt).toLocaleDateString() : "Live"}
+          />
+        ) : null}
 
         <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
           <div className="rounded-[30px] border border-white/10 bg-[#080909] p-7">
             <p className="text-xs font-black uppercase tracking-[0.28em] text-white/40">
               Monthly Challenge
             </p>
-            <p className="mt-5 text-7xl font-black text-[#b6ff00]">#{challengeRank}</p>
-            <p className="mt-2 text-2xl font-black">Top Five</p>
+            <p className="mt-5 text-7xl font-black text-[#b6ff00]">
+              {challengeRank === "-" ? "OPEN" : `#${challengeRank}`}
+            </p>
+            <p className="mt-2 text-2xl font-black">
+              {challengeRank === "-" ? "Not enrolled" : "Top Five"}
+            </p>
             <div className="mt-8 grid grid-cols-2 gap-4">
               <Mini label="Prize Pool" value={money(challengePrize)} />
               <Mini label="Entry Fee" value={money(challengeEntryFee)} />

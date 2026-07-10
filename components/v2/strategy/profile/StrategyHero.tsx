@@ -34,7 +34,7 @@ export function StrategyHero({ strategy, editable = false }: { strategy: Strateg
             <div className="mt-4 flex flex-wrap gap-2">
               <Badge tone="purple">{strategy.tier}</Badge>
               <Badge tone="neutral">Managed by {strategy.managerName}</Badge>
-              <Badge tone="success">Verified</Badge>
+              <Badge tone="green">Verified</Badge>
             </div>
 
             <p className="mt-5 max-w-3xl text-base leading-7 text-white/50">
@@ -50,7 +50,7 @@ export function StrategyHero({ strategy, editable = false }: { strategy: Strateg
       </div>
 
       <div className="mt-8 grid gap-4 border-t border-white/8 pt-6 sm:grid-cols-6">
-        <Metric label="ROI" value={`+${strategy.roi.toFixed(1)}%`} tone="success" />
+        <Metric label="ROI" value={`+${strategy.roi.toFixed(1)}%`} tone="green" />
         <Metric label="Capital" value={usd(strategy.capitalFollowing)} />
         <Metric label="Allocators" value={strategy.allocators.toLocaleString()} />
         <Metric label="Win Rate" value={`${strategy.winRate}%`} />

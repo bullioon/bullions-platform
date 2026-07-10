@@ -126,7 +126,7 @@ export function ResearchEditor({
           </Button>
 
           {article.status === "draft" ? (
-            <Button variant="outline" onClick={onPublish}>
+            <Button variant="secondary" onClick={onPublish}>
               Publish
             </Button>
           ) : (

@@ -92,7 +92,7 @@ export function ResearchStudio({ strategy }: { strategy: Strategy }) {
                 </div>
 
                 {article.status === "draft" ? (
-                  <Button variant="outline" onClick={() => publish(article.id)}>
+                  <Button variant="secondary" onClick={() => publish(article.id)}>
                     Publish
                   </Button>
                 ) : (

@@ -96,10 +96,10 @@ export function BullionsHomeHero() {
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <a
-              href="/bullpad"
+              href="/challenge"
               className="grid h-[58px] place-items-center rounded-full bg-[#b6ff00] px-9 text-sm font-semibold text-black shadow-[0_0_45px_rgba(182,255,0,0.22)]"
             >
-              Enter BullPad
+              View Challenge
             </a>
 
             <a
@@ -201,10 +201,10 @@ export function BullionsHomeHero() {
           </p>
 
           <a
-            href="/bullpad"
+            href="/challenge"
             className="mt-7 inline-grid h-[54px] place-items-center rounded-full bg-black px-8 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(0,0,0,0.25)] sm:mx-auto sm:mt-8"
           >
-            Open BullPad
+            Open Challenge
           </a>
         </div>
       </section>

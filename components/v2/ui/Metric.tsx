@@ -1,13 +1,14 @@
 type MetricProps = {
   label: string;
   value: string;
-  tone?: "success" | "purple" | "warning" | "neutral";
+  tone?: "success" | "green" | "purple" | "warning" | "neutral";
   className?: string;
 };
 
 export function Metric({ label, value, tone = "neutral", className = "" }: MetricProps) {
   const tones = {
     success: "text-[#b6ff00]",
+    green: "text-[#b6ff00]",
     purple: "text-[#d8b4ff]",
     warning: "text-[#ffd23f]",
     neutral: "text-white",

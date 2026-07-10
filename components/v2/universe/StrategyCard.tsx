@@ -57,7 +57,7 @@ export function StrategyCard({ strategy }: { strategy: StrategyCardData }) {
         </p>
 
         <div className="mt-6 grid grid-cols-2 gap-5 border-y border-white/8 py-5">
-          <Metric label="ROI" value={`+${strategy.roi.toFixed(1)}%`} tone="success" />
+          <Metric label="ROI" value={`+${strategy.roi.toFixed(1)}%`} tone="green" />
           <Metric label="Max DD" value={`${strategy.maxDrawdown.toFixed(1)}%`} />
           <Metric label="PF" value={strategy.profitFactor.toFixed(2)} tone="purple" />
           <Metric label="Capital" value={usd(strategy.capitalFollowing)} />
@@ -75,7 +75,7 @@ export function StrategyCard({ strategy }: { strategy: StrategyCardData }) {
           <Button variant="ghost" className="flex-1">
             View Profile
           </Button>
-          <Button variant={isOfficial ? "primary" : "outline"} className="flex-1">
+          <Button variant={isOfficial ? "primary" : "secondary"} className="flex-1">
             Allocate →
           </Button>
         </div>

@@ -58,7 +58,7 @@ export function CopyEnginePanel({
         </div>
 
         <div>
-          <p className="text-xs text-[#8f96a3]">Profit</p>
+          <p className="text-xs text-[#8f96a3]">Fund PnL</p>
           <p
             className={`mt-1 text-sm font-medium ${
               profitUsd >= 0 ? "text-[#b6ff00]" : "text-red-400"

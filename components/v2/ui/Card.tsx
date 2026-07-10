@@ -1,21 +1,29 @@
-import type { ReactNode } from "react";
+import { ReactNode } from "react";
 
-type CardProps = {
+type Props = {
   children: ReactNode;
   className?: string;
-  variant?: "default" | "soft" | "glass";
+  hover?: boolean;
 };
 
-export function Card({ children, className = "", variant = "default" }: CardProps) {
-  const variants = {
-    default: "border border-white/10 bg-[#080909]",
-    soft: "border border-white/8 bg-white/[0.025]",
-    glass: "border border-white/10 bg-white/[0.035] backdrop-blur-xl",
-  };
-
+export function Card({
+  children,
+  className = "",
+  hover = false,
+}: Props) {
   return (
-    <section className={`rounded-[28px] p-5 ${variants[variant]} ${className}`}>
+    <div
+      className={`
+        rounded-[32px]
+        border
+        border-white/10
+        bg-[#080909]
+        p-8
+        ${hover ? "transition hover:border-[#b6ff00]/30 hover:bg-white/[0.03]" : ""}
+        ${className}
+      `}
+    >
       {children}
-    </section>
+    </div>
   );
 }

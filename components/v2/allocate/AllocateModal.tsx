@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
-
-import { FundRepository } from "@/core/v2/repositories/FundRepository";
-import { setCopyEngine } from "@/lib/bullionsUser";
+import { auth } from "@/lib/firebase";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-
   userId?: string;
   traderId: string;
   strategyId: string;
@@ -19,78 +16,113 @@ export function AllocateModal({
   onClose,
   userId = "demo-user",
   traderId,
-  strategyId,
 }: Props) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   if (!open) return null;
 
   async function handleAllocate() {
-    if (!amount) return;
-
-    setLoading(true);
+    setError("");
 
     const allocationUsd = Number(amount);
 
-    await FundRepository.create({
-      userId,
-      traderId,
-      strategyId,
-      amount: allocationUsd,
-    });
+    if (!allocationUsd || allocationUsd <= 0) {
+      setError("Enter a valid amount.");
+      return;
+    }
 
-    await setCopyEngine({
-      userId,
-      copiedTraderId: traderId,
-      systemActive: true,
-      allocationUsd,
-    });
+    const currentUser = auth.currentUser;
 
-    setLoading(false);
+    if (!currentUser) {
+      setError("Login required to allocate capital.");
+      return;
+    }
 
-    setAmount("");
+    setLoading(true);
 
-    onClose();
+    try {
+      const idToken = await currentUser.getIdToken();
+
+      const res = await fetch("/api/funds/activate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          userId,
+          tier: "BULLION",
+          capitalUsd: allocationUsd,
+          managers: [
+            {
+              traderId,
+              allocationPct: 100,
+            },
+          ],
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error || "Allocation failed.");
+      }
+
+      setAmount("");
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Allocation failed.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-md">
+      <div className="w-full max-w-md rounded-[30px] border border-white/10 bg-[#090909] p-7 text-white shadow-[0_30px_120px_rgba(0,0,0,0.65)]">
+        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#b6ff00]">
+          BullPad Allocation
+        </p>
 
-      <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-[#090909] p-8 text-white">
-
-        <h2 className="text-3xl font-black">
-          Allocate Capital
+        <h2 className="mt-3 text-3xl font-black tracking-[-0.055em]">
+          Copy Strategy
         </h2>
 
-        <p className="mt-2 text-white/50">
-          Strategy Allocation
+        <p className="mt-2 text-sm leading-6 text-white/45">
+          Allocate capital through the same Fund Engine used by BullPad.
         </p>
 
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="Amount (USD)"
-          className="mt-8 w-full rounded-xl border border-white/10 bg-black px-4 py-4 outline-none"
+          placeholder="Amount in USD"
+          inputMode="decimal"
+          className="mt-7 w-full rounded-2xl border border-white/10 bg-black px-4 py-4 text-white outline-none placeholder:text-white/25"
         />
+
+        {error ? (
+          <p className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
+            {error}
+          </p>
+        ) : null}
 
         <button
           disabled={loading}
           onClick={handleAllocate}
-          className="mt-6 w-full rounded-xl bg-[#b6ff00] py-4 font-bold text-black disabled:opacity-40"
+          className="mt-5 w-full rounded-2xl bg-[#b6ff00] py-4 text-sm font-black uppercase tracking-[0.16em] text-black disabled:opacity-40"
         >
-          {loading ? "Allocating..." : "Confirm Allocation"}
+          {loading ? "Activating..." : "Activate Fund"}
         </button>
 
         <button
           onClick={onClose}
-          className="mt-3 w-full rounded-xl border border-white/10 py-4"
+          className="mt-3 w-full rounded-2xl border border-white/10 py-4 text-sm font-black uppercase tracking-[0.16em] text-white/55"
         >
           Cancel
         </button>
-
       </div>
-
     </div>
   );
 }

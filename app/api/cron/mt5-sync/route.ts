@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebaseAdmin";
+import { RuntimeRepository } from "@/core/v2/runtime";
+import { FundPerformanceService } from "@/core/v2/services/FundPerformanceService";
 
 function randomBetween(min: number, max: number) {
   return min + Math.random() * (max - min);
@@ -32,9 +34,13 @@ type StrategyDoc = {
     initialBalance?: number;
     equity?: number;
     balance?: number;
+    accountId?: string | null;
     accountLogin?: string | null;
     server?: string;
     provider?: string;
+    broker?: string;
+    accountStatus?: string;
+    connected?: boolean;
   };
   performance?: Record<string, unknown> & {
     initialBalance?: number;
@@ -47,6 +53,141 @@ type StrategyDoc = {
     totalTrades?: number;
   };
 };
+
+async function activateAssignedMT5Account(input: {
+  strategyId: string;
+  managerUid: string | null;
+  accountId: string | null;
+  accountLogin: string | null;
+  server: string;
+  broker: string;
+  syncedAt: number;
+}) {
+  if (!input.accountId) {
+    return {
+      activated: false,
+      reason: "Strategy has no MT5 accountId",
+    };
+  }
+
+  const db = getAdminDb();
+
+  const accountRef = db
+    .collection("mt5Accounts")
+    .doc(input.accountId);
+
+  const accountSnap = await accountRef.get();
+
+  if (!accountSnap.exists) {
+    return {
+      activated: false,
+      reason: "MT5 account not found",
+    };
+  }
+
+  const account = accountSnap.data() as Record<string, any>;
+  const challengeEntryId = String(
+    account.challengeEntryId || ""
+  );
+
+  const batch = db.batch();
+
+  batch.set(
+    accountRef,
+    {
+      status: "ACTIVE",
+      activatedAt:
+        account.activatedAt || input.syncedAt,
+      lastSyncAt: input.syncedAt,
+      updatedAt: input.syncedAt,
+    },
+    { merge: true }
+  );
+
+  const strategyRef = db
+    .collection("managerStrategies")
+    .doc(input.strategyId);
+
+  batch.set(
+    strategyRef,
+    {
+      mt5: {
+        accountId: input.accountId,
+        accountLogin: input.accountLogin,
+        server: input.server,
+        broker: input.broker,
+        connected: true,
+        enabled: true,
+        accountStatus: "ACTIVE",
+        activatedAt:
+          account.activatedAt || input.syncedAt,
+        lastSyncAt: input.syncedAt,
+        lastSyncedAt: input.syncedAt,
+      },
+      updatedAt: input.syncedAt,
+      updatedAtMs: input.syncedAt,
+    },
+    { merge: true }
+  );
+
+  if (challengeEntryId) {
+    const entryRef = db
+      .collection("challengeEntries")
+      .doc(challengeEntryId);
+
+    batch.set(
+      entryRef,
+      {
+        mt5AccountId: input.accountId,
+        mt5AssignmentStatus: "active",
+        eligibleForLeaderboard: true,
+        activatedAt: input.syncedAt,
+        updatedAt: input.syncedAt,
+      },
+      { merge: true }
+    );
+  }
+
+  if (input.managerUid) {
+    const traderRef = db
+      .collection("traders")
+      .doc(input.managerUid);
+
+    const traderSnap = await traderRef.get();
+
+    if (traderSnap.exists) {
+      batch.set(
+        traderRef,
+        {
+          status: "ACTIVE",
+          verified: true,
+          mt5: {
+            accountId: input.accountId,
+            accountLogin: input.accountLogin,
+            server: input.server,
+            broker: input.broker,
+            connected: true,
+            assignmentStatus: "ACTIVE",
+            activatedAt:
+              account.activatedAt || input.syncedAt,
+            lastSyncAt: input.syncedAt,
+          },
+          updatedAt: input.syncedAt,
+        },
+        { merge: true }
+      );
+    }
+  }
+
+  await batch.commit();
+
+  return {
+    activated: true,
+    accountId: input.accountId,
+    challengeEntryId:
+      challengeEntryId || null,
+  };
+}
 
 function buildSixAssessment(input: {
   roi: number;
@@ -70,6 +211,16 @@ function buildSixAssessment(input: {
 }
 
 export async function GET(req: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "MT5 simulator is disabled in production",
+      },
+      { status: 403 }
+    );
+  }
+
   if (!requireCronSecret(req)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
@@ -157,8 +308,10 @@ export async function GET(req: Request) {
       strategyId: strategyDoc.id,
       managerUid: strategy?.manager?.uid || null,
       source: "demo-mt5-simulator",
+      accountId: strategy?.mt5?.accountId || null,
       accountLogin: strategy?.mt5?.accountLogin || null,
       server: strategy?.mt5?.server || "OctaFX-Demo",
+      broker: strategy?.mt5?.broker || "OctaFX",
       initialBalance,
       balance: Number(balance.toFixed(2)),
       equity: Number(equity.toFixed(2)),
@@ -197,7 +350,14 @@ export async function GET(req: Request) {
           balance: snapshot.balance,
           equity: snapshot.equity,
           server: snapshot.server,
+          accountId: snapshot.accountId,
           accountLogin: snapshot.accountLogin,
+          broker: snapshot.broker,
+          connected: Boolean(snapshot.accountId),
+          accountStatus: snapshot.accountId
+            ? "ACTIVE"
+            : strategy?.mt5?.accountStatus || "UNASSIGNED",
+          lastSyncAt: snapshot.syncedAt,
           lastSyncedAt: snapshot.syncedAt,
         },
         performance: {
@@ -220,6 +380,26 @@ export async function GET(req: Request) {
       { merge: true }
     );
 
+    const mt5Activation =
+      await activateAssignedMT5Account({
+        strategyId: strategyDoc.id,
+        managerUid: strategy?.manager?.uid || null,
+        accountId: snapshot.accountId,
+        accountLogin: snapshot.accountLogin,
+        server: snapshot.server,
+        broker: snapshot.broker,
+        syncedAt: snapshot.syncedAt,
+      });
+
+    const runtime =
+      await RuntimeRepository.syncStrategyRuntime(
+        strategyDoc.id
+      );
+
+    const fundSync = await FundPerformanceService.syncFundsByStrategy(
+      strategyDoc.id
+    );
+
     synced++;
 
     results.push({
@@ -228,6 +408,16 @@ export async function GET(req: Request) {
       roi: snapshot.roi,
       equity: snapshot.equity,
       source: snapshot.source,
+      mt5AccountId: snapshot.accountId,
+      mt5Activated: mt5Activation.activated,
+      mt5ActivationReason:
+        "reason" in mt5Activation
+          ? mt5Activation.reason
+          : null,
+      runtimeGrade: runtime?.universe.grade || null,
+      allocatorScore: runtime?.scores.allocatorScore || null,
+      affectedFunds: fundSync.affected,
+      syncedFunds: fundSync.synced,
     });
   }
 

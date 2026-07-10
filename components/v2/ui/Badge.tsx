@@ -1,21 +1,31 @@
-import type { ReactNode } from "react";
+import { ReactNode } from "react";
 
-type BadgeProps = {
+type Tone = "green" | "success" | "purple" | "neutral" | "warning" | "danger";
+
+type Props = {
   children: ReactNode;
-  tone?: "success" | "purple" | "warning" | "neutral";
+  tone?: Tone;
   className?: string;
 };
 
-export function Badge({ children, tone = "neutral", className = "" }: BadgeProps) {
+export function Badge({
+  children,
+  tone = "neutral",
+  className = "",
+}: Props) {
   const tones = {
-    success: "border-[#b6ff00]/20 bg-[#b6ff00]/10 text-[#b6ff00]",
+    green: "border-[#b6ff00]/25 bg-[#b6ff00]/10 text-[#b6ff00]",
+    success: "border-[#b6ff00]/25 bg-[#b6ff00]/10 text-[#b6ff00]",
     purple: "border-[#b66dff]/25 bg-[#b66dff]/10 text-[#d8b4ff]",
-    warning: "border-[#ffd23f]/20 bg-[#ffd23f]/10 text-[#ffd23f]",
-    neutral: "border-white/10 bg-white/[0.035] text-white/45",
+    neutral: "border-white/10 bg-white/[0.04] text-white/55",
+    warning: "border-yellow-400/25 bg-yellow-400/10 text-yellow-300",
+    danger: "border-red-400/25 bg-red-400/10 text-red-300",
   };
 
   return (
-    <span className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${tones[tone]} ${className}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${tones[tone]} ${className}`}
+    >
       {children}
     </span>
   );

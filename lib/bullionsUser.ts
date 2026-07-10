@@ -50,6 +50,10 @@ export type BullionsUser = {
   mt5Status?: "pending" | "active" | "disabled" | null;
   dailyPerformance?: DailyPerformance[];
   allocatedUsd: number;
+  fundEquityUsd?: number;
+  fundPnlUsd?: number;
+  fundActive?: boolean;
+  activeFundId?: string | null;
   maxLossUsd: number;
   updatedAt?: number;
   lastEngineUpdate?: number;
@@ -423,6 +427,8 @@ export async function setCopyEngine({
     copiedTraderId,
     systemActive,
     allocatedUsd: allocationUsd,
+    fundEquityUsd: allocationUsd,
+    fundPnlUsd: 0,
   });
 }
 

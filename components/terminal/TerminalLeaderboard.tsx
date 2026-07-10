@@ -1,9 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { type Trader } from "@/lib/mockTraders";
+
+
+function strategyProfileHref(traderId: string) {
+  const aliases: Record<string, string> = {
+    ghost_alpha: "aa07ccd7-bae1-471c-84ab-185d881e9f97",
+    "local-manager": "aa07ccd7-bae1-471c-84ab-185d881e9f97",
+    managerdos: "aa07ccd7-bae1-471c-84ab-185d881e9f97",
+    mia_capital: "strategy_mia_capital",
+    ax_prime_KMF63S: "strategy_ax_prime_KMF63S",
+    bullions_ai: "strategy_bullions_ai",
+    "bullions-bot": "strategy_bullions_ai",
+    torion_desk: "strategy_torion_desk",
+  };
+
+  return `/s/${aliases[traderId] || `strategy_${traderId}`}`;
+}
 
 type Props = {
   traders: Trader[];
@@ -26,6 +43,8 @@ export function TerminalLeaderboard({
   onAddToFund,
   fundTraderIds = [],
 }: Props) {
+  const router = useRouter();
+
   const sorted = useMemo(
     () =>
       [...(traders || [])]
@@ -65,6 +84,8 @@ export function TerminalLeaderboard({
           const riskProfile = anyTrader.riskProfile || "MEDIUM";
           const capitalFollowing = Number(anyTrader.capitalFollowing || 0);
           const inFund = fundTraderIds.includes(trader.id);
+          const strategyId = String(anyTrader.strategyId || "");
+          const href = strategyId ? `/s/${strategyId}` : strategyProfileHref(trader.id);
 
           return (
             <div
@@ -103,7 +124,13 @@ export function TerminalLeaderboard({
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelectTrader(trader.id);
-                    if (!isBullionsAI) onAddToFund?.(trader.id);
+
+                    if (isBullionsAI) {
+                      router.push(href);
+                      return;
+                    }
+
+                    onAddToFund?.(trader.id);
                   }}
                   className={
                     isBullionsAI

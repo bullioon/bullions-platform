@@ -7,6 +7,7 @@ import {
   query,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -18,6 +19,15 @@ export const StrategyRepository = {
   async list(): Promise<Strategy[]> {
     const snapshot = await getDocs(
       query(collection(db, COLLECTION), orderBy("createdAt", "desc"))
+    );
+
+    return snapshot.docs.map((docSnap) => docSnap.data() as Strategy);
+  },
+
+
+  async listByManager(managerUid: string): Promise<Strategy[]> {
+    const snapshot = await getDocs(
+      query(collection(db, COLLECTION), where("manager.uid", "==", managerUid))
     );
 
     return snapshot.docs.map((docSnap) => docSnap.data() as Strategy);

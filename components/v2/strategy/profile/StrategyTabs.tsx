@@ -43,7 +43,7 @@ export function StrategyTabs({ strategy }: { strategy: StrategyProfile }) {
       {tab === "performance" ? (
         <Card>
           <div className="grid gap-5 sm:grid-cols-4">
-            <Metric label="ROI" value={`+${strategy.roi.toFixed(1)}%`} tone="success" />
+            <Metric label="ROI" value={`+${strategy.roi.toFixed(1)}%`} tone="green" />
             <Metric label="Max DD" value={`${strategy.maxDrawdown.toFixed(1)}%`} />
             <Metric label="Win Rate" value={`${strategy.winRate.toFixed(0)}%`} />
             <Metric label="Profit Factor" value={strategy.profitFactor.toFixed(2)} tone="purple" />
@@ -83,7 +83,7 @@ export function StrategyTabs({ strategy }: { strategy: StrategyProfile }) {
               <p className="text-xl font-black text-white">{title}</p>
               <p className="mt-2 text-2xl font-black text-[#b6ff00]">{price}</p>
               <p className="mt-4 text-sm leading-6 text-white/40">{body}</p>
-              <Button className="mt-6 w-full" variant="outline">
+              <Button className="mt-6 w-full" variant="secondary">
                 View Product
               </Button>
             </Card>

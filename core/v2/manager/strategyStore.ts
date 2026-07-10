@@ -7,6 +7,7 @@ import {
   query,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -38,7 +39,7 @@ function dataToManagerStrategy(id: string, data: any): ManagerStrategy {
   const state = data.status?.state || data.status;
 
   return {
-    id,
+    id: String(data.id || id),
     name: String(data.identity?.name || data.name || "Untitled Strategy"),
     status: state === "published" || state === "ACTIVE" ? "ACTIVE" : state === "PAUSED" ? "PAUSED" : "DRAFT",
     verified: Boolean(data.status?.verified ?? data.verified),
@@ -64,15 +65,23 @@ function getLocalStrategies(): ManagerStrategy[] {
   );
 }
 
-export async function getManagerStrategies(): Promise<ManagerStrategy[]> {
+export async function getManagerStrategies(managerUid?: string): Promise<ManagerStrategy[]> {
   try {
+    const constraints = managerUid
+      ? [where("manager.uid", "==", managerUid)]
+      : [orderBy("createdAtMs", "desc")];
+
     const snapshot = await getDocs(
-      query(collection(db, COLLECTION), orderBy("createdAtMs", "desc"))
+      query(collection(db, COLLECTION), ...constraints)
     );
 
     const firestoreStrategies = snapshot.docs.map((docSnap) =>
       dataToManagerStrategy(docSnap.id, docSnap.data())
     );
+
+    if (managerUid) {
+      return firestoreStrategies;
+    }
 
     return [...firestoreStrategies, ...seedStrategies].filter(
       (strategy, index, self) =>

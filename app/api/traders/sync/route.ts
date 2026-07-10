@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+
+function requireSyncSecret(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  const expectedSecret = process.env.MT5_CRON_SECRET || process.env.CRON_SECRET;
+
+  return Boolean(expectedSecret && authHeader === `Bearer ${expectedSecret}`);
+}
+
 import { PerformanceRepository } from "@/core/v2/repositories/PerformanceRepository";
 import { evaluatePerformance } from "@/core/v2/performance/PerformanceEngine";
 import { ChallengeRepository } from "@/core/v2/repositories/ChallengeRepository";
+import { FundPerformanceService } from "@/core/v2/services/FundPerformanceService";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -28,6 +37,10 @@ function score({
 }
 
 export async function POST(req: Request) {
+  if (!requireSyncSecret(req)) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
 
@@ -154,6 +167,8 @@ export async function POST(req: Request) {
           evaluation.challengeScore
         );
       }
+
+      await FundPerformanceService.syncFundsByStrategy(strategyDoc.id);
     }
 
     await addDoc(collection(db, "traderSnapshots"), {

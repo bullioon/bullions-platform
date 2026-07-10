@@ -132,6 +132,7 @@ const selected = selectedIds
         <FundMetric label="Diversification" value={diversification} />
         <FundMetric label="Expected Return" value={selected.length ? `+${expectedReturn.toFixed(1)}%` : "--"} />
       </div>
+
     </section>
   );
 }

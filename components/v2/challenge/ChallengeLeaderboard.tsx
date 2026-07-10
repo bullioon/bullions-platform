@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export function ChallengeLeaderboard() {
   const [rows, setRows] = useState<any[]>([]);
@@ -21,7 +22,11 @@ export function ChallengeLeaderboard() {
 
       <div className="mt-5 space-y-3">
         {rows.map((row) => (
-          <div key={row.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <Link
+            key={row.id}
+            href={`/s/${row.strategyId}`}
+            className="block rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-[#b6ff00]/40 hover:bg-white/[0.06]"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-black text-white">
@@ -36,7 +41,7 @@ export function ChallengeLeaderboard() {
                 ROI {Number(row.roi || 0).toFixed(2)}%
               </p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

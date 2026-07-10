@@ -40,7 +40,7 @@ export function SixAssessmentCard({
         <Metric
           label="Execution"
           value={execution}
-          tone="success"
+          tone="green"
         />
 
         <Metric
@@ -51,7 +51,7 @@ export function SixAssessmentCard({
         <Metric
           label="Consistency"
           value={consistency}
-          tone="success"
+          tone="green"
         />
       </div>
 

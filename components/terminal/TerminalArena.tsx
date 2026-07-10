@@ -9,7 +9,6 @@ import { auth, db } from "@/lib/firebase";
 import { FundService } from "@/core/v2/services/FundService";
 import { getSixMessage } from "@/lib/six";
 import { mockTraders, type Trader } from "@/lib/mockTraders";
-import { subscribeLeaderboardV2 } from "@/lib/leaderboardV2";
 import {
   subscribeWeeklyLeaderboard,
 } from "@/lib/challengeLeaderboard";
@@ -19,7 +18,6 @@ import {
   registerCryptoDeposit,
   addProfit,
   recordDailyPerformance,
-  recordPerformanceSnapshot,
   setCopyEngine,
   updateEmoji,
   type BullionsUser,
@@ -98,6 +96,33 @@ function isTraditionalMarketClosed(pair?: string) {
   return false;
 }
 
+
+
+function missionRankingToTrader(row: any): Trader {
+  const profitUsd =
+    Number(String(row.profit || "0").replace(/[$,+]/g, "")) || 0;
+
+  const accountBase = row.accountSize === "200K" ? 200000 : 50000;
+  const roi = accountBase > 0 ? (profitUsd / accountBase) * 100 : 0;
+
+  return {
+    id: String(row.id),
+    name: String(row.name || "Unknown Strategy"),
+    pair: String(row.market || "XAU/USD"),
+    tag: String(row.engine === "AI" ? "Bullions AI" : "Verified MT5"),
+    avatar: String(row.name || "ST").slice(0, 2).toUpperCase(),
+    roi,
+    profitUsd,
+    balance: accountBase + profitUsd,
+    topTrade: Number(row.profitFactor || 0) * 10,
+    maxLoss: Number(String(row.drawdown || "0").replace("%", "")) || 0,
+    strategyId: String(row.id),
+    bullionsScore: Math.round(
+      roi + Number(String(row.winRate || "0").replace("%", ""))
+    ),
+    specialty: `${row.accountSize || "50K"} · ${row.engine || "MT5"}`,
+  } as Trader;
+}
 
 function generateTierMove({
   tier,
@@ -287,6 +312,16 @@ export function TerminalArena() {
   const [notice, setNotice] = useState<string | null>(null);
   const [showUranioResult, setShowUranioResult] = useState(false);
   const [showMt5Password, setShowMt5Password] = useState(false);
+  useEffect(() => {
+    if (!notice) return;
+
+    const timeout = setTimeout(() => {
+      setNotice(null);
+    }, 2800);
+
+    return () => clearTimeout(timeout);
+  }, [notice]);
+
 
   const [events, setEvents] = useState<string[]>([
     "BullPad loaded in guest mode.",
@@ -328,6 +363,15 @@ const availableUsd = Math.max(
     )
   );
 
+  const allocatedPrincipalUsd = Number(activeUser.allocatedUsd || 0);
+  const fundEquityUsd = Number(
+    Math.max(
+      0,
+      Number(activeUser.fundEquityUsd ?? allocatedPrincipalUsd + (activeUser.profitUsd || 0))
+    ).toFixed(2)
+  );
+  const fundPnlUsd = Number((fundEquityUsd - allocatedPrincipalUsd).toFixed(2));
+
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get("ref");
 
@@ -338,18 +382,40 @@ const availableUsd = Math.max(
   }, []);
 
   useEffect(() => {
-    const unsubscribe = subscribeLeaderboardV2((nextTraders) => {
-      if (nextTraders.length > 0) {
-        setTraders(nextTraders);
+    let alive = true;
 
-        setSelectedTraderId((current) => current);
-      } else {
-        setTraders(mockTraders);
-        setSelectedTraderId((current) => current);
+    async function loadMissionRankings() {
+      try {
+        const res = await fetch("/api/mission-control", { cache: "no-store" });
+        const data = await res.json();
+
+        const nextTraders = Array.isArray(data.rankings)
+          ? data.rankings.map(missionRankingToTrader)
+          : [];
+
+        if (!alive) return;
+
+        if (nextTraders.length) {
+          setTraders(nextTraders);
+          setSelectedTraderId((prev) => prev || nextTraders[0]?.id || "");
+          return;
+        }
+
+        setTraders([]);
+        setSelectedTraderId("");
+      } catch (error) {
+        console.warn("[BullPad] mission-control failed", error);
+        if (!alive) return;
+        setTraders([]);
+        setSelectedTraderId("");
       }
-    });
+    }
 
-    return () => unsubscribe();
+    loadMissionRankings();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
 
@@ -433,96 +499,8 @@ const availableUsd = Math.max(
     }
   }, [engineIsActive, copiedTrader]);
 
-  useEffect(() => {
-    if (!userId || !engineIsActive || !copiedTrader || (user?.allocatedUsd || 0) <= 0) return;
-
-    if (process.env.NODE_ENV !== "development") return;
-
-    const interval = setInterval(async () => {
-      const accountSize = user?.allocatedUsd || 0;
-
-      const activePair = resolveTraderPair(copiedTrader);
-
-      if (isTraditionalMarketClosed(activePair)) {
-        const cryptoTrader = traders.find((t) => isCryptoPair(t.pair));
-
-        setEvents((current) =>
-          [
-            cryptoTrader
-              ? `MARKET CLOSED • ${activePair} paused. Crypto traders stay active on weekends: ${cryptoTrader.name}`
-              : `MARKET CLOSED • ${activePair} reopens Sunday 5PM NY. Crypto markets remain open 24/7.`,
-            ...current,
-          ].slice(0, 6)
-        );
-        return;
-      }
-      const currentRoi =
-        accountSize > 0 ? ((user?.profitUsd || 0) / accountSize) * 100 : 0;
-      const tierMove = generateTierMove({
-        tier,
-        profitUsd: user?.profitUsd || 0,
-        allocatedUsd: accountSize,
-      });
-
-      const nextState: EngineState =
-        (tierMove?.state as EngineState | undefined) || resolveEngineState(currentRoi);
-
-      setEngineState(nextState);
-
-      const movePct =
-        tierMove?.movePct ?? generateMove(nextState);
-
-      const scaledMovePct =
-        tier === "TORION"
-          ? movePct * tierMultiplier(tier)
-          : movePct;
-
-      let nextMove =
-        accountSize * (scaledMovePct / 100);
-
-      const lastEngineUpdate = Number(user?.lastEngineUpdate || user?.updatedAt || 0);
-      const missedTicks =
-        lastEngineUpdate > 0
-          ? Math.min(
-              8,
-              Math.max(1, Math.floor((Date.now() - lastEngineUpdate) / ENGINE_PULSE_MS))
-            )
-          : 1;
-
-      if (tier !== "TORION" && missedTicks > 1) {
-        nextMove = nextMove * missedTicks;
-      }
-
-      if (currentRoi > 120 && nextMove > 0) {
-        nextMove = -(accountSize * ((4 + Math.random() * 10) / 100));
-      }
-
-      if (currentRoi < -35 && nextMove < 0) {
-        nextMove = accountSize * ((6 + Math.random() * 12) / 100);
-      }
-      const stateEvents = engineEvents[nextState] || ["TORION engine updated"];
-      const event = stateEvents[Math.floor(Math.random() * stateEvents.length)];
-
-      const nextProfitUsd = (user?.profitUsd || 0) + nextMove;
-
-      await addProfit(userId, nextMove);
-
-      await recordPerformanceSnapshot({
-        userId,
-        depositedUsd: user?.depositedUsd || 0,
-        profitUsd: nextProfitUsd,
-      });
-
-      setEvents((current) =>
-        [
-          `${nextState} • ${copiedTrader.name} ${nextMove >= 0 ? "+" : "-"}$${Math.abs(nextMove).toFixed(2)} • ${event}`,
-          ...current,
-        ].slice(0, 6)
-      );
-    }, ENGINE_PULSE_MS);
-
-    return () => clearInterval(interval);
-  }, [userId, engineIsActive, user?.allocatedUsd, user?.profitUsd, copiedTrader]);
+  // Engine movement is handled server-side by /api/cron/engine-pulse.
+  // Do not move balances from the browser.
 
   const fundSelectedTrader =
     copiedTrader ||
@@ -531,8 +509,69 @@ const availableUsd = Math.max(
     mockTraders.find((t) => t.id === fundTraderIds[0]) ||
     null;
 
+  function allocationForManagerCount(count: number) {
+    if (count === 1) return [100];
+    if (count === 2) return tier === "BULLION" ? [100] : [70, 30];
+    if (count === 3) return [40, 35, 25];
+    return [];
+  }
+
+  function buildFundManagers(ids: string[]) {
+    const allocationPct = allocationForManagerCount(ids.length);
+
+    return ids.map((traderId, index) => ({
+      traderId,
+      allocationPct: allocationPct[index] || 0,
+    }));
+  }
+
+  async function handleAddManager(traderId: string) {
+    if (!traderId) return;
+
+    const maxManagers =
+      tier === "TORION" ? 3 : tier === "HELLION" ? 2 : 1;
+
+    const nextIds = Array.from(new Set([...fundTraderIds, traderId]));
+
+    if (nextIds.length > maxManagers) {
+      setNotice(`${tier} Protocol allows up to ${maxManagers} manager${maxManagers === 1 ? "" : "s"}.`);
+      return;
+    }
+
+    setFundTraderIds(nextIds);
+
+    if (!authUser?.uid || !userId || !activeUser.fundActive || allocatedPrincipalUsd <= 0) {
+      return;
+    }
+
+    const idToken = await authUser.getIdToken();
+
+    const res = await fetch("/api/funds/activate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        userId,
+        tier,
+        capitalUsd: allocatedPrincipalUsd,
+        managers: buildFundManagers(nextIds),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      setNotice(data.error || "Could not rebalance fund.");
+      return;
+    }
+
+    setNotice("Fund rebalanced.");
+  }
+
   async function handleCopy(amount: number, traderOverride?: Trader) {
-    if (!requireLogin() || !userId || !user) return;
+    if (!requireLogin() || !userId || !user || !authUser) return;
 
     const traderToCopy = traderOverride || selectedTrader;
     if (!traderToCopy || amount <= 0 || amount > availableUsd) return;
@@ -550,6 +589,35 @@ const availableUsd = Math.max(
           ...current,
         ].slice(0, 6)
       );
+      return;
+    }
+
+    const activeManagers = fundTraderIds.length
+      ? fundTraderIds
+      : [traderToCopy.id];
+
+    const managers = buildFundManagers(activeManagers);
+
+    const idToken = await authUser.getIdToken();
+
+    const fundRes = await fetch("/api/funds/activate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        userId,
+        tier,
+        capitalUsd: amount,
+        managers,
+      }),
+    });
+
+    const fundData = await fundRes.json();
+
+    if (!fundData.ok) {
+      setNotice(fundData.error || "Could not activate fund.");
       return;
     }
 
@@ -902,21 +970,7 @@ const availableUsd = Math.max(
           onSelectTrader={(id) => {
             setSelectedTraderId(id);
           }}
-          onAddToFund={(traderId) => {
-            setFundTraderIds((current) => {
-              if (current.includes(traderId)) return current;
-
-              const maxManagers =
-                tier === "TORION" ? 3 : tier === "HELLION" ? 2 : 1;
-
-              if (current.length >= maxManagers) {
-                setNotice(`${tier} Protocol allows up to ${maxManagers} manager${maxManagers === 1 ? "" : "s"}.`);
-                return current;
-              }
-
-              return [...current, traderId];
-            });
-          }}
+          onAddToFund={handleAddManager}
         />
 
         <ChallengeRegister />
@@ -933,26 +987,47 @@ const availableUsd = Math.max(
           traders={traders.length ? traders : mockTraders}
           selectedIds={fundTraderIds}
           tier={tier}
-          onAdd={(traderId) => {
-            setFundTraderIds((current) => {
-              if (current.includes(traderId)) return current;
+          onAdd={handleAddManager}
+          onRemove={async (traderId) => {
+            if (!authUser?.uid || !userId) return;
 
-              const maxManagers =
-                tier === "TORION" ? 3 : tier === "HELLION" ? 2 : 1;
+            const idToken = await authUser.getIdToken();
 
-              if (current.length >= maxManagers) {
-                setNotice(`${tier} Protocol allows up to ${maxManagers} manager${maxManagers === 1 ? "" : "s"}.`);
-                return current;
-              }
-
-              return [...current, traderId];
+            const res = await fetch("/api/funds/deallocate", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${idToken}`,
+              },
+              body: JSON.stringify({
+                userId,
+                traderId,
+              }),
             });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.ok) {
+              setNotice(data.error || "Could not remove manager.");
+              return;
+            }
+
+            const nextIds = Array.isArray(data.nextIds) ? data.nextIds : [];
+            setFundTraderIds(nextIds);
+
+            if (nextIds.length === 0) {
+              await setCopyEngine({
+                userId,
+                copiedTraderId: null,
+                systemActive: false,
+                allocationUsd: 0,
+              });
+            }
+
+            setNotice("Manager removed from your fund.");
           }}
-          onRemove={(traderId) => {
-            setFundTraderIds((current) => current.filter((id) => id !== traderId));
-          }}
-          onActivate={async (managers) => {
-            setNotice("Use Fund Setup to deploy capital through your tier rules.");
+          onActivate={async () => {
+            setNotice("Use Fund Setup to deploy capital.");
           }}
         />
       </div>
@@ -976,16 +1051,20 @@ const availableUsd = Math.max(
           selectedTraderName={selectedTrader?.name}
           depositedUsd={activeUser.depositedUsd}
           profitUsd={activeUser.profitUsd}
-          allocatedUsd={activeUser.allocatedUsd || 0}
+          allocatedUsd={fundEquityUsd}
           onToggle={toggleEngine}
           onDisconnect={disconnectTrader}
         />
 
         <TerminalInvestPanel
           trader={fundSelectedTrader || undefined}
+          fundManagers={fundTraderIds
+            .map((id) => traders.find((t) => t.id === id) || mockTraders.find((t) => t.id === id))
+            .filter(Boolean) as Trader[]}
+          allocationMix={allocationForManagerCount(fundTraderIds.length)}
           totalInvested={availableUsd}
-          estimatedProfit={activeUser.profitUsd}
-          allocatedUsd={activeUser.allocatedUsd || 0}
+          estimatedProfit={fundPnlUsd}
+          allocatedUsd={fundEquityUsd}
           isActive={activeUser.systemActive}
           onInvest={handleCopy}
         />

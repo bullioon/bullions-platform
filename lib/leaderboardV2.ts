@@ -7,8 +7,22 @@ export function subscribeLeaderboardV2(cb: (traders: Trader[]) => void) {
     const traders = snap.docs.map((d) => {
       const data = d.data() as any;
 
+      const id = data.id || d.id;
+
+      const strategyAliases: Record<string, string> = {
+        ghost_alpha: "aa07ccd7-bae1-471c-84ab-185d881e9f97",
+        "local-manager": "aa07ccd7-bae1-471c-84ab-185d881e9f97",
+        managerdos: "aa07ccd7-bae1-471c-84ab-185d881e9f97",
+        mia_capital: "strategy_mia_capital",
+        ax_prime_KMF63S: "strategy_ax_prime_KMF63S",
+        bullions_ai: "strategy_bullions_ai",
+        "bullions-bot": "strategy_bullions_ai",
+        torion_desk: "strategy_torion_desk",
+      };
+
       return {
-        id: data.id || d.id,
+        id,
+        strategyId: data.strategyId || strategyAliases[id] || `strategy_${id}`,
         name: data.name || "Unknown Trader",
         tag: data.tag || data.style || "Verified trader",
         avatar: data.avatar || "⚔️",

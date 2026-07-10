@@ -42,7 +42,7 @@ export function PerformancePanel({ strategyId }: { strategyId: string }) {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card><Metric label="ROI" value={`${result.roi.toFixed(2)}%`} tone="success" /></Card>
+        <Card><Metric label="ROI" value={`${result.roi.toFixed(2)}%`} tone="green" /></Card>
         <Card><Metric label="Win Rate" value={`${result.winRate.toFixed(1)}%`} /></Card>
         <Card><Metric label="Risk Score" value={result.riskScore.toFixed(0)} /></Card>
         <Card><Metric label="Challenge Score" value={result.challengeScore.toFixed(2)} tone="purple" /></Card>

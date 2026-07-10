@@ -31,6 +31,23 @@ export class RuntimeRepository {
     });
   }
 
+
+  static async syncAllStrategyRuntimes(): Promise<StrategyRuntime[]> {
+    const db = getAdminDb();
+
+    const snap = await db.collection("managerStrategies").get();
+
+    const runtimes = (
+      await Promise.all(
+        snap.docs.map((docSnap) =>
+          RuntimeRepository.syncStrategyRuntime(docSnap.id)
+        )
+      )
+    ).filter(Boolean) as StrategyRuntime[];
+
+    return runtimes;
+  }
+
   static async persistStrategyRuntime(runtime: StrategyRuntime): Promise<void> {
     const db = getAdminDb();
 

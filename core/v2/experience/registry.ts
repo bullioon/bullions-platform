@@ -1,0 +1,78 @@
+import type { ExperienceSection } from "./types";
+
+export const managerExperienceSections: ExperienceSection[] = [
+  {
+    id: "hero",
+    title: "Hero",
+    description: "Primary investment identity section.",
+    order: 0,
+    surface: "manager",
+    visibility: "public",
+    editable: true,
+    enabled: true,
+  },
+  {
+    id: "philosophy",
+    title: "Investment Philosophy",
+    description: "How the manager thinks about markets and risk.",
+    order: 10,
+    surface: "manager",
+    visibility: "public",
+    editable: true,
+    enabled: true,
+  },
+  {
+    id: "trust",
+    title: "Trust Layer",
+    description: "Verification, runtime, capital and allocator signals.",
+    order: 20,
+    surface: "manager",
+    visibility: "public",
+    editable: false,
+    enabled: true,
+  },
+  {
+    id: "products",
+    title: "Investment Products",
+    description: "Strategies and products offered by the manager.",
+    order: 30,
+    surface: "manager",
+    visibility: "public",
+    editable: false,
+    enabled: true,
+  },
+  {
+    id: "research",
+    title: "Research",
+    description: "Published theses, market notes and reports.",
+    order: 40,
+    surface: "manager",
+    visibility: "public",
+    editable: true,
+    enabled: false,
+  },
+  {
+    id: "gallery",
+    title: "Gallery",
+    description: "Visual proof and manager context.",
+    order: 50,
+    surface: "manager",
+    visibility: "public",
+    editable: true,
+    enabled: false,
+  },
+  {
+    id: "journal",
+    title: "Journal",
+    description: "Narrative updates from the manager.",
+    order: 60,
+    surface: "manager",
+    visibility: "public",
+    editable: true,
+    enabled: false,
+  },
+];
+
+export const experienceRegistry = {
+  manager: managerExperienceSections,
+};

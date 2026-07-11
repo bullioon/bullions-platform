@@ -12,7 +12,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { getAdminAuth } from "@/lib/firebaseAdmin";
+import { getAdminAuth } from "@/lib/firebaseAdminAuth";
 
 function maxManagersForTier(tier: string) {
   if (tier === "TORION") return 3;

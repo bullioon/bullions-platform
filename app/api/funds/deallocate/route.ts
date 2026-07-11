@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { FundService } from "@/core/v2/services/FundService";
-import { getAdminAuth } from "@/lib/firebaseAdmin";
+import { getAdminAuth } from "@/lib/firebaseAdminAuth";
 
 export async function POST(req: Request) {
   try {

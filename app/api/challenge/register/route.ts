@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { getAdminAuth, getAdminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
+import { getAdminAuth } from "@/lib/firebaseAdminAuth";
 
 type TierId = "demo_50k" | "demo_200k";
 

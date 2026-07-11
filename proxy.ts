@@ -17,6 +17,7 @@ function isOperationalRoute(pathname: string) {
   return (
     pathname.startsWith("/api/mt5/") ||
     pathname.startsWith("/api/cron/") ||
+    pathname.startsWith("/api/dev/") ||
     pathname === "/api/challenge/confirm-payment"
   );
 }

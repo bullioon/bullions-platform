@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { ManagerProfile } from "@/types/v2/profile/managerProfile";
 
-import { ManagerHero } from "@/components/v2/manager-profile/ManagerHero";
+import { ManagerHero } from "@/components/v2/manager-profile/hero/ManagerHero";
 import { InvestmentPhilosophy } from "@/components/v2/manager-profile/InvestmentPhilosophy";
 import { TrustLayer } from "@/components/v2/manager-profile/TrustLayer";
 import { ProductShelf } from "@/components/v2/manager-profile/ProductShelf";
@@ -28,28 +28,8 @@ export type ManagerSection = {
 export const managerSectionRegistry: Record<ManagerProfileSectionId, ManagerSection> = {
   hero: {
     id: "hero",
-    render: ({ manager, stats, runtime }) => (
-      <ManagerHero
-        displayName={manager.identity.displayName}
-        tagline={manager.identity.tagline}
-        biography={manager.identity.biography}
-        strategyCount={
-          runtime?.stats.strategies ??
-          stats.strategies
-        }
-        verifiedCount={
-          runtime?.stats.verifiedStrategies ??
-          stats.verifiedStrategies
-        }
-        capitalFollowing={
-          runtime?.stats.totalCapital ??
-          stats.totalCapital
-        }
-        allocators={
-          runtime?.stats.totalAllocators ??
-          stats.totalAllocators
-        }
-      />
+    render: (profile) => (
+      <ManagerHero profile={profile} />
     ),
   },
 

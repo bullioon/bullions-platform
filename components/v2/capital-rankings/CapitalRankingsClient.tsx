@@ -138,7 +138,7 @@ export function CapitalRankingsClient() {
 
     const interval = window.setInterval(
       load,
-      60_000
+      15_000
     );
 
     return () => {
@@ -242,7 +242,7 @@ export function CapitalRankingsClient() {
                 value={String(liveCount)}
               />
               <HeaderMetric
-                label="Tracked"
+                label="Tracked Equity"
                 value={money(capitalTracked)}
               />
             </div>
@@ -313,10 +313,14 @@ export function CapitalRankingsClient() {
         </div>
       ) : filtered.length ? (
         <section className="grid gap-4 xl:grid-cols-2">
-          {filtered.map((strategy, index) => (
+          {filtered.map((strategy) => (
             <CapitalRankingCard
               key={strategy.id}
-              position={index + 1}
+              position={
+                rankings.findIndex(
+                  (row) => row.id === strategy.id
+                ) + 1
+              }
               strategy={strategy}
             />
           ))}

@@ -49,7 +49,7 @@ export const managerExperienceSections: ExperienceSection[] = [
     surface: "manager",
     visibility: "public",
     editable: true,
-    enabled: false,
+    enabled: true,
   },
   {
     id: "gallery",
@@ -59,7 +59,7 @@ export const managerExperienceSections: ExperienceSection[] = [
     surface: "manager",
     visibility: "public",
     editable: true,
-    enabled: false,
+    enabled: true,
   },
   {
     id: "journal",
@@ -69,7 +69,7 @@ export const managerExperienceSections: ExperienceSection[] = [
     surface: "manager",
     visibility: "public",
     editable: true,
-    enabled: false,
+    enabled: true,
   },
 ];
 

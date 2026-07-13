@@ -5,6 +5,11 @@ import { ManagerHero } from "@/components/v2/manager-profile/ManagerHero";
 import { InvestmentPhilosophy } from "@/components/v2/manager-profile/InvestmentPhilosophy";
 import { TrustLayer } from "@/components/v2/manager-profile/TrustLayer";
 import { ProductShelf } from "@/components/v2/manager-profile/ProductShelf";
+import {
+  ManagerGallerySection,
+  ManagerJournalSection,
+  ManagerResearchSection,
+} from "@/components/v2/manager-profile/ManagerSocialSections";
 
 export type ManagerProfileSectionId =
   | "hero"
@@ -72,16 +77,22 @@ export const managerSectionRegistry: Record<ManagerProfileSectionId, ManagerSect
 
   research: {
     id: "research",
-    render: () => null,
+    render: ({ manager }) => (
+      <ManagerResearchSection manager={manager} />
+    ),
   },
 
   gallery: {
     id: "gallery",
-    render: () => null,
+    render: ({ manager }) => (
+      <ManagerGallerySection manager={manager} />
+    ),
   },
 
   journal: {
     id: "journal",
-    render: () => null,
+    render: ({ manager }) => (
+      <ManagerJournalSection manager={manager} />
+    ),
   },
 };

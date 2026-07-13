@@ -16,6 +16,7 @@ export function AllocateModal({
   onClose,
   userId = "demo-user",
   traderId,
+  strategyId,
 }: Props) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,6 +59,7 @@ export function AllocateModal({
           managers: [
             {
               traderId,
+              strategyId,
               allocationPct: 100,
             },
           ],

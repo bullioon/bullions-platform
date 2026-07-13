@@ -99,27 +99,24 @@ function isTraditionalMarketClosed(pair?: string) {
 
 
 function missionRankingToTrader(row: any): Trader {
-  const profitUsd =
-    Number(String(row.profit || "0").replace(/[$,+]/g, "")) || 0;
-
-  const accountBase = row.accountSize === "200K" ? 200000 : 50000;
-  const roi = accountBase > 0 ? (profitUsd / accountBase) * 100 : 0;
+  const initialBalance = Number(row.initialBalance || 0);
+  const equity = Number(row.equity || initialBalance);
+  const profitUsd = Number(row.profitUsd || equity - initialBalance);
+  const roi = Number(row.roi || 0);
 
   return {
     id: String(row.id),
     name: String(row.name || "Unknown Strategy"),
-    pair: String(row.market || "XAU/USD"),
+    pair: String(row.market || "Multi-asset"),
     tag: String(row.engine === "AI" ? "Bullions AI" : "Verified MT5"),
     avatar: String(row.name || "ST").slice(0, 2).toUpperCase(),
     roi,
     profitUsd,
-    balance: accountBase + profitUsd,
+    balance: equity,
     topTrade: Number(row.profitFactor || 0) * 10,
-    maxLoss: Number(String(row.drawdown || "0").replace("%", "")) || 0,
+    maxLoss: Number(row.drawdown || 0),
     strategyId: String(row.id),
-    bullionsScore: Math.round(
-      roi + Number(String(row.winRate || "0").replace("%", ""))
-    ),
+    bullionsScore: Math.round(Number(row.allocatorScore || 0)),
     specialty: `${row.accountSize || "50K"} · ${row.engine || "MT5"}`,
   } as Trader;
 }

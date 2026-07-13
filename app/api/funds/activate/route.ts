@@ -174,9 +174,23 @@ export async function POST(req: Request) {
 
     for (const manager of managers) {
       const traderId = String(manager.traderId || "");
+      const suppliedStrategyId = String(manager.strategyId || "").trim();
       const allocationPct = Number(manager.allocationPct || 0);
       const managerCapital = Number(((capitalUsd * allocationPct) / 100).toFixed(2));
-      const strategyIds = await findStrategyIdsForTrader(traderId);
+
+      const strategyIds = suppliedStrategyId
+        ? [suppliedStrategyId]
+        : await findStrategyIdsForTrader(traderId);
+
+      if (!strategyIds.length) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `No strategy found for ${traderId || "manager"}`,
+          },
+          { status: 404 }
+        );
+      }
 
       for (const strategyId of strategyIds) {
         await applyStrategyCapital({

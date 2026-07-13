@@ -238,6 +238,22 @@ export async function GET(req: Request) {
     const challengeStatus = strategy?.challenge?.status;
     const mt5Enabled = strategy?.mt5?.enabled === true;
 
+    const isRealBridgeStrategy =
+      strategy?.mt5?.source === "mt5-bridge" ||
+      strategy?.mt5?.provider === "mt5-bridge" ||
+      strategy?.mt5?.accountStatus === "ACTIVE";
+
+    if (isRealBridgeStrategy) {
+      results.push({
+        strategyId: strategyDoc.id,
+        strategyName: strategy?.identity?.name || "Unknown Strategy",
+        skipped: true,
+        reason: "Real MT5 bridge active",
+      });
+
+      continue;
+    }
+
     const shouldSync =
       mt5Enabled ||
       state === "published" ||

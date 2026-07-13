@@ -1,4 +1,5 @@
 import type { Strategy } from "@/types/v2/domain/strategy";
+import type { Manager } from "@/types/v2/domain/manager";
 import type {
   MT5HealthStatus,
   StrategyRuntime,
@@ -64,6 +65,7 @@ function mt5Style(status: MT5HealthStatus) {
 
 type Props = {
   strategy: Strategy;
+  manager: Manager | null;
   runtime: StrategyRuntime | null;
   challengeRank: string | number;
   challengeScore: number;
@@ -72,6 +74,7 @@ type Props = {
 
 export function StrategyHero({
   strategy,
+  manager,
   runtime,
   challengeRank,
   challengeScore,
@@ -222,13 +225,14 @@ export function StrategyHero({
                 </p>
 
                 <h2 className="mt-2 truncate text-2xl font-black">
-                  {strategy.manager.displayName ||
+                  {manager?.identity.displayName ||
+                    strategy.manager.displayName ||
                     strategy.manager.username ||
                     strategy.identity.name}
                 </h2>
 
                 <p className="mt-1 text-sm text-white/35">
-                  {allocators.toLocaleString()} allocators
+                  {manager?.brand.location || `${allocators.toLocaleString()} allocators`}
                 </p>
               </div>
             </div>

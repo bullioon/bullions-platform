@@ -253,6 +253,7 @@ export function StrategyProfilePage({
     <main className="min-h-screen bg-[#050606] text-white">
       <StrategyHero
         strategy={strategy}
+        manager={manager}
         runtime={runtime}
         challengeRank={challengeRank}
         challengeScore={challengeScore}
@@ -373,30 +374,62 @@ export function StrategyProfilePage({
           </Panel>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
-          <Panel title="Latest Research">
-            {["Gold Macro Outlook", "Indices Breakdown", "Bitcoin Cycle Update"].map((x, i) => (
-              <div key={x} className="border-b border-white/10 py-4 last:border-0">
-                <p className="font-bold">{x}</p>
-                <p className="mt-1 text-sm text-white/35">{i + 5} min read · Published recently</p>
-              </div>
-            ))}
+        <section className="grid gap-6 xl:grid-cols-2">
+          <Panel title="Research">
+            {manager?.social?.research?.length ? (
+              manager.social.research.map((item) => (
+                <a
+                  key={item.id}
+                  href={item.url || "#"}
+                  target={item.url ? "_blank" : undefined}
+                  rel={item.url ? "noreferrer" : undefined}
+                  className="block border-b border-white/10 py-4 last:border-0"
+                >
+                  <p className="font-black text-white">
+                    {item.title}
+                  </p>
+
+                  {item.summary ? (
+                    <p className="mt-2 text-sm leading-6 text-white/40">
+                      {item.summary}
+                    </p>
+                  ) : null}
+
+                  <p className="mt-2 text-xs text-white/25">
+                    {new Date(item.publishedAt).toLocaleDateString()}
+                  </p>
+                </a>
+              ))
+            ) : (
+              <EmptyContent
+                title="No research published yet"
+                body="Market reports, investment theses and strategy notes from this manager will appear here."
+              />
+            )}
           </Panel>
 
-          <Panel title="Products & Access">
-            <div className="grid gap-4 md:grid-cols-3">
-              {[
-                ["Premium Copy Access", "$99 / month"],
-                ["Macro Course", "$299"],
-                ["Signals Channel", "$149 / month"],
-              ].map(([name, price]) => (
-                <div key={name} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                  <p className="text-3xl text-[#b6ff00]">♛</p>
-                  <p className="mt-5 font-bold">{name}</p>
-                  <p className="mt-6 text-lg font-black">{price}</p>
-                </div>
-              ))}
-            </div>
+          <Panel title="Manager Journal">
+            {manager?.social?.journal?.length ? (
+              manager.social.journal.map((item) => (
+                <article
+                  key={item.id}
+                  className="border-b border-white/10 py-4 last:border-0"
+                >
+                  <p className="text-sm leading-7 text-white/55">
+                    {item.body}
+                  </p>
+
+                  <p className="mt-2 text-xs text-white/25">
+                    {new Date(item.publishedAt).toLocaleDateString()}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <EmptyContent
+                title="No manager updates yet"
+                body="Execution notes, market observations and strategy updates will appear here."
+              />
+            )}
           </Panel>
         </section>
 
@@ -448,5 +481,28 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
       <p className="text-xs font-black uppercase tracking-[0.28em] text-white/40">{title}</p>
       <div className="mt-5">{children}</div>
     </section>
+  );
+}
+
+
+function EmptyContent({
+  title,
+  body,
+}: {
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="grid min-h-[180px] place-items-center rounded-[22px] border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
+      <div className="max-w-sm">
+        <p className="font-black text-white">
+          {title}
+        </p>
+
+        <p className="mt-2 text-sm leading-6 text-white/35">
+          {body}
+        </p>
+      </div>
+    </div>
   );
 }

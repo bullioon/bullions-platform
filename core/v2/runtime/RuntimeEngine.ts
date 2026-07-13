@@ -29,6 +29,40 @@ function round(n: number, decimals = 2): number {
   return Number(n.toFixed(decimals));
 }
 
+function resolveMT5Health(lastSyncedAt: number | null) {
+  if (!lastSyncedAt) {
+    return {
+      status: "pending" as const,
+      connected: false,
+      ageMs: null,
+    };
+  }
+
+  const ageMs = Math.max(0, Date.now() - lastSyncedAt);
+
+  if (ageMs <= 3 * 60 * 1000) {
+    return {
+      status: "live" as const,
+      connected: true,
+      ageMs,
+    };
+  }
+
+  if (ageMs <= 10 * 60 * 1000) {
+    return {
+      status: "stale" as const,
+      connected: false,
+      ageMs,
+    };
+  }
+
+  return {
+    status: "offline" as const,
+    connected: false,
+    ageMs,
+  };
+}
+
 function gradeFromScores(input: {
   roi: number;
   maxDrawdown: number;
@@ -94,7 +128,18 @@ export function buildStrategyRuntime(input: {
   const maxDrawdown = numberValue(snapshot.maxDrawdown ?? performanceDoc.maxDrawdown, 0);
   const totalTrades = numberValue(snapshot.totalTrades ?? performanceDoc.totalTrades, 0);
   const openTrades = numberValue(snapshot.openTrades ?? performanceDoc.openTrades, 0);
-  const dailyReturnPct = numberValue(snapshot.dailyReturnPct ?? performanceDoc.dailyReturnPct, 0);
+  const dailyReturnPct = numberValue(
+    snapshot.dailyReturnPct ?? performanceDoc.dailyReturnPct,
+    0
+  );
+
+  const lastSyncedAt =
+    numberValue(
+      snapshot.syncedAt ?? performanceDoc.lastSyncedAt,
+      0
+    ) || null;
+
+  const mt5Health = resolveMT5Health(lastSyncedAt);
 
   const riskScore = clamp(100 - maxDrawdown * 6);
   const consistencyScore = clamp(winRate * 0.45 + profitFactor * 18 + riskScore * 0.25);
@@ -126,7 +171,12 @@ export function buildStrategyRuntime(input: {
       totalTrades: round(totalTrades, 0),
       openTrades: round(openTrades, 0),
       dailyReturnPct: round(dailyReturnPct, 3),
-      lastSyncedAt: numberValue(snapshot.syncedAt ?? performanceDoc.lastSyncedAt, 0) || null,
+      lastSyncedAt,
+    },
+    mt5: {
+      status: mt5Health.status,
+      connected: mt5Health.connected,
+      ageMs: mt5Health.ageMs,
     },
     scores: {
       allocatorScore: round(allocatorScore),

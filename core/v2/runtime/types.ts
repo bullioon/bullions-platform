@@ -1,4 +1,15 @@
-export type RuntimeGrade = "elite" | "strong" | "stable" | "watchlist" | "high_risk";
+export type RuntimeGrade =
+  | "elite"
+  | "strong"
+  | "stable"
+  | "watchlist"
+  | "high_risk";
+
+export type MT5HealthStatus =
+  | "live"
+  | "stale"
+  | "offline"
+  | "pending";
 
 export type StrategyRuntime = {
   strategyId: string;
@@ -19,6 +30,11 @@ export type StrategyRuntime = {
     openTrades: number;
     dailyReturnPct: number;
     lastSyncedAt: number | null;
+  };
+  mt5: {
+    status: MT5HealthStatus;
+    connected: boolean;
+    ageMs: number | null;
   };
   scores: {
     allocatorScore: number;

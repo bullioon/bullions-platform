@@ -17,6 +17,7 @@ export type CapitalRanking = {
   drawdown: string;
   profitFactor: string;
   synced: string;
+  mt5Status: "live" | "stale" | "offline" | "pending";
 };
 
 function money(n: number) {
@@ -46,7 +47,15 @@ function toRanking(runtime: StrategyRuntime): CapitalRanking {
     winRate: `${runtime.performance.winRate.toFixed(0)}%`,
     drawdown: `${runtime.performance.maxDrawdown.toFixed(1)}%`,
     profitFactor: runtime.performance.profitFactor.toFixed(2),
-    synced: runtime.performance.lastSyncedAt ? "30m delay" : "pending",
+    synced:
+      runtime.mt5.status === "live"
+        ? "live"
+        : runtime.mt5.status === "stale"
+          ? "stale"
+          : runtime.mt5.status === "offline"
+            ? "offline"
+            : "pending",
+    mt5Status: runtime.mt5.status,
   };
 }
 

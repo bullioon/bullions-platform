@@ -10,7 +10,46 @@ export function ManagerProfilePage({ uid }: { uid: string }) {
   const [profile, setProfile] = useState<ManagerProfile | null>(null);
 
   useEffect(() => {
-    ManagerService.getProfile(uid).then(setProfile);
+    let alive = true;
+
+    async function loadProfile() {
+      const baseProfile =
+        await ManagerService.getProfile(uid);
+
+      if (!baseProfile || !alive) {
+        if (alive) setProfile(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/runtime/manager/${encodeURIComponent(uid)}`,
+          { cache: "no-store" }
+        );
+
+        const data = await response.json();
+
+        if (!alive) return;
+
+        setProfile({
+          ...baseProfile,
+          runtime: data.runtime || null,
+        });
+      } catch {
+        if (alive) {
+          setProfile({
+            ...baseProfile,
+            runtime: null,
+          });
+        }
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      alive = false;
+    };
   }, [uid]);
 
   if (!profile) {

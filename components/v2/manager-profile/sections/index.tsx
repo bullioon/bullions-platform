@@ -23,15 +23,27 @@ export type ManagerSection = {
 export const managerSectionRegistry: Record<ManagerProfileSectionId, ManagerSection> = {
   hero: {
     id: "hero",
-    render: ({ manager, stats }) => (
+    render: ({ manager, stats, runtime }) => (
       <ManagerHero
         displayName={manager.identity.displayName}
         tagline={manager.identity.tagline}
         biography={manager.identity.biography}
-        strategyCount={stats.strategies}
-        verifiedCount={stats.verifiedStrategies}
-        capitalFollowing={stats.totalCapital}
-        allocators={stats.totalAllocators}
+        strategyCount={
+          runtime?.stats.strategies ??
+          stats.strategies
+        }
+        verifiedCount={
+          runtime?.stats.verifiedStrategies ??
+          stats.verifiedStrategies
+        }
+        capitalFollowing={
+          runtime?.stats.totalCapital ??
+          stats.totalCapital
+        }
+        allocators={
+          runtime?.stats.totalAllocators ??
+          stats.totalAllocators
+        }
       />
     ),
   },

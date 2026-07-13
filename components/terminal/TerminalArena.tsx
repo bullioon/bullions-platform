@@ -516,10 +516,19 @@ const availableUsd = Math.max(
   function buildFundManagers(ids: string[]) {
     const allocationPct = allocationForManagerCount(ids.length);
 
-    return ids.map((traderId, index) => ({
-      traderId,
-      allocationPct: allocationPct[index] || 0,
-    }));
+    return ids.map((traderId, index) => {
+      const trader = traders.find(
+        (item) => item.id === traderId
+      ) as (Trader & { strategyId?: string }) | undefined;
+
+      return {
+        traderId,
+        strategyId:
+          trader?.strategyId || traderId,
+        allocationPct:
+          allocationPct[index] || 0,
+      };
+    });
   }
 
   async function handleAddManager(traderId: string) {

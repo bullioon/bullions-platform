@@ -18,7 +18,7 @@ export class RuntimeRepository {
       .collection("strategyPerformanceSnapshots")
       .doc(strategyId)
       .collection("points")
-      .orderBy("syncedAt", "desc")
+      .orderBy("createdAt", "desc")
       .limit(1)
       .get();
 

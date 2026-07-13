@@ -40,11 +40,19 @@ function pct(n: number | null | undefined) {
   return `${Number(n || 0).toFixed(2)}%`;
 }
 
-export function StrategyProfilePage({ strategyId }: { strategyId: string }) {
+export function StrategyProfilePage({
+  strategyId,
+  initialAllocateOpen = false,
+}: {
+  strategyId: string;
+  initialAllocateOpen?: boolean;
+}) {
   const { user } = useAuth();
   const [strategy, setStrategy] = useState<Strategy | null>(null);
   const [runtime, setRuntime] = useState<StrategyRuntime | null>(null);
-  const [allocateOpen, setAllocateOpen] = useState(false);
+  const [allocateOpen, setAllocateOpen] = useState(
+    initialAllocateOpen
+  );
   const [challengeRow, setChallengeRow] = useState<any | null>(null);
   const [challengeSeason, setChallengeSeason] = useState<any | null>(null);
   const [performanceHistory, setPerformanceHistory] = useState<any[]>([]);
@@ -131,7 +139,11 @@ export function StrategyProfilePage({ strategyId }: { strategyId: string }) {
   const runtimeGrade = gradeLabel(runtime?.universe.grade);
   const allocatorScore = Number(runtime?.scores.allocatorScore || 0);
   const lastSyncLabel = timeAgo(runtime?.performance.lastSyncedAt);
-  const mt5Live = Boolean(runtime?.performance.lastSyncedAt);
+  const mt5Status =
+    runtime?.mt5.status || "pending";
+
+  const mt5Connected =
+    runtime?.mt5.connected === true;
   const challengeRank = challengeRow?.position || strategy.challenge.rank || "-";
   const challengeScore = Number(challengeRow?.score || 0);
   const challengePrize = Number(challengeSeason?.prizePoolUsd || strategy.challenge.prizeUsd || 50000);

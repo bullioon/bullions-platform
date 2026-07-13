@@ -178,10 +178,16 @@ export async function POST(req: Request) {
       Date.now()
     );
 
-    const syncedAt =
+    // Timestamp reported by the broker/MT5 terminal.
+    // Broker server time can use a different timezone.
+    const brokerTimestamp =
       suppliedTimestamp > 0
         ? Math.floor(suppliedTimestamp)
-        : Date.now();
+        : null;
+
+    // Canonical heartbeat time. Always use Bullions server time
+    // so connection health is not affected by broker timezone.
+    const syncedAt = Date.now();
 
     const db = getAdminDb();
 
@@ -348,7 +354,8 @@ export async function POST(req: Request) {
       openTrades,
 
       syncedAt,
-      receivedAt: Date.now(),
+      brokerTimestamp,
+      receivedAt: syncedAt,
       createdAt: FieldValue.serverTimestamp(),
     };
 

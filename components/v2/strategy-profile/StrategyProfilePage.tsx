@@ -7,8 +7,10 @@ import { SixAssessmentCard } from "@/components/v2/six/SixAssessmentCard";
 import { StrategyHero } from "@/components/v2/strategy-profile/StrategyHero";
 import { StrategyGallery } from "@/components/v2/strategy-profile/StrategyGallery";
 import { StrategyRepository } from "@/core/v2/repositories/StrategyRepository";
+import { ManagerRepository } from "@/core/v2/repositories/ManagerRepository";
 import { useAuth } from "@/hooks/useAuth";
 import type { Strategy } from "@/types/v2/domain/strategy";
+import type { Manager } from "@/types/v2/domain/manager";
 import type { StrategyRuntime } from "@/core/v2/runtime";
 
 
@@ -49,6 +51,7 @@ export function StrategyProfilePage({
 }) {
   const { user } = useAuth();
   const [strategy, setStrategy] = useState<Strategy | null>(null);
+  const [manager, setManager] = useState<Manager | null>(null);
   const [runtime, setRuntime] = useState<StrategyRuntime | null>(null);
   const [allocateOpen, setAllocateOpen] = useState(
     initialAllocateOpen
@@ -58,7 +61,23 @@ export function StrategyProfilePage({
   const [performanceHistory, setPerformanceHistory] = useState<any[]>([]);
 
   useEffect(() => {
-    StrategyRepository.get(strategyId).then(setStrategy);
+    StrategyRepository.get(strategyId).then(async (nextStrategy) => {
+      setStrategy(nextStrategy);
+
+      const managerUid = nextStrategy?.manager?.uid;
+
+      if (!managerUid) {
+        setManager(null);
+        return;
+      }
+
+      try {
+        const nextManager = await ManagerRepository.get(managerUid);
+        setManager(nextManager);
+      } catch {
+        setManager(null);
+      }
+    });
 
     fetch(`/api/runtime/strategy/${encodeURIComponent(strategyId)}`)
       .then((res) => res.json())
@@ -242,7 +261,10 @@ export function StrategyProfilePage({
 
       <div className="mx-auto max-w-[1600px] space-y-6 px-6 pb-12">
 
-        <StrategyGallery strategy={strategy} />
+        <StrategyGallery
+          strategy={strategy}
+          manager={manager}
+        />
 
 
         <section className="grid gap-3 rounded-[30px] border border-white/10 bg-[#080909] p-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
@@ -349,27 +371,6 @@ export function StrategyProfilePage({
             <Mini label="Confidence" value="HIGH" />
             <Mini label="Signal" value="Copy Eligible" />
           </Panel>
-        </section>
-
-        <section className="rounded-[30px] border border-white/10 bg-[#080909] p-6">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-black uppercase tracking-[0.28em] text-white/40">Gallery</p>
-            <p className="text-sm text-white/35">View All</p>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-6">
-            {[
-              "https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=800&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?q=80&w=800&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=800&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=800&auto=format&fit=crop",
-            ].map((src) => (
-              <div key={src} className="h-32 overflow-hidden rounded-2xl bg-white/5">
-                <img src={src} className="h-full w-full object-cover opacity-80" alt="" />
-              </div>
-            ))}
-          </div>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">

@@ -102,7 +102,11 @@ export function TerminalLeaderboard({
               <div className="relative z-10 flex items-center"><span className="text-sm font-semibold text-white/35">{String(index + 1).padStart(2, "0")}</span></div>
 
               <button
-                onClick={() => onSelectTrader(trader.id)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onSelectTrader(trader.id);
+                  router.push(href);
+                }}
                 className="relative z-10 min-w-0 text-left">
                 <div className="flex items-center gap-3">
                   <div className="hidden">{trader.avatar || "⚔️"}</div>

@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { TopFloatingMenu } from "@/components/layout/TopFloatingMenu";
 import { AllocateModal } from "@/components/v2/allocate/AllocateModal";
 import { SixAssessmentCard } from "@/components/v2/six/SixAssessmentCard";
 import { StrategyHero } from "@/components/v2/strategy-profile/StrategyHero";
@@ -250,17 +252,65 @@ export function StrategyProfilePage({
       : Number(strategy.performance.roi || 0);
 
   return (
-    <main className="min-h-screen bg-[#050606] text-white">
-      <StrategyHero
-        strategy={strategy}
-        manager={manager}
-        runtime={runtime}
-        challengeRank={challengeRank}
-        challengeScore={challengeScore}
-        onAllocate={() => setAllocateOpen(true)}
-      />
+    <main className="min-h-screen overflow-hidden bg-[#050607] px-4 pb-12 pt-8 text-white">
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(182,255,0,0.07),transparent_30%)]" />
 
-      <div className="mx-auto max-w-[1600px] space-y-6 px-6 pb-12">
+      <div className="relative mx-auto max-w-[1600px]">
+        <TopFloatingMenu />
+
+        <section className="mb-5 flex flex-col gap-4 rounded-[24px] border border-white/10 bg-[#080909]/90 px-5 py-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[16px] border border-white/10 bg-white/[0.04] text-sm font-black text-[#b6ff00]">
+              {manager?.identity.avatarUrl ? (
+                <img
+                  src={manager.identity.avatarUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                (manager?.identity.displayName ||
+                  strategy.manager.displayName ||
+                  "6X")
+                  .slice(0, 2)
+                  .toUpperCase()
+              )}
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#b6ff00]">
+                Strategy Headquarters
+              </p>
+
+              <p className="mt-1 truncate text-sm font-semibold text-white/45">
+                Managed by{" "}
+                <span className="font-black text-white">
+                  {manager?.identity.displayName ||
+                    strategy.manager.displayName}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          {strategy.manager.uid ? (
+            <Link
+              href={`/m/${strategy.manager.uid}`}
+              className="inline-flex h-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] px-6 text-[9px] font-black uppercase tracking-[0.15em] text-white/60 transition hover:border-[#b6ff00]/25 hover:text-[#b6ff00]"
+            >
+              ← Manager Headquarters
+            </Link>
+          ) : null}
+        </section>
+
+        <StrategyHero
+          strategy={strategy}
+          manager={manager}
+          runtime={runtime}
+          challengeRank={challengeRank}
+          challengeScore={challengeScore}
+          onAllocate={() => setAllocateOpen(true)}
+        />
+
+        <div className="mt-6 space-y-6">
 
         <StrategyGallery
           strategy={strategy}
@@ -455,13 +505,14 @@ export function StrategyProfilePage({
         </section>
       </div>
 
-      <AllocateModal
-        open={allocateOpen}
-        onClose={() => setAllocateOpen(false)}
-        userId={user?.uid || "guest"}
-        traderId={strategy.manager.uid}
-        strategyId={strategy.id}
-      />
+        <AllocateModal
+          open={allocateOpen}
+          onClose={() => setAllocateOpen(false)}
+          userId={user?.uid || "guest"}
+          traderId={strategy.manager.uid}
+          strategyId={strategy.id}
+        />
+      </div>
     </main>
   );
 }

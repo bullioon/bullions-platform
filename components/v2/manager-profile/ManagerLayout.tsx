@@ -4,20 +4,28 @@ import { managerTemplate } from "@/core/v2/templates/managerTemplate";
 import type { ManagerProfile } from "@/types/v2/profile/managerProfile";
 import { managerSectionRegistry } from "@/components/v2/manager-profile/sections";
 
-export function ManagerLayout({ profile }: { profile: ManagerProfile }) {
+export function ManagerLayout({
+  profile,
+}: {
+  profile: ManagerProfile;
+}) {
   return (
-    <>
+    <div className="space-y-8">
       {managerTemplate.map((id) => {
         const section = managerSectionRegistry[id];
 
         if (!section) return null;
 
         return (
-          <div key={id} className={id === "hero" ? "" : "mt-8"}>
+          <div
+            key={id}
+            id={`hq-${id === "hero" ? "overview" : id}`}
+            className="scroll-mt-28"
+          >
             {section.render(profile)}
           </div>
         );
       })}
-    </>
+    </div>
   );
 }

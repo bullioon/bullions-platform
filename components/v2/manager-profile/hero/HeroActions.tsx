@@ -39,7 +39,7 @@ export function HeroActions({ profile }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-4 px-6 pt-7 sm:px-10">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"

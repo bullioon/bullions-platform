@@ -5,17 +5,9 @@ type Props = {
 };
 
 function gradeLabel(value?: string) {
-  if (!value) return "Pending";
-
   return value
-    .replaceAll("_", " ")
-    .toUpperCase();
-}
-
-function riskLabel(score: number) {
-  if (score >= 80) return "Controlled";
-  if (score >= 55) return "Moderate";
-  return "Elevated";
+    ? value.replaceAll("_", " ").toUpperCase()
+    : "PENDING";
 }
 
 export function HeroRuntime({ profile }: Props) {
@@ -26,19 +18,12 @@ export function HeroRuntime({ profile }: Props) {
     profile.manager.reputation.allocatorScore ??
     0;
 
-  const riskScore =
-    runtime?.scores.riskScore ?? 0;
-
   const liveStrategies =
     runtime?.stats.liveStrategies ?? 0;
 
   const totalStrategies =
     runtime?.stats.strategies ??
     profile.stats.strategies;
-
-  const grade = gradeLabel(
-    runtime?.universe.grade
-  );
 
   const mt5Status =
     liveStrategies > 0
@@ -47,93 +32,77 @@ export function HeroRuntime({ profile }: Props) {
         ? "OFFLINE"
         : "PENDING";
 
-  const mt5Tone =
-    mt5Status === "LIVE"
-      ? "text-[#b6ff00]"
-      : mt5Status === "OFFLINE"
-        ? "text-red-300"
-        : "text-white/35";
-
   return (
-    <section className="mx-6 mt-8 overflow-hidden rounded-[28px] border border-white/10 bg-black/25 sm:mx-10">
-      <div className="grid gap-px bg-white/10 sm:grid-cols-2 xl:grid-cols-5">
-        <RuntimeMetric
-          label="MT5 Network"
-          value={mt5Status}
-          valueClassName={mt5Tone}
-          sub={`${liveStrategies}/${totalStrategies} live strategies`}
-        />
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge
+        label="MT5"
+        value={mt5Status}
+        tone={
+          mt5Status === "LIVE"
+            ? "green"
+            : mt5Status === "OFFLINE"
+              ? "red"
+              : "neutral"
+        }
+      />
 
-        <RuntimeMetric
-          label="Allocator Score"
-          value={allocatorScore.toFixed(0)}
-          valueClassName="text-[#b6ff00]"
-          sub="Manager aggregation"
-        />
+      <Badge
+        label="Allocator"
+        value={allocatorScore.toFixed(0)}
+        tone="green"
+      />
 
-        <RuntimeMetric
-          label="Runtime Grade"
-          value={grade}
-          sub="Across active strategies"
-        />
+      <Badge
+        label="Runtime"
+        value={gradeLabel(runtime?.universe.grade)}
+      />
 
-        <RuntimeMetric
-          label="Risk"
-          value={riskLabel(riskScore)}
-          sub={`Risk score ${riskScore.toFixed(0)}`}
-        />
-
-        <RuntimeMetric
-          label="Universe"
-          value={
-            runtime?.universe.eligible
-              ? "ELIGIBLE"
-              : "WATCHLIST"
-          }
-          valueClassName={
-            runtime?.universe.eligible
-              ? "text-[#b6ff00]"
-              : "text-amber-300"
-          }
-          sub={
-            runtime?.universe.visible
-              ? "Public profile"
-              : "Private profile"
-          }
-        />
-      </div>
-    </section>
+      <Badge
+        label="Universe"
+        value={
+          runtime?.universe.eligible
+            ? "ELIGIBLE"
+            : "WATCHLIST"
+        }
+        tone={
+          runtime?.universe.eligible
+            ? "green"
+            : "amber"
+        }
+      />
+    </div>
   );
 }
 
-function RuntimeMetric({
+function Badge({
   label,
   value,
-  sub,
-  valueClassName = "text-white",
+  tone = "neutral",
 }: {
   label: string;
   value: string;
-  sub?: string;
-  valueClassName?: string;
+  tone?: "neutral" | "green" | "red" | "amber";
 }) {
+  const toneClass =
+    tone === "green"
+      ? "border-[#b6ff00]/20 bg-[#b6ff00]/8 text-[#b6ff00]"
+      : tone === "red"
+        ? "border-red-400/20 bg-red-400/8 text-red-300"
+        : tone === "amber"
+          ? "border-amber-400/20 bg-amber-400/8 text-amber-300"
+          : "border-white/10 bg-white/[0.035] text-white/55";
+
   return (
-    <div className="bg-[#080909] p-5">
-      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/25">
+    <div
+      className={`flex items-center gap-2 rounded-full border px-3 py-2 ${toneClass}`}
+    >
+      <span className="text-[8px] font-black uppercase tracking-[0.16em] opacity-55">
         {label}
-      </p>
+      </span>
 
-      <p
-        className={`mt-3 text-2xl font-black tracking-[-0.05em] ${valueClassName}`}
-      >
+      <span className="text-[10px] font-black uppercase tracking-[0.12em]">
         {value}
-      </p>
-
-      {sub ? (
-        <p className="mt-2 text-xs leading-5 text-white/30">
-          {sub}
-        </p>
-      ) : null}
+      </span>
     </div>
   );
 }

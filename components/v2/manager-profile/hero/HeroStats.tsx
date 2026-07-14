@@ -27,44 +27,33 @@ export function HeroStats({ profile }: Props) {
     runtime?.stats.strategies ??
     profile.stats.strategies;
 
-  const verified =
-    runtime?.stats.verifiedStrategies ??
-    profile.stats.verifiedStrategies;
-
   const averageRoi =
     runtime?.stats.averageRoi ?? 0;
 
   return (
-    <section className="mx-6 mt-4 overflow-hidden rounded-[28px] border border-white/10 bg-black/20 sm:mx-10">
-      <div className="grid gap-px bg-white/10 sm:grid-cols-2 xl:grid-cols-5">
-        <Stat
-          label="Capital Following"
-          value={money(totalCapital)}
-          accent
-        />
+    <div className="grid gap-5 border-t border-white/10 pt-6 sm:grid-cols-2 xl:grid-cols-4">
+      <Stat
+        label="Capital Following"
+        value={money(totalCapital)}
+        accent
+      />
 
-        <Stat
-          label="Allocators"
-          value={totalAllocators.toLocaleString()}
-        />
+      <Stat
+        label="Allocators"
+        value={totalAllocators.toLocaleString()}
+      />
 
-        <Stat
-          label="Strategies"
-          value={String(strategies)}
-        />
+      <Stat
+        label="Strategies"
+        value={String(strategies)}
+      />
 
-        <Stat
-          label="Verified"
-          value={String(verified)}
-        />
-
-        <Stat
-          label="Average ROI"
-          value={`${averageRoi >= 0 ? "+" : ""}${averageRoi.toFixed(2)}%`}
-          accent={averageRoi >= 0}
-        />
-      </div>
-    </section>
+      <Stat
+        label="Average ROI"
+        value={`${averageRoi >= 0 ? "+" : ""}${averageRoi.toFixed(2)}%`}
+        accent={averageRoi > 0}
+      />
+    </div>
   );
 }
 
@@ -78,13 +67,13 @@ function Stat({
   accent?: boolean;
 }) {
   return (
-    <div className="bg-[#080909] p-5 sm:p-6">
+    <div>
       <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/25">
         {label}
       </p>
 
       <p
-        className={`mt-3 text-3xl font-black tracking-[-0.06em] ${
+        className={`mt-2 text-3xl font-black tracking-[-0.06em] ${
           accent ? "text-[#b6ff00]" : "text-white"
         }`}
       >

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ManagerService } from "@/core/v2/services/ManagerService";
 import type { ManagerProfile } from "@/types/v2/profile/managerProfile";
 import { ManagerLayout } from "@/components/v2/manager-profile/ManagerLayout";
+import { TopFloatingMenu } from "@/components/layout/TopFloatingMenu";
 
 export function ManagerProfilePage({ uid }: { uid: string }) {
   const [profile, setProfile] = useState<ManagerProfile | null>(null);
@@ -13,8 +14,7 @@ export function ManagerProfilePage({ uid }: { uid: string }) {
     let alive = true;
 
     async function loadProfile() {
-      const baseProfile =
-        await ManagerService.getProfile(uid);
+      const baseProfile = await ManagerService.getProfile(uid);
 
       if (!baseProfile || !alive) {
         if (alive) setProfile(null);
@@ -61,10 +61,16 @@ export function ManagerProfilePage({ uid }: { uid: string }) {
   }
 
   return (
-    <main className="min-h-screen bg-[#050606] text-white">
-      <section className="mx-auto max-w-[1600px] px-6 py-10">
-        <ManagerLayout profile={profile} />
-      </section>
+    <main className="min-h-screen overflow-hidden bg-[#050607] px-4 pb-12 pt-10 text-white">
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(182,255,0,0.07),transparent_30%)]" />
+
+      <div className="relative mx-auto max-w-[1600px]">
+        <TopFloatingMenu />
+
+        <section className="mt-6">
+          <ManagerLayout profile={profile} />
+        </section>
+      </div>
     </main>
   );
 }

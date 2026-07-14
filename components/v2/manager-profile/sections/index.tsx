@@ -6,10 +6,10 @@ import { InvestmentPhilosophy } from "@/components/v2/manager-profile/Investment
 import { TrustLayer } from "@/components/v2/manager-profile/TrustLayer";
 import { ProductShelf } from "@/components/v2/manager-profile/ProductShelf";
 import {
-  ManagerGallerySection,
   ManagerJournalSection,
   ManagerResearchSection,
 } from "@/components/v2/manager-profile/ManagerSocialSections";
+import { ManagerGallery } from "@/components/v2/manager-profile/gallery/ManagerGallery";
 
 export type ManagerProfileSectionId =
   | "hero"
@@ -52,7 +52,12 @@ export const managerSectionRegistry: Record<ManagerProfileSectionId, ManagerSect
 
   products: {
     id: "products",
-    render: ({ strategies }) => <ProductShelf strategies={strategies} />,
+    render: ({ strategies, runtime }) => (
+      <ProductShelf
+        strategies={strategies}
+        runtimeStrategies={runtime?.strategies ?? []}
+      />
+    ),
   },
 
   research: {
@@ -65,7 +70,7 @@ export const managerSectionRegistry: Record<ManagerProfileSectionId, ManagerSect
   gallery: {
     id: "gallery",
     render: ({ manager }) => (
-      <ManagerGallerySection manager={manager} />
+      <ManagerGallery manager={manager} />
     ),
   },
 

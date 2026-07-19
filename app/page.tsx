@@ -1,31 +1,15 @@
-import { DiscordProof } from "@/components/home/DiscordProof";
-import { TierAccessSection } from "@/components/home/TierAccessSection";
-import { PrivateRoomCTA } from "@/components/home/PrivateRoomCTA";
-import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
-import { Footer } from "@/components/layout/Footer";
-import { HomeIconStrip } from "@/components/home/HomeIconStrip";
+import { HomeExperience } from "@/components/home/HomeExperience";
 import { TopFloatingMenu } from "@/components/layout/TopFloatingMenu";
-import { BullionsHomeHero } from "@/components/home/BullionsHomeHero";
-import { SocialProofToast } from "@/components/home/SocialProofToast";
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#050607] px-4 pt-10 pb-5 text-white">
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(182,255,0,0.08),transparent_28%)]" />
+    <main className="min-h-screen overflow-hidden bg-[#050607] px-4 pb-28 pt-8 text-white md:pb-14">
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(182,255,0,0.07),transparent_30%)]" />
 
-      <div className="relative">
+      <div className="relative mx-auto max-w-[1480px]">
         <TopFloatingMenu />
-        <BullionsHomeHero />
-      <SocialProofToast />
+        <HomeExperience />
       </div>
-
-
-      <TierAccessSection />
-      <DiscordProof />
-      <PrivateRoomCTA />
-      <HomeIconStrip />
-          <HomeHowItWorks />
-      <Footer />
     </main>
   );
 }

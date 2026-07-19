@@ -78,6 +78,69 @@ async function applyStrategyCapital(input: {
   });
 }
 
+async function getStrategyEntrySnapshot(
+  strategyId: string
+) {
+  const runtimeSnap = await getDoc(
+    doc(db, "strategyRuntimes", strategyId)
+  );
+
+  if (!runtimeSnap.exists()) {
+    throw new Error(
+      `Strategy runtime not found for ${strategyId}`
+    );
+  }
+
+  const runtime = runtimeSnap.data() as any;
+  const performance = runtime.performance || {};
+
+  const initialBalanceUsd = Number(
+    performance.initialBalance || 0
+  );
+
+  const balanceUsd = Number(
+    performance.balance || 0
+  );
+
+  const equityUsd = Number(
+    performance.equity || balanceUsd
+  );
+
+  if (
+    !Number.isFinite(initialBalanceUsd) ||
+    initialBalanceUsd <= 0
+  ) {
+    throw new Error(
+      `Invalid initial balance for ${strategyId}`
+    );
+  }
+
+  if (
+    !Number.isFinite(equityUsd) ||
+    equityUsd <= 0
+  ) {
+    throw new Error(
+      `Invalid entry equity for ${strategyId}`
+    );
+  }
+
+  const strategyRoiPct =
+    ((equityUsd - initialBalanceUsd) /
+      initialBalanceUsd) *
+    100;
+
+  return {
+    initialBalanceUsd,
+    balanceUsd:
+      balanceUsd > 0
+        ? balanceUsd
+        : equityUsd,
+    equityUsd,
+    strategyRoiPct,
+    capturedAt: Date.now(),
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const authHeader = req.headers.get("authorization");
@@ -193,6 +256,11 @@ export async function POST(req: Request) {
       }
 
       for (const strategyId of strategyIds) {
+        const entry =
+          await getStrategyEntrySnapshot(
+            strategyId
+          );
+
         await applyStrategyCapital({
           strategyId,
           capitalDelta: managerCapital,
@@ -204,9 +272,37 @@ export async function POST(req: Request) {
           strategyId,
           allocationPct,
           capitalUsd: managerCapital,
+
+          /*
+           * Public strategy ROI begins at its $50K/$200K
+           * account. Investor PnL begins at this equity.
+           */
+          strategyInitialBalanceUsd:
+            entry.initialBalanceUsd,
+
+          entryStrategyBalanceUsd:
+            entry.balanceUsd,
+
+          entryStrategyEquityUsd:
+            entry.equityUsd,
+
+          entryStrategyRoiPct:
+            Number(
+              entry.strategyRoiPct.toFixed(4)
+            ),
+
+          entryCapturedAt:
+            entry.capturedAt,
+
+          /*
+           * New allocations have no previous investor PnL.
+           */
+          carryoverPnlUsd: 0,
         });
       }
     }
+
+    const performanceStartedAt = Date.now();
 
     const fund = {
       id: fundId,
@@ -216,21 +312,67 @@ export async function POST(req: Request) {
       strategyAllocations,
       capitalUsd,
       status: "ACTIVE",
-      createdAt: previousFund?.createdAt || serverTimestamp(),
-      updatedAt: Date.now(),
+
+      weightedRoi: 0,
+      fundEquityUsd: capitalUsd,
+      fundPnlUsd: 0,
+
+      /*
+       * Every activation/rebalance starts a new performance
+       * session even though the active fund ID is reused.
+       */
+      performanceStartedAt,
+      lastPerformanceSnapshotAt:
+        performanceStartedAt,
+      lastPerformanceSnapshotEquityUsd:
+        capitalUsd,
+
+      createdAt:
+        previousFund?.createdAt ||
+        serverTimestamp(),
+      updatedAt: performanceStartedAt,
     };
 
-    await setDoc(fundRef, fund, { merge: true });
+    await setDoc(
+      fundRef,
+      fund,
+      { merge: true }
+    );
+
+    const initialSnapshotRef = doc(
+      db,
+      "funds",
+      fundId,
+      "performanceSnapshots",
+      String(performanceStartedAt)
+    );
+
+    await setDoc(initialSnapshotRef, {
+      fundId,
+      userId,
+
+      timestamp: performanceStartedAt,
+      performanceStartedAt,
+
+      principalUsd: capitalUsd,
+      equityUsd: capitalUsd,
+      pnlUsd: 0,
+      weightedRoi: 0,
+
+      source: "fund_activation",
+      createdAt: performanceStartedAt,
+    });
 
     await updateDoc(userRef, {
       activeFundId: fundId,
       fundActive: true,
-      copiedTraderId: managers[0]?.traderId || null,
+      copiedTraderId:
+        managers[0]?.traderId || null,
       systemActive: true,
       allocatedUsd: capitalUsd,
       fundEquityUsd: capitalUsd,
       fundPnlUsd: 0,
-      updatedAt: Date.now(),
+      updatedAt: performanceStartedAt,
     });
 
     return NextResponse.json({

@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Bullions local snapshots / temporary backups
+**/*.bak
+**/*.backup.*
+**/*-backup.*
+**/*.before-*
+**/*.step*.bak
+public/assets/chip-backups/
+# Local environment secrets
+.env
+.env.*
+!.env.example

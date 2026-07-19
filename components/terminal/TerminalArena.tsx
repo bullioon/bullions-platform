@@ -29,8 +29,9 @@ import { ProtocolPanel } from "@/components/fund/ProtocolPanel";
 import { TierOpportunity } from "@/components/terminal/TierOpportunity";
 import { UranioEvent } from "@/components/terminal/UranioEvent";
 import { TerminalInvestPanel } from "@/components/terminal/TerminalInvestPanel";
+import { InvestorHero } from "@/components/terminal/InvestorHero";
+import { ChallengeReactor } from "@/components/terminal/ChallengeReactor";
 import { TerminalChat } from "@/components/terminal/TerminalChat";
-import { ChallengeRegister } from "@/components/terminal/ChallengeRegister";
 import { AffiliateDashboard } from "@/components/terminal/AffiliateDashboard";
 import { PerformanceChart } from "@/components/ui/PerformanceChart";
 import { UserIntroCard } from "@/components/wallet/UserIntroCard";
@@ -108,16 +109,120 @@ function missionRankingToTrader(row: any): Trader {
     id: String(row.id),
     name: String(row.name || "Unknown Strategy"),
     pair: String(row.market || "Multi-asset"),
-    tag: String(row.engine === "AI" ? "Bullions AI" : "Verified MT5"),
-    avatar: String(row.name || "ST").slice(0, 2).toUpperCase(),
+    tag: String(
+      row.engine === "AI"
+        ? "Bullions AI"
+        : "Verified MT5"
+    ),
+    avatar: String(row.name || "ST")
+      .slice(0, 2)
+      .toUpperCase(),
+
     roi,
     profitUsd,
-    balance: equity,
-    topTrade: Number(row.profitFactor || 0) * 10,
-    maxLoss: Number(row.drawdown || 0),
+
+    /*
+     * Preserve the real MT5 account metrics.
+     * Balance and equity are different while trades are open.
+     */
+    initialBalance,
+    balance: Number(
+      row.balance || initialBalance
+    ),
+    equity,
+
+    totalTrades: Number(
+      row.totalTrades || 0
+    ),
+    openTrades: Number(
+      row.openTrades || 0
+    ),
+
+    mt5Status: String(
+      row.mt5Status || "offline"
+    ).toLowerCase(),
+
+    mt5Connected:
+      String(
+        row.mt5Status || ""
+      ).toLowerCase() === "live",
+
+    winRate: Number(
+      row.winRate || 0
+    ),
+
+    profitFactor: Number(
+      row.profitFactor || 0
+    ),
+
+    maxDrawdown: Number(
+      row.maxDrawdown ??
+        row.drawdown ??
+        0
+    ),
+
+    lastSyncedAt: Number(
+      row.lastSyncedAt ??
+        row.syncedAt ??
+        row.updatedAt ??
+        0
+    ),
+
+    mt5: {
+      ...(row.mt5 || {}),
+
+      status: String(
+        row.mt5Status || "offline"
+      ).toLowerCase(),
+
+      connected:
+        String(
+          row.mt5Status || ""
+        ).toLowerCase() === "live",
+
+      initialBalance,
+      balance: Number(
+        row.balance || initialBalance
+      ),
+      equity,
+
+      winRate: Number(
+        row.winRate || 0
+      ),
+
+      profitFactor: Number(
+        row.profitFactor || 0
+      ),
+
+      maxDrawdown: Number(
+        row.maxDrawdown ??
+          row.drawdown ??
+          0
+      ),
+
+      lastSyncAt: Number(
+        row.lastSyncedAt ??
+          row.syncedAt ??
+          row.updatedAt ??
+          0
+      ),
+    },
+
+    topTrade:
+      Number(row.profitFactor || 0) * 10,
+
+    maxLoss: Number(
+      row.drawdown || 0
+    ),
+
     strategyId: String(row.id),
-    bullionsScore: Math.round(Number(row.allocatorScore || 0)),
-    specialty: `${row.accountSize || "50K"} · ${row.engine || "MT5"}`,
+
+    bullionsScore: Math.round(
+      Number(row.allocatorScore || 0)
+    ),
+
+    specialty:
+      `${row.accountSize || "50K"} · ${row.engine || "MT5"}`,
   } as Trader;
 }
 
@@ -293,6 +398,17 @@ export function TerminalArena() {
   const [passportOpen, setPassportOpen] = useState(false);
   const [fundTraderIds, setFundTraderIds] = useState<string[]>([]);
 
+  const [fundPerformanceHistory, setFundPerformanceHistory] =
+    useState<
+      Array<{
+        date: string;
+        depositedUsd: number;
+        profitUsd: number;
+        liveWallet: number;
+        pnlPct: number;
+      }>
+    >([]);
+
   useEffect(() => {
     if (!authUser?.uid) return;
 
@@ -369,6 +485,42 @@ const availableUsd = Math.max(
   );
   const fundPnlUsd = Number((fundEquityUsd - allocatedPrincipalUsd).toFixed(2));
 
+  const hasActiveFund = Boolean(
+    activeUser.activeFundId ||
+      activeUser.fundActive
+  );
+
+  /*
+   * portfolioUsd is the capital base.
+   *
+   * While a fund is active, activeUser.profitUsd contains
+   * migrated historical capital and must not be counted
+   * again as current live profit.
+   */
+  const liveFundPnlUsd =
+    hasActiveFund
+      ? fundPnlUsd
+      : 0;
+
+  const totalProfitUsd = Number(
+    (
+      hasActiveFund
+        ? liveFundPnlUsd
+        : Number(
+            activeUser.profitUsd || 0
+          )
+    ).toFixed(2)
+  );
+
+  const totalPortfolioUsd = Number(
+    (
+      hasActiveFund
+        ? portfolioUsd +
+          liveFundPnlUsd
+        : portfolioUsd
+    ).toFixed(2)
+  );
+
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get("ref");
 
@@ -386,15 +538,30 @@ const availableUsd = Math.max(
         const res = await fetch("/api/mission-control", { cache: "no-store" });
         const data = await res.json();
 
-        const nextTraders = Array.isArray(data.rankings)
-          ? data.rankings.map(missionRankingToTrader)
+        const nextTraders = Array.isArray(data.leaderboards.investment)
+          ? data.leaderboards.investment.map(missionRankingToTrader)
           : [];
 
         if (!alive) return;
 
         if (nextTraders.length) {
           setTraders(nextTraders);
-          setSelectedTraderId((prev) => prev || nextTraders[0]?.id || "");
+
+          const requestedStrategyId =
+            new URLSearchParams(window.location.search).get("strategy");
+
+          const requestedTrader = requestedStrategyId
+            ? nextTraders.find(
+                (trader: Trader & { strategyId?: string }) =>
+                  trader.id === requestedStrategyId ||
+                  trader.strategyId === requestedStrategyId
+              )
+            : null;
+
+          setSelectedTraderId(
+            requestedTrader?.id || nextTraders[0]?.id || ""
+          );
+
           return;
         }
 
@@ -448,6 +615,119 @@ const availableUsd = Math.max(
       if (unsubscribeUser) unsubscribeUser();
     };
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    let pollId: ReturnType<typeof setInterval> | null =
+      null;
+
+    async function loadFundPerformance() {
+      if (
+        !authUser ||
+        !activeUser.activeFundId
+      ) {
+        if (alive) {
+          setFundPerformanceHistory([]);
+        }
+
+        return;
+      }
+
+      try {
+        const idToken =
+          await authUser.getIdToken();
+
+        const response = await fetch(
+          "/api/funds/performance",
+          {
+            cache: "no-store",
+            headers: {
+              Authorization:
+                `Bearer ${idToken}`,
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (
+          !response.ok ||
+          data.ok === false
+        ) {
+          throw new Error(
+            data.error ||
+              "Could not load fund performance."
+          );
+        }
+
+        const rows = Array.isArray(data.rows)
+          ? data.rows
+              .map((row: any) => ({
+                date: new Date(
+                  Number(row.timestamp || 0)
+                ).toISOString(),
+
+                depositedUsd: Number(
+                  row.principalUsd || 0
+                ),
+
+                profitUsd: Number(
+                  row.pnlUsd || 0
+                ),
+
+                liveWallet: Number(
+                  row.equityUsd || 0
+                ),
+
+                pnlPct: Number(
+                  row.weightedRoi || 0
+                ),
+              }))
+              .filter(
+                (row: {
+                  date: string;
+                  liveWallet: number;
+                }) =>
+                  Boolean(row.date) &&
+                  Number.isFinite(
+                    row.liveWallet
+                  )
+              )
+          : [];
+
+        if (alive) {
+          setFundPerformanceHistory(rows);
+        }
+      } catch (error) {
+        console.warn(
+          "[BullPad] fund performance failed",
+          error
+        );
+
+        if (alive) {
+          setFundPerformanceHistory([]);
+        }
+      }
+    }
+
+    loadFundPerformance();
+
+    pollId = setInterval(
+      loadFundPerformance,
+      15_000
+    );
+
+    return () => {
+      alive = false;
+
+      if (pollId) {
+        clearInterval(pollId);
+      }
+    };
+  }, [
+    authUser,
+    activeUser.activeFundId,
+  ]);
 
   const selectedTrader = useMemo(
     () => traders.find((t) => t.id === selectedTraderId),
@@ -811,8 +1091,8 @@ const availableUsd = Math.max(
           name={activeUser.name}
           username={isLoggedIn ? authUser?.email?.split("@")[0] || activeUser.username : "guest"}
           emoji={activeUser.emoji}
-          balanceUsd={activeUser.depositedUsd}
-          profitUsd={activeUser.profitUsd}
+          balanceUsd={portfolioUsd}
+          profitUsd={totalProfitUsd}
           activeTrader={copiedTrader?.name}
           systemActive={activeUser.systemActive}
           engineState={engineState}
@@ -837,12 +1117,20 @@ const availableUsd = Math.max(
         />
 
         <PerformanceChart
-          depositedUsd={activeUser.depositedUsd}
-          profitUsd={activeUser.profitUsd}
-          dailyPerformance={activeUser.dailyPerformance || []}
+          depositedUsd={allocatedPrincipalUsd}
+          profitUsd={fundPnlUsd}
+          dailyPerformance={
+            fundPerformanceHistory
+          }
         />
       </div>
 
+      <InvestorHero
+        portfolioUsd={totalPortfolioUsd}
+        profitUsd={totalProfitUsd}
+        managers={fundTraderIds.length}
+        availableUsd={availableUsd}
+/>
 
       {(() => {
         const topTrader = [...(traders || [])]
@@ -853,7 +1141,7 @@ const availableUsd = Math.max(
           selectedManagers: fundTraderIds.length,
           copiedTraderName: copiedTrader?.name,
           depositedUsd: Number(activeUser.depositedUsd || 0),
-          profitUsd: Number(activeUser.profitUsd || 0),
+          profitUsd: totalProfitUsd,
           topTraderName: topTrader?.name,
           hasBullionsAiAccess: false,
         });
@@ -908,62 +1196,6 @@ const availableUsd = Math.max(
         );
       })()}
 
-      <section className="rounded-[30px] border border-white/10 bg-[#080909] p-5">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.32em] text-[#b6ff00]">
-              MT5 Beta
-            </p>
-            <h3 className="mt-2 text-2xl font-black text-white">
-              MetaTrader Access
-            </h3>
-            <p className="mt-1 text-sm text-white/40">
-              Some users will receive MT5 login credentials during the beta rollout.
-            </p>
-          </div>
-
-          <span className="rounded-full border border-[#b6ff00]/20 bg-[#b6ff00]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#b6ff00]">
-            Beta
-          </span>
-        </div>
-
-        <div className="mt-5 grid gap-3 md:grid-cols-4">
-          <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Login</p>
-            <p className="mt-2 text-lg font-black text-white/60">
-              {activeUser.mt5Login || "Pending"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Server</p>
-            <p className="mt-2 text-lg font-black text-white/60">
-              {activeUser.mt5Server || (activeUser as any)["mt5Server "] || "Pending"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Password</p>
-            <button
-              onClick={() => setShowMt5Password((v) => !v)}
-              className="mt-2 text-left text-lg font-black text-white/60 hover:text-[#b6ff00]"
-            >
-              {showMt5Password
-                ? activeUser.mt5Password || "Pending"
-                : activeUser.mt5Password
-                  ? "••••••••"
-                  : "Pending"}
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/30">Status</p>
-            <p className="mt-2 text-lg font-black text-[#b6ff00]">
-              {activeUser.mt5Status === "active" ? "Active" : "Beta Queue"}
-            </p>
-          </div>
-        </div>
-      </section>
 
       <div className="grid gap-5 xl:grid-cols-2">
         <TerminalLeaderboard
@@ -979,14 +1211,14 @@ const availableUsd = Math.max(
           onAddToFund={handleAddManager}
         />
 
-        <ChallengeRegister />
+        <ChallengeReactor />
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
         <ProtocolPanel
           tier={tier}
           selectedCount={fundTraderIds.length}
-          portfolioUsd={portfolioUsd}
+          portfolioUsd={totalPortfolioUsd}
         />
 
         <FundBuilder
@@ -1040,7 +1272,7 @@ const availableUsd = Math.max(
 
       <TierOpportunity userId={userId}
         depositedUsd={activeUser.depositedUsd || 0}
-        profitUsd={activeUser.profitUsd || 0}
+        profitUsd={totalProfitUsd}
         onDepositAmount={(amount) => {
           setCashModal("deposit");
           setCashAmount(amount);
@@ -1056,7 +1288,7 @@ const availableUsd = Math.max(
           traderName={copiedTrader?.name}
           selectedTraderName={selectedTrader?.name}
           depositedUsd={activeUser.depositedUsd}
-          profitUsd={activeUser.profitUsd}
+          profitUsd={totalProfitUsd}
           allocatedUsd={fundEquityUsd}
           onToggle={toggleEngine}
           onDisconnect={disconnectTrader}

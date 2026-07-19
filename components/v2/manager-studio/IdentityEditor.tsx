@@ -139,9 +139,9 @@ export function IdentityEditor() {
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="space-y-6 max-w-2xl">
         <Field
-          label="Display Name"
+          label="What should investors call you?"
           value={state.displayName}
           onChange={(value) =>
             update("displayName", value)
@@ -149,7 +149,7 @@ export function IdentityEditor() {
         />
 
         <Field
-          label="Username"
+          label="Choose your public handle"
           value={state.username}
           onChange={(value) =>
             update("username", value)
@@ -158,7 +158,7 @@ export function IdentityEditor() {
         />
 
         <ImageField
-          label="Avatar"
+          label="Upload your profile photo"
           value={state.avatarUrl}
           uploading={uploading === "avatar"}
           onChange={(value) =>
@@ -169,8 +169,9 @@ export function IdentityEditor() {
           }
         />
 
+
         <ImageField
-          label="Cover"
+          label="Upload your cover image"
           value={state.bannerUrl}
           uploading={uploading === "banner"}
           onChange={(value) =>
@@ -180,50 +181,15 @@ export function IdentityEditor() {
             uploadImage(file, "banner")
           }
         />
-
-        <Field
-          label="Company"
-          value={state.companyName}
-          onChange={(value) =>
-            update("companyName", value)
-          }
-          placeholder="Ghost Alpha Capital"
-        />
-
-        <Field
-          label="Location"
-          value={state.location}
-          onChange={(value) =>
-            update("location", value)
-          }
-          placeholder="Mexico City"
-        />
-
-        <Field
-          label="Website"
-          value={state.website}
-          onChange={(value) =>
-            update("website", value)
-          }
-          placeholder="https://..."
-        />
-
-        <Field
-          label="Tagline"
-          value={state.tagline}
-          onChange={(value) =>
-            update("tagline", value)
-          }
-          placeholder="Institutional macro manager."
-        />
       </div>
 
       <div>
         <label className="mb-3 block text-xs font-black uppercase tracking-[0.25em] text-white/40">
-          Biography
+          Describe how you invest
         </label>
 
         <textarea
+          placeholder="I focus on disciplined execution, capital preservation and consistent long-term returns."
           rows={6}
           value={state.biography}
           onChange={(event) =>
@@ -235,6 +201,90 @@ export function IdentityEditor() {
           className="w-full rounded-2xl border border-white/10 bg-[#0d0d0d] px-5 py-4 leading-7 text-white outline-none transition focus:border-[#b6ff00]/60"
         />
       </div>
+
+      {(() => {
+        const requirements = [
+          {
+            label: "Cover image",
+            complete: Boolean(state.bannerUrl),
+          },
+          {
+            label: "Profile photo",
+            complete: Boolean(state.avatarUrl),
+          },
+          {
+            label: "Public name",
+            complete: Boolean(state.displayName.trim()),
+          },
+          {
+            label: "Public handle",
+            complete: Boolean(state.username.trim()),
+          },
+          {
+            label: "Investment philosophy",
+            complete: Boolean(state.biography.trim()),
+          },
+        ];
+
+        const missing = requirements.filter(
+          (item) => !item.complete
+        );
+
+        if (!missing.length) {
+          return (
+            <div className="rounded-[22px] border border-[#b6ff00]/20 bg-[#b6ff00]/[0.05] p-5">
+              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#b6ff00]">
+                Identity complete
+              </p>
+
+              <p className="mt-2 text-sm text-white/55">
+                Everything required is ready. You can continue when you are satisfied.
+              </p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="rounded-[22px] border border-[#d6b35a]/20 bg-[#d6b35a]/[0.05] p-5">
+            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#d6b35a]">
+              Complete these items to continue
+            </p>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {requirements.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center gap-3 rounded-[16px] border border-white/10 bg-black/20 px-4 py-3"
+                >
+                  <span
+                    className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[9px] font-black ${
+                      item.complete
+                        ? "border-[#b6ff00]/30 bg-[#b6ff00]/10 text-[#b6ff00]"
+                        : "border-[#d6b35a]/30 bg-[#d6b35a]/10 text-[#d6b35a]"
+                    }`}
+                  >
+                    {item.complete ? "✓" : "!"}
+                  </span>
+
+                  <p
+                    className={`text-sm ${
+                      item.complete
+                        ? "text-white/45 line-through"
+                        : "font-semibold text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-4 text-xs leading-5 text-white/35">
+              Your work is saved automatically. Complete the remaining items and the Continue button will unlock.
+            </p>
+          </div>
+        );
+      })()}
 
       {uploadError ? (
         <p className="rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">

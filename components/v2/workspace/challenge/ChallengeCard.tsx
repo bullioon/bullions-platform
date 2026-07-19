@@ -1,5 +1,6 @@
 "use client";
 
+import { ChallengeTiers } from "@/core/v2/challenge/tiers";
 import { useEffect, useState } from "react";
 
 import { auth } from "@/lib/firebase";
@@ -134,7 +135,7 @@ export function ChallengeCard({
               50K Demo
             </p>
             <p className="mt-2 text-xl font-black text-[#b6ff00]">
-              $350
+              ${ChallengeTiers.demo_50k.feeUsd}
             </p>
           </button>
 

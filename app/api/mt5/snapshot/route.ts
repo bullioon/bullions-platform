@@ -71,6 +71,51 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as RawBody;
 
+    /*
+     * Temporary sanitized payload inspection.
+     * Never log passwords, tokens or investor credentials.
+     */
+    console.log("[mt5-snapshot] raw account metrics", {
+      login: String(
+        body.login ??
+          body.accountLogin ??
+          ""
+      ).slice(-4),
+
+      server: String(body.server || ""),
+
+      initialBalance:
+        body.initialBalance ??
+        body.deposits ??
+        body.accountSize ??
+        null,
+
+      balance: body.balance ?? null,
+      equity: body.equity ?? null,
+
+      closedPnL:
+        body.closedPnL ?? null,
+
+      floatingPnL:
+        body.floatingPnL ?? null,
+
+      deposits:
+        body.deposits ?? null,
+
+      withdrawals:
+        body.withdrawals ?? null,
+
+      trades:
+        body.totalTrades ??
+        body.trades ??
+        null,
+
+      openTrades:
+        body.openTrades ?? null,
+
+      receivedAt: Date.now(),
+    });
+
     const login = requiredString(
       body.login ?? body.accountLogin,
       "login"

@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Strategy } from "@/types/v2/domain/strategy";
 import type { Manager } from "@/types/v2/domain/manager";
 import type { StrategyRuntime } from "@/core/v2/runtime";
+import { ChallengeTiers } from "@/core/v2/challenge/tiers";
 
 
 function timeAgo(ms: number | null | undefined) {
@@ -171,10 +172,13 @@ export function StrategyProfilePage({
   const challengeEligible = Boolean(challengeRow?.eligibleForTopFive);
   const challengeEntryFee =
     challengeRow?.tierId === "demo_200k"
-      ? 1080
+      ? ChallengeTiers.demo_200k.feeUsd
       : challengeRow?.tierId === "demo_50k"
-        ? 350
-        : Number(strategy.challenge.entryFeeUsd || 350);
+        ? ChallengeTiers.demo_50k.feeUsd
+        : Number(
+            strategy.challenge.entryFeeUsd ||
+              ChallengeTiers.demo_50k.feeUsd
+          );
   const challengeTier =
     challengeRow?.tierId === "demo_200k"
       ? "200K Demo"
@@ -508,8 +512,6 @@ export function StrategyProfilePage({
         <AllocateModal
           open={allocateOpen}
           onClose={() => setAllocateOpen(false)}
-          userId={user?.uid || "guest"}
-          traderId={strategy.manager.uid}
           strategyId={strategy.id}
         />
       </div>

@@ -166,7 +166,7 @@ export function TopSixChallenge() {
             <Mini label="Top benchmark" value={`+${selected.perf}% ${selected.name}`} green />
           </div>
 
-          <Link href="/manager/strategies/new">
+          <Link href="/manager/strategies/new?source=challenge&returnTo=/challenge">
             <Button className="mt-5 w-full">Enroll Now</Button>
           </Link>
         </div>

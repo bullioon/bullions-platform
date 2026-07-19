@@ -5,6 +5,34 @@ import type {
   StrategyRuntime,
 } from "@/core/v2/runtime/types";
 
+type RankableRuntime = StrategyRuntime & {
+  market: string;
+};
+
+function resolveStrategyMarket(
+  strategy: Record<string, any>,
+  runtime: StrategyRuntime
+): string {
+  const primary =
+    strategy.markets?.primary;
+
+  const secondary =
+    Array.isArray(strategy.markets?.secondary)
+      ? strategy.markets.secondary[0]
+      : null;
+
+  const legacyMarket =
+    strategy.market;
+
+  return String(
+    primary ||
+      secondary ||
+      legacyMarket ||
+      runtime.subtitle ||
+      "Multi-asset"
+  );
+}
+
 export type CapitalRanking = {
   id: string;
 
@@ -63,7 +91,7 @@ function strategyHandle(name: string) {
 }
 
 function toRanking(
-  runtime: StrategyRuntime
+  runtime: RankableRuntime
 ): CapitalRanking {
   const profitUsd =
     runtime.performance.equity -
@@ -73,7 +101,7 @@ function toRanking(
     id: runtime.strategyId,
 
     traderHref: `/m/${runtime.managerUid ?? runtime.strategyId}`,
-    strategyHref: `/strategy-profile?id=${runtime.strategyId}`,
+    strategyHref: `/s/${runtime.strategyId}`,
 
     name: runtime.name,
     handle: strategyHandle(runtime.name),
@@ -83,7 +111,7 @@ function toRanking(
       runtime.performance.initialBalance
     ),
 
-    market: runtime.subtitle || "Multi-asset",
+    market: runtime.market,
     engine: "MT5",
 
     initialBalance:
@@ -155,8 +183,8 @@ function toRanking(
   };
 }
 
-export async function getCapitalRankings(): Promise<
-  CapitalRanking[]
+async function loadRankableRuntimes(): Promise<
+  RankableRuntime[]
 > {
   const db = getAdminDb();
 
@@ -167,30 +195,59 @@ export async function getCapitalRankings(): Promise<
 
   const runtimes = (
     await Promise.all(
-      snap.docs.map((doc) =>
-        RuntimeRepository.getStrategyRuntime(doc.id)
-      )
+      snap.docs.map(async (strategyDoc) => {
+        const runtime =
+          await RuntimeRepository.getStrategyRuntime(
+            strategyDoc.id
+          );
+
+        if (!runtime) {
+          return null;
+        }
+
+        const strategy =
+          strategyDoc.data() as Record<
+            string,
+            any
+          >;
+
+        return {
+          ...runtime,
+          market: resolveStrategyMarket(
+            strategy,
+            runtime
+          ),
+        } satisfies RankableRuntime;
+      })
     )
-  ).filter(Boolean) as StrategyRuntime[];
+  ).filter(Boolean) as RankableRuntime[];
+
+  return runtimes.filter((runtime) => {
+    const hasSync = Boolean(
+      runtime.performance.lastSyncedAt
+    );
+
+    const hasTrades =
+      runtime.performance.totalTrades > 0 ||
+      runtime.performance.openTrades > 0;
+
+    const hasMovement =
+      Math.abs(
+        runtime.performance.equity -
+          runtime.performance.initialBalance
+      ) > 0.01;
+
+    return hasSync || hasTrades || hasMovement;
+  });
+}
+
+export async function getCapitalRankings(): Promise<
+  CapitalRanking[]
+> {
+  const runtimes =
+    await loadRankableRuntimes();
 
   return runtimes
-    .filter((runtime) => {
-      const hasSync = Boolean(
-        runtime.performance.lastSyncedAt
-      );
-
-      const hasTrades =
-        runtime.performance.totalTrades > 0 ||
-        runtime.performance.openTrades > 0;
-
-      const hasMovement =
-        Math.abs(
-          runtime.performance.equity -
-            runtime.performance.initialBalance
-        ) > 0.01;
-
-      return hasSync || hasTrades || hasMovement;
-    })
     .sort((a, b) => {
       const scoreDifference =
         b.scores.allocatorScore -
@@ -198,6 +255,155 @@ export async function getCapitalRankings(): Promise<
 
       if (scoreDifference !== 0) {
         return scoreDifference;
+      }
+
+      return (
+        b.performance.roi -
+        a.performance.roi
+      );
+    })
+    .slice(0, 24)
+    .map(toRanking);
+}
+
+
+export async function getCompetitionRankings(): Promise<
+  CapitalRanking[]
+> {
+  const runtimes = await loadRankableRuntimes();
+
+  return runtimes
+    .filter((runtime) => {
+      const status = runtime.challenge.status;
+
+      return (
+        status === "enrolled" ||
+        status === "qualified" ||
+        status === "top_5"
+      );
+    })
+    .sort((a, b) => {
+      const aRank =
+        a.challenge.rank ?? Number.MAX_SAFE_INTEGER;
+
+      const bRank =
+        b.challenge.rank ?? Number.MAX_SAFE_INTEGER;
+
+      if (aRank !== bRank) {
+        return aRank - bRank;
+      }
+
+      if (
+        b.scores.challengeScore !==
+        a.scores.challengeScore
+      ) {
+        return (
+          b.scores.challengeScore -
+          a.scores.challengeScore
+        );
+      }
+
+      if (
+        b.performance.roi !==
+        a.performance.roi
+      ) {
+        return (
+          b.performance.roi -
+          a.performance.roi
+        );
+      }
+
+      const aProfit =
+        a.performance.equity -
+        a.performance.initialBalance;
+
+      const bProfit =
+        b.performance.equity -
+        b.performance.initialBalance;
+
+      return bProfit - aProfit;
+    })
+    .slice(0, 6)
+    .map(toRanking);
+}
+
+export async function getInvestmentRankings(): Promise<
+  CapitalRanking[]
+> {
+  const runtimes = await loadRankableRuntimes();
+
+  return runtimes
+    .sort((a, b) => {
+      if (
+        b.scores.allocatorScore !==
+        a.scores.allocatorScore
+      ) {
+        return (
+          b.scores.allocatorScore -
+          a.scores.allocatorScore
+        );
+      }
+
+      if (
+        b.scores.consistencyScore !==
+        a.scores.consistencyScore
+      ) {
+        return (
+          b.scores.consistencyScore -
+          a.scores.consistencyScore
+        );
+      }
+
+      if (
+        b.scores.riskScore !==
+        a.scores.riskScore
+      ) {
+        return (
+          b.scores.riskScore -
+          a.scores.riskScore
+        );
+      }
+
+      return (
+        b.performance.roi -
+        a.performance.roi
+      );
+    })
+    .slice(0, 24)
+    .map(toRanking);
+}
+
+export async function getUniverseRankings(): Promise<
+  CapitalRanking[]
+> {
+  const runtimes = await loadRankableRuntimes();
+
+  return runtimes
+    .sort((a, b) => {
+      const visibilityDifference =
+        Number(b.universe.visible) -
+        Number(a.universe.visible);
+
+      if (visibilityDifference !== 0) {
+        return visibilityDifference;
+      }
+
+      const eligibilityDifference =
+        Number(b.universe.eligible) -
+        Number(a.universe.eligible);
+
+      if (eligibilityDifference !== 0) {
+        return eligibilityDifference;
+      }
+
+      if (
+        b.scores.allocatorScore !==
+        a.scores.allocatorScore
+      ) {
+        return (
+          b.scores.allocatorScore -
+          a.scores.allocatorScore
+        );
       }
 
       return (

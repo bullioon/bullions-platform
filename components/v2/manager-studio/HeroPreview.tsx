@@ -34,7 +34,7 @@ export function HeroPreview() {
 
   return (
     <section className="relative overflow-hidden rounded-[42px] border border-white/10 bg-[#050606]">
-      <div className="relative h-[330px] overflow-hidden">
+      <div className="relative h-[230px] overflow-hidden">
         {state.bannerUrl ? (
           <img
             src={state.bannerUrl}
@@ -50,14 +50,14 @@ export function HeroPreview() {
 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.08),rgba(5,6,6,.22)_45%,rgba(5,6,6,.94)_100%)]" />
 
-        <div className="absolute bottom-0 left-0 right-0 p-7 sm:p-9">
-          <div className="flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-7">
+          <div className="flex items-end justify-between gap-6">
             <div className="max-w-4xl">
               <p className="text-[11px] font-black uppercase tracking-[0.35em] text-[#b6ff00]">
-                Investment Manager
+                Your Public Firm
               </p>
 
-              <h1 className="mt-4 text-4xl font-black tracking-[-0.07em] sm:text-5xl">
+              <h1 className="mt-3 text-3xl font-black tracking-[-0.07em] sm:text-4xl">
                 {displayName}
               </h1>
 
@@ -65,16 +65,16 @@ export function HeroPreview() {
                 @{username}
               </p>
 
-              <p className="mt-4 text-lg text-white/70 sm:text-xl">
+              <p className="mt-3 text-base text-white/70 sm:text-lg">
                 {tagline}
               </p>
 
-              <p className="mt-4 max-w-3xl line-clamp-2 text-sm leading-6 text-white/45">
+              <p className="mt-3 max-w-3xl line-clamp-2 text-sm leading-6 text-white/45">
                 {biography}
               </p>
             </div>
 
-            <div className="grid h-24 w-24 sm:h-28 sm:w-28 shrink-0 place-items-center overflow-hidden rounded-[34px] border-4 border-[#050606] bg-[#111312] text-4xl font-black text-[#b6ff00] shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+            <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-[26px] border-4 border-[#050606] bg-[#111312] text-3xl font-black text-[#b6ff00] shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
               {state.avatarUrl ? (
                 <img
                   src={state.avatarUrl}
@@ -89,27 +89,6 @@ export function HeroPreview() {
         </div>
       </div>
 
-      <div className="grid border-t border-white/10 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          ["Allocator Score", "92"],
-          ["Strategies", "3"],
-          ["Following", "$2.8M"],
-          ["Runtime", "A+"],
-        ].map(([label, value]) => (
-          <div
-            key={label}
-            className="border-b border-white/10 p-6 last:border-b-0 sm:border-r sm:last:border-r-0 xl:border-b-0"
-          >
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/35">
-              {label}
-            </p>
-
-            <p className="mt-3 text-3xl font-black">
-              {value}
-            </p>
-          </div>
-        ))}
-      </div>
     </section>
   );
 }

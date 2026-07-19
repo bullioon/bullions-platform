@@ -1,4 +1,9 @@
-import { getCapitalRankings } from "./capital-rankings";
+import {
+  getCapitalRankings,
+  getCompetitionRankings,
+  getInvestmentRankings,
+  getUniverseRankings,
+} from "./capital-rankings";
 
 export type MissionRuntime = {
   timestamp: number;
@@ -13,7 +18,23 @@ export type MissionRuntime = {
     managers: number;
   };
 
-  rankings: Awaited<ReturnType<typeof getCapitalRankings>>;
+  rankings: Awaited<
+    ReturnType<typeof getCapitalRankings>
+  >;
+
+  leaderboards: {
+    competition: Awaited<
+      ReturnType<typeof getCompetitionRankings>
+    >;
+
+    investment: Awaited<
+      ReturnType<typeof getInvestmentRankings>
+    >;
+
+    universe: Awaited<
+      ReturnType<typeof getUniverseRankings>
+    >;
+  };
 
   featured: {
     strategyId: string | null;
@@ -30,14 +51,26 @@ export type MissionRuntime = {
 };
 
 export async function buildMissionRuntime(): Promise<MissionRuntime> {
-  const rankings = await getCapitalRankings();
+  const [
+    rankings,
+    competition,
+    investment,
+    universe,
+  ] = await Promise.all([
+    getCapitalRankings(),
+    getCompetitionRankings(),
+    getInvestmentRankings(),
+    getUniverseRankings(),
+  ]);
 
   return {
     timestamp: Date.now(),
 
     season: {
       id: "03",
-      endsAt: Date.now() + 20 * 24 * 60 * 60 * 1000,
+      endsAt:
+        Date.now() +
+        20 * 24 * 60 * 60 * 1000,
 
       seats: {
         used: 8,
@@ -49,8 +82,15 @@ export async function buildMissionRuntime(): Promise<MissionRuntime> {
 
     rankings,
 
+    leaderboards: {
+      competition,
+      investment,
+      universe,
+    },
+
     featured: {
-      strategyId: rankings[0]?.id ?? null,
+      strategyId:
+        rankings[0]?.id ?? null,
     },
 
     mt5: {

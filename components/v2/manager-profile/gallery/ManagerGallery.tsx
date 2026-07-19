@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import type { Manager } from "@/types/v2/domain/manager";
-import { GalleryEmpty } from "./GalleryEmpty";
 import { GalleryGrid } from "./GalleryGrid";
 import { GalleryViewer } from "./GalleryViewer";
 
@@ -17,6 +16,10 @@ export function ManagerGallery({
   const images = manager.social?.gallery ?? [];
   const [activeIndex, setActiveIndex] =
     useState<number | null>(null);
+
+  if (images.length === 0) {
+    return null;
+  }
 
   return (
     <section className="rounded-[34px] border border-white/10 bg-[#080909] p-6 sm:p-8">
@@ -44,24 +47,16 @@ export function ManagerGallery({
         ) : null}
       </div>
 
-      {images.length ? (
-        <>
-          <GalleryGrid
-            images={images}
-            onOpen={setActiveIndex}
-          />
+      <GalleryGrid
+        images={images}
+        onOpen={setActiveIndex}
+      />
 
-          <GalleryViewer
-            images={images}
-            activeIndex={activeIndex}
-            onChange={setActiveIndex}
-          />
-        </>
-      ) : (
-        <GalleryEmpty
-          managerName={manager.identity.displayName}
-        />
-      )}
+      <GalleryViewer
+        images={images}
+        activeIndex={activeIndex}
+        onChange={setActiveIndex}
+      />
     </section>
   );
 }

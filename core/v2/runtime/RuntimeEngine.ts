@@ -112,11 +112,45 @@ export function buildStrategyRuntime(input: {
   const performanceDoc = objectValue(input.strategy.performance);
   const challengeDoc = objectValue(input.strategy.challenge);
   const statusDoc = objectValue(input.strategy.status);
+  const mt5Doc = objectValue(input.strategy.mt5);
   const snapshot = objectValue(input.latestSnapshot);
 
-  const initialBalance = numberValue(snapshot.initialBalance ?? performanceDoc.initialBalance, 100000);
-  const balance = numberValue(snapshot.balance ?? performanceDoc.balance, initialBalance);
-  const equity = numberValue(snapshot.equity ?? performanceDoc.equity, balance);
+  /*
+   * Bullions challenge accounts are $50K or $200K.
+   * Never silently manufacture a $100K account when MT5
+   * has not provided an initial balance.
+   */
+  const configuredAccountSize = numberValue(
+    challengeDoc.accountSizeUsd ??
+      challengeDoc.accountSize ??
+      challengeDoc.initialBalance ??
+      mt5Doc.initialBalance,
+    50000
+  );
+
+  const fallbackInitialBalance =
+    configuredAccountSize >= 125000
+      ? 200000
+      : 50000;
+
+  const initialBalance = numberValue(
+    snapshot.initialBalance ??
+      performanceDoc.initialBalance ??
+      mt5Doc.initialBalance,
+    fallbackInitialBalance
+  );
+
+  const balance = numberValue(
+    snapshot.balance ??
+      performanceDoc.balance,
+    initialBalance
+  );
+
+  const equity = numberValue(
+    snapshot.equity ??
+      performanceDoc.equity,
+    balance
+  );
 
   const roi = numberValue(
     snapshot.roi ?? performanceDoc.roi,

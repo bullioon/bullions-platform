@@ -82,7 +82,7 @@ export function ChallengeSpotlight() {
               <Mini label="Entry From" value="$90" />
             </div>
 
-            <Link href="/manager/strategies/new">
+            <Link href="/manager/strategies/new?source=challenge&returnTo=/challenge">
               <Button className="mt-5 w-full">Join Season 03</Button>
             </Link>
           </div>

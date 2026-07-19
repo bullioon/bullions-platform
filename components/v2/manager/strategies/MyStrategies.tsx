@@ -108,8 +108,14 @@ export function MyStrategies() {
                   <Button variant="ghost">Preview</Button>
                 </Link>
 
-                <Link href={`/workspace/${strategy.id}`}>
-                  <Button variant="secondary">Workspace</Button>
+                <Link
+                  href={`/trading-desk?strategyId=${encodeURIComponent(
+                    strategy.id
+                  )}`}
+                >
+                  <Button variant="secondary">
+                    Trading Desk
+                  </Button>
                 </Link>
               </div>
             </div>

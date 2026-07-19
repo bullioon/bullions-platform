@@ -1,7 +1,6 @@
 import type { Strategy } from "@/types/v2/domain/strategy";
 import { TraderHero } from "./TraderHero";
 import { TraderStatsBar } from "./TraderStatsBar";
-import { TraderStrategies } from "./TraderStrategies";
 import { TraderResearch } from "./TraderResearch";
 import { TraderGallery } from "./TraderGallery";
 import { TraderTimeline } from "./TraderTimeline";
@@ -12,9 +11,7 @@ export function TraderProfilePage({ strategy }: { strategy: Strategy }) {
       <div className="mx-auto max-w-[1600px] space-y-5">
         <TraderHero strategy={strategy} />
         <TraderStatsBar strategy={strategy} />
-        <TraderStrategies strategy={strategy} />
-
-        <section className="grid gap-5 xl:grid-cols-[1fr_420px]">
+<section className="grid gap-5 xl:grid-cols-[1fr_420px]">
           <div className="space-y-5">
             <TraderResearch />
             <TraderGallery />

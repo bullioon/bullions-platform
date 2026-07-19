@@ -14,15 +14,12 @@ function isPublicAsset(pathname: string) {
 }
 
 function isOperationalRoute(pathname: string) {
-  return (
-    pathname.startsWith("/api/mt5/") ||
-    pathname.startsWith("/api/cron/") ||
-    pathname.startsWith("/api/dev/") ||
-    pathname.startsWith("/api/runtime/") ||
-    pathname.startsWith("/api/leaderboard/") ||
-    pathname === "/api/mission-control" ||
-    pathname === "/api/challenge/confirm-payment"
-  );
+  /*
+   * Coming-soon protects browser pages only.
+   * API routes must always reach their own authentication
+   * and authorization logic instead of being rewritten to HTML.
+   */
+  return pathname.startsWith("/api/");
 }
 
 export function proxy(request: NextRequest) {
@@ -78,5 +75,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|assets/|images/|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico)$).*)",
+  ],
 };

@@ -45,7 +45,7 @@ export function strategyFromDraft(draft: StrategyDraft): Strategy {
     },
 
     status: {
-      state: "published",
+      state: "draft",
       visibility: "private",
       verified: false,
       tier: "Tier C",

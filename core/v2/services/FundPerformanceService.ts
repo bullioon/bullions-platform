@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   query,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -12,26 +13,119 @@ import { db } from "@/lib/firebase";
 import { PerformanceRepository } from "@/core/v2/repositories/PerformanceRepository";
 
 
-async function roiFromRuntime(strategyId: string): Promise<number | null> {
-  const runtimeSnap = await getDoc(doc(db, "strategyRuntimes", strategyId));
+type StrategyPerformance = {
+  initialBalanceUsd: number;
+  balanceUsd: number;
+  equityUsd: number;
+  strategyRoiPct: number;
+};
+
+async function performanceFromRuntime(
+  strategyId: string
+): Promise<StrategyPerformance | null> {
+  const runtimeSnap = await getDoc(
+    doc(db, "strategyRuntimes", strategyId)
+  );
 
   if (!runtimeSnap.exists()) {
     return null;
   }
 
-  const runtime = runtimeSnap.data() as { performance?: { roi?: number } };
-  const roi = Number(runtime.performance?.roi);
+  const runtime = runtimeSnap.data() as any;
+  const performance = runtime.performance || {};
 
-  return Number.isFinite(roi) ? roi : null;
+  const initialBalanceUsd = Number(
+    performance.initialBalance || 0
+  );
+
+  const balanceUsd = Number(
+    performance.balance || 0
+  );
+
+  const equityUsd = Number(
+    performance.equity || balanceUsd
+  );
+
+  if (
+    initialBalanceUsd <= 0 ||
+    equityUsd <= 0
+  ) {
+    return null;
+  }
+
+  return {
+    initialBalanceUsd,
+    balanceUsd:
+      balanceUsd > 0
+        ? balanceUsd
+        : equityUsd,
+    equityUsd,
+    strategyRoiPct:
+      ((equityUsd - initialBalanceUsd) /
+        initialBalanceUsd) *
+      100,
+  };
 }
-function roiFromSnapshot(snapshot: any) {
-  const deposits = Number(snapshot?.deposits || 0);
-  const equity = Number(snapshot?.equity || 0);
-  const withdrawals = Number(snapshot?.withdrawals || 0);
 
-  if (deposits <= 0) return 0;
+function performanceFromSnapshot(
+  snapshot: any
+): StrategyPerformance | null {
+  if (!snapshot) {
+    return null;
+  }
 
-  return ((equity - deposits + withdrawals) / deposits) * 100;
+  const initialBalanceUsd = Number(
+    snapshot.initialBalance ??
+      snapshot.deposits ??
+      0
+  );
+
+  const balanceUsd = Number(
+    snapshot.balance ??
+      snapshot.equity ??
+      0
+  );
+
+  const equityUsd = Number(
+    snapshot.equity ??
+      snapshot.balance ??
+      0
+  );
+
+  if (
+    initialBalanceUsd <= 0 ||
+    equityUsd <= 0
+  ) {
+    return null;
+  }
+
+  return {
+    initialBalanceUsd,
+    balanceUsd,
+    equityUsd,
+    strategyRoiPct:
+      ((equityUsd - initialBalanceUsd) /
+        initialBalanceUsd) *
+      100,
+  };
+}
+
+async function currentStrategyPerformance(
+  strategyId: string
+): Promise<StrategyPerformance | null> {
+  const runtime =
+    await performanceFromRuntime(strategyId);
+
+  if (runtime) {
+    return runtime;
+  }
+
+  const latest =
+    await PerformanceRepository.latest(
+      strategyId
+    );
+
+  return performanceFromSnapshot(latest);
 }
 
 async function syncFundDocument(fundId: string) {
@@ -50,50 +144,285 @@ async function syncFundDocument(fundId: string) {
     return { ok: false, error: "Fund has no strategy allocations" };
   }
 
-  let weightedRoi = 0;
-  const details = [];
+  const principal = Number(
+    fund.capitalUsd || 0
+  );
+
+  let calculatedFundPnlUsd = 0;
+  const details: any[] = [];
 
   for (const allocation of allocations) {
-    const runtimeRoi = await roiFromRuntime(allocation.strategyId);
-    const latest = runtimeRoi === null ? await PerformanceRepository.latest(allocation.strategyId) : null;
-    const strategyRoi = runtimeRoi === null ? roiFromSnapshot(latest) : runtimeRoi;
-    const allocationPct = Number(allocation.allocationPct || 0);
+    const performance =
+      await currentStrategyPerformance(
+        allocation.strategyId
+      );
 
-    weightedRoi += strategyRoi * (allocationPct / 100);
+    const allocationPct = Number(
+      allocation.allocationPct || 0
+    );
+
+    const allocationCapitalUsd = Number(
+      allocation.capitalUsd ??
+        (
+          principal *
+          (allocationPct / 100)
+        )
+    );
+
+    if (!performance) {
+      details.push({
+        strategyId: allocation.strategyId,
+        traderId: allocation.traderId,
+        allocationPct,
+        capitalUsd: allocationCapitalUsd,
+        status: "performance_unavailable",
+      });
+
+      continue;
+    }
+
+    const entryStrategyEquityUsd = Number(
+      allocation.entryStrategyEquityUsd || 0
+    );
+
+    const hasEntryBaseline =
+      entryStrategyEquityUsd > 0;
+
+    /*
+     * New funds: return begins at the exact strategy
+     * equity captured when the investor entered.
+     *
+     * Legacy funds temporarily retain historical ROI
+     * until their entry baselines are migrated.
+     */
+    const liveReturnPct =
+      hasEntryBaseline
+        ? (
+            (
+              performance.equityUsd -
+              entryStrategyEquityUsd
+            ) /
+            entryStrategyEquityUsd
+          ) * 100
+        : performance.strategyRoiPct;
+
+    /*
+     * Migrated funds retain all investor PnL earned before
+     * the entry-equity engine was installed. Future PnL is
+     * calculated exclusively from the captured entry equity.
+     */
+    const carryoverPnlUsd = Number(
+      allocation.carryoverPnlUsd || 0
+    );
+
+    const livePnlUsd =
+      allocationCapitalUsd *
+      (liveReturnPct / 100);
+
+    const allocationPnlUsd =
+      carryoverPnlUsd +
+      livePnlUsd;
+
+    const investorReturnPct =
+      allocationCapitalUsd > 0
+        ? (
+            allocationPnlUsd /
+            allocationCapitalUsd
+          ) * 100
+        : 0;
+
+    calculatedFundPnlUsd +=
+      allocationPnlUsd;
 
     details.push({
       strategyId: allocation.strategyId,
       traderId: allocation.traderId,
+
       allocationPct,
-      strategyRoi,
+      capitalUsd:
+        Number(
+          allocationCapitalUsd.toFixed(2)
+        ),
+
+      strategyInitialBalanceUsd:
+        performance.initialBalanceUsd,
+
+      entryStrategyEquityUsd:
+        hasEntryBaseline
+          ? entryStrategyEquityUsd
+          : null,
+
+      currentStrategyBalanceUsd:
+        performance.balanceUsd,
+
+      currentStrategyEquityUsd:
+        performance.equityUsd,
+
+      strategyRoiPct:
+        Number(
+          performance.strategyRoiPct.toFixed(4)
+        ),
+
+      liveReturnPct:
+        Number(
+          liveReturnPct.toFixed(4)
+        ),
+
+      carryoverPnlUsd:
+        Number(
+          carryoverPnlUsd.toFixed(2)
+        ),
+
+      livePnlUsd:
+        Number(
+          livePnlUsd.toFixed(2)
+        ),
+
+      investorReturnPct:
+        Number(
+          investorReturnPct.toFixed(4)
+        ),
+
+      allocationPnlUsd:
+        Number(
+          allocationPnlUsd.toFixed(2)
+        ),
+
+      calculationMode:
+        hasEntryBaseline
+          ? carryoverPnlUsd !== 0
+            ? "entry_equity_with_carryover"
+            : "since_entry_equity"
+          : "legacy_strategy_roi",
     });
   }
 
-  const principal = Number(fund.capitalUsd || 0);
-  const fundEquityUsd = Math.max(0, principal * (1 + weightedRoi / 100));
-  const fundPnlUsd = fundEquityUsd - principal;
+  const fundEquityUsd = Math.max(
+    0,
+    principal + calculatedFundPnlUsd
+  );
 
-  await updateDoc(doc(db, "users", fund.userId), {
-    fundEquityUsd: Number(fundEquityUsd.toFixed(2)),
-    fundPnlUsd: Number(fundPnlUsd.toFixed(2)),
-    updatedAt: Date.now(),
-  });
+  const fundPnlUsd =
+    fundEquityUsd - principal;
 
-  await updateDoc(doc(db, "funds", fundId), {
-    weightedRoi: Number(weightedRoi.toFixed(4)),
-    fundEquityUsd: Number(fundEquityUsd.toFixed(2)),
-    fundPnlUsd: Number(fundPnlUsd.toFixed(2)),
-    lastPerformanceSyncAt: Date.now(),
-  });
+  const weightedRoi =
+    principal > 0
+      ? (fundPnlUsd / principal) * 100
+      : 0;
+
+  const roundedWeightedRoi = Number(
+    weightedRoi.toFixed(4)
+  );
+
+  const roundedEquityUsd = Number(
+    fundEquityUsd.toFixed(2)
+  );
+
+  const roundedPnlUsd = Number(
+    fundPnlUsd.toFixed(2)
+  );
+
+  const now = Date.now();
+
+  const performanceStartedAt = Number(
+    fund.performanceStartedAt || now
+  );
+
+  const lastSnapshotAt = Number(
+    fund.lastPerformanceSnapshotAt || 0
+  );
+
+  const lastSnapshotEquityUsd = Number(
+    fund.lastPerformanceSnapshotEquityUsd ??
+      principal
+  );
+
+  const equityChanged =
+    Math.abs(
+      roundedEquityUsd -
+        lastSnapshotEquityUsd
+    ) >= 0.01;
+
+  /*
+   * Keep the chart useful without producing thousands
+   * of duplicate points: at most one changed snapshot
+   * per minute.
+   */
+  const shouldWriteSnapshot =
+    equityChanged &&
+    (
+      !lastSnapshotAt ||
+      now - lastSnapshotAt >= 60_000
+    );
+
+  await updateDoc(
+    doc(db, "users", fund.userId),
+    {
+      fundEquityUsd: roundedEquityUsd,
+      fundPnlUsd: roundedPnlUsd,
+      updatedAt: now,
+    }
+  );
+
+  const fundUpdate: Record<string, any> = {
+    weightedRoi: roundedWeightedRoi,
+    fundEquityUsd: roundedEquityUsd,
+    fundPnlUsd: roundedPnlUsd,
+    lastPerformanceSyncAt: now,
+    calculationVersion:
+      "entry_equity_v1",
+  };
+
+  if (shouldWriteSnapshot) {
+    fundUpdate.lastPerformanceSnapshotAt =
+      now;
+
+    fundUpdate.lastPerformanceSnapshotEquityUsd =
+      roundedEquityUsd;
+  }
+
+  await updateDoc(
+    doc(db, "funds", fundId),
+    fundUpdate
+  );
+
+  if (shouldWriteSnapshot) {
+    const snapshotRef = doc(
+      db,
+      "funds",
+      fundId,
+      "performanceSnapshots",
+      String(now)
+    );
+
+    await setDoc(snapshotRef, {
+      fundId,
+      userId: fund.userId,
+
+      timestamp: now,
+      performanceStartedAt,
+
+      principalUsd: principal,
+      equityUsd: roundedEquityUsd,
+      pnlUsd: roundedPnlUsd,
+      weightedRoi:
+        roundedWeightedRoi,
+
+      details,
+      source: "strategy_runtime",
+      createdAt: now,
+    });
+  }
 
   return {
     ok: true,
     userId: fund.userId,
     activeFundId: fundId,
     principal,
-    weightedRoi: Number(weightedRoi.toFixed(4)),
-    fundEquityUsd: Number(fundEquityUsd.toFixed(2)),
-    fundPnlUsd: Number(fundPnlUsd.toFixed(2)),
+    weightedRoi: roundedWeightedRoi,
+    fundEquityUsd: roundedEquityUsd,
+    fundPnlUsd: roundedPnlUsd,
+    snapshotWritten: shouldWriteSnapshot,
     details,
   };
 }

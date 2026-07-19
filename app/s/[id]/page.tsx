@@ -1,11 +1,17 @@
-import { StrategyProfilePage } from "@/components/v2/strategy-profile/StrategyProfilePage";
+import { StrategyFirmRedirect } from "@/components/v2/navigation/StrategyFirmRedirect";
 
-export default async function Page({
+export default async function StrategyRoute({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{
+    id: string;
+  }>;
 }) {
   const { id } = await params;
 
-  return <StrategyProfilePage strategyId={id} />;
+  return (
+    <StrategyFirmRedirect
+      strategyId={decodeURIComponent(id)}
+    />
+  );
 }

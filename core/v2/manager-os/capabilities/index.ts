@@ -41,8 +41,8 @@ export const managerCapabilities: ManagerCapability[] = [
   },
   {
     id: "products",
-    title: "Products",
-    description: "Manage paid products and access.",
+    title: "Marketplace",
+    description: "Sell research, AI, systems, software and access.",
     stage: "draft",
   },
   {

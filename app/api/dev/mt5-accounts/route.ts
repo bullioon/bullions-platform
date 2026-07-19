@@ -154,35 +154,47 @@ export async function GET(req: Request) {
     );
   }
 
-  const db = getAdminDb();
+  try {
+    const db = getAdminDb();
 
-  const snap = await db
-    .collection("mt5Accounts")
-    .get();
+    const snap = await db
+      .collection("mt5Accounts")
+      .get();
 
-  return NextResponse.json({
-    ok: true,
-    count: snap.size,
+    return NextResponse.json({
+      ok: true,
+      count: snap.size,
 
-    accounts: snap.docs.map((accountDoc) => {
-      const account =
-        accountDoc.data() as Record<string, any>;
+      accounts: snap.docs.map((accountDoc) => {
+        const account =
+          accountDoc.data() as Record<string, any>;
 
-      /*
-       * Passwords are intentionally excluded.
-       */
-      return {
-        id: accountDoc.id,
-        login: account.login || null,
-        server: account.server || null,
-        broker: account.broker || null,
-        accountSize: account.accountSize || null,
-        status: account.status || null,
-        strategyId: account.strategyId || null,
-        managerUid: account.managerUid || null,
-        seasonId: account.seasonId || null,
-        assignedAt: account.assignedAt || null,
-      };
-    }),
-  });
+        return {
+          id: accountDoc.id,
+          login: account.login || null,
+          server: account.server || null,
+          broker: account.broker || null,
+          accountSize: account.accountSize || null,
+          status: account.status || null,
+          strategyId: account.strategyId || null,
+          managerUid: account.managerUid || null,
+          seasonId: account.seasonId || null,
+          assignedAt: account.assignedAt || null,
+        };
+      }),
+    });
+  } catch (error) {
+    console.error("[dev-mt5-accounts:get]", error);
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not list MT5 accounts",
+      },
+      { status: 500 }
+    );
+  }
 }

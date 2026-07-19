@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { getAdminAuth } from "@/lib/firebaseAdminAuth";
+import { getChallengeTier } from "@/core/v2/challenge/tiers";
 
 type TierId = "demo_50k" | "demo_200k";
 
@@ -130,7 +131,7 @@ export async function POST(req: Request) {
     }
 
     const entryFeeUsd =
-      tierId === "demo_200k" ? 1080 : 350;
+      getChallengeTier(tierId).feeUsd;
 
     const now = Date.now();
 

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { auth } from "@/lib/firebase";
+
 import {
   createDraft,
   publishDraft,
@@ -53,12 +55,50 @@ export function CreateStrategyWizard() {
     }
 
     try {
+      const user = auth.currentUser;
+
+      if (!user) {
+        throw new Error("Login required to create a strategy.");
+      }
+
       const published = publishDraft(draft);
-      const strategy = strategyFromDraft(published);
+      const baseStrategy = strategyFromDraft(published);
+
+      const strategy = {
+        ...baseStrategy,
+        manager: {
+          ...baseStrategy.manager,
+          uid: user.uid,
+        },
+        updatedAt: Date.now(),
+      };
+
       await saveStrategy(strategy);
-      window.location.href = "/manager/strategies";
+
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnTo");
+      const source = params.get("source");
+
+      if (source === "challenge" && returnTo) {
+        const target = new URL(returnTo, window.location.origin);
+
+        target.searchParams.set(
+          "strategyId",
+          strategy.id
+        );
+
+        window.location.href =
+          `${target.pathname}${target.search}${target.hash}`;
+
+        return;
+      }
+
+      window.location.href =
+        `/challenge?strategyId=${encodeURIComponent(
+          strategy.id
+        )}`;
     } catch (error: any) {
-      alert(error?.message || "Could not publish strategy.");
+      alert(error?.message || "Could not create strategy draft.");
     }
   }
 
@@ -151,7 +191,7 @@ export function CreateStrategyWizard() {
 
       <WizardFooter
         canContinue={canContinue}
-        label={step === 4 ? "Publish Strategy →" : "Continue →"}
+        label={step === 4 ? "Continue to Challenge →" : "Continue →"}
         onContinue={handleContinue}
       />
     </section>

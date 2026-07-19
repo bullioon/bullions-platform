@@ -1,5 +1,6 @@
 "use client";
 
+import { ChallengeTiers } from "@/core/v2/challenge/tiers";
 import { useEffect, useState } from "react";
 import { ChallengeRepository } from "@/core/v2/repositories/ChallengeRepository";
 
@@ -9,7 +10,7 @@ const PRODUCTS = [
     badge: "50K DEMO",
     label: "$50,000",
     prize: "MONTHLY CASH PRIZE",
-    entry: "$350",
+    entry: `$${ChallengeTiers.demo_50k.feeUsd}`,
     description: "Access a $50,000 demo challenge account.",
   },
   {

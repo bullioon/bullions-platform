@@ -1,3 +1,5 @@
+import type { StrategyProduct } from "@/types/v2/product";
+
 export interface Manager {
   uid: string;
 
@@ -53,6 +55,8 @@ export interface Manager {
       body: string;
       publishedAt: number;
     }>;
+
+    products?: StrategyProduct[];
 
     links?: {
       x?: string;

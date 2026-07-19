@@ -22,6 +22,12 @@ export async function ensureUser(userId: string, email?: string) {
         copiedTraderId: null,
         systemActive: false,
         dailyPerformance: [],
+        workspaces: {
+          trader: true,
+          investor: true,
+        },
+        lastWorkspace: null,
+        onboardingCompleted: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       },

@@ -240,20 +240,35 @@ export async function POST(req: Request) {
      * Resolve the assigned account using login + server.
      * The bridge cannot select an arbitrary strategyId.
      */
+    const normalizeServer = (value: unknown) =>
+      String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+
     const accountSnap = await db
       .collection("mt5Accounts")
       .where("login", "==", login)
-      .where("server", "==", server)
-      .limit(1)
+      .limit(10)
       .get();
 
-    const accountDoc = accountSnap.docs[0];
+    const accountDoc = accountSnap.docs.find((doc) => {
+      const data = doc.data() as Record<string, any>;
+
+      return (
+        normalizeServer(data.server) ===
+        normalizeServer(server)
+      );
+    });
 
     if (!accountDoc) {
       return NextResponse.json(
         {
           ok: false,
           error: "MT5 account is not registered",
+          received: {
+            login,
+            server,
+          },
         },
         { status: 404 }
       );
